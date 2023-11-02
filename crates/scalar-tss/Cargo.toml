@@ -1,0 +1,33 @@
+[package]
+name = "scalar-tss"
+version = "0.0.0"
+authors = ["Codelight <tai@codelight.co>"]
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+anemo.workspace = true
+anyhow.workspace = true
+
+config.workspace = true 
+crypto.workspace = true
+serde.workspace = true
+serde_repr.workspace = true
+sui-macros.workspace = true
+fastcrypto = { workspace = true, features = ["copy_key"] }
+eyre.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+bcs.workspace = true
+store.workspace = true
+tempfile.workspace = true
+
+[dev-dependencies]
+[target.'cfg(not(target_env = "msvc"))'.build-dependencies]
+protobuf-src.workspace = true
+
+[build-dependencies]
+prost-build.workspace = true
+rustversion.workspace = true
+tonic-build.workspace = true
+anemo-build.workspace = true

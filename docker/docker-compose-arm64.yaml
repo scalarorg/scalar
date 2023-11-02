@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  builder:
+    build:
+      context: ../
+      dockerfile: ./docker/builder.Dockerfile.arm64
+      args:
+        # update with git sha of whichever branch you're building on.
+        GIT_REVISION: db24658bc9
+        BUILD_DATE: today
+    image: scalar-builder
+    environment:
+      - LD_PRELOAD
+      - RUST_JSON_LOG=true
+      - RUST_LOG=info
+      # don't use debug, it generates volumes of data.
+
+    container_name: scalar-builder
+    restart: unless-stopped
+    working_dir: /scalar
+    # populate your local ./fullnode/config/ directory with fullnode.yaml and genesis.blob for the network you want to use.
+    volumes:
+      - ../:/scalar
+
+  runner:
+    build:
+      context: ../
+      dockerfile: ./docker/runner.Dockerfile
+      args:
+        BUILD_DATE: today
+    image: scalar-runner 
+    environment:
+      - LD_PRELOAD
+      - RUST_JSON_LOG=true
+      - RUST_LOG=info
+      # don't use debug, it generates volumes of data.
+    container_name: scalar-runner
+    restart: unless-stopped
