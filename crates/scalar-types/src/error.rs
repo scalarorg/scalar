@@ -2,16 +2,20 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// use crate::{
-//     execution_status::CommandArgumentError,
-//     messages_checkpoint::CheckpointSequenceNumber,
-//     object::Owner,
-// };
+/*
+ * 2023-11-02 TaiVV
+ * copy and modify from sui-types/src/error.rs
+ * Định nghĩa các kiểu error sử dụng trong Scalar.
+ * Có thể tham khảo để định nghĩa error cho các component logic khác
+ * Tags: SCALAR_ERROR
+ */
+
 use crate::base_types::*;
 use crate::committee::{Committee, EpochId, StakeUnit};
 use crate::digests::{
     CheckpointContentsDigest, ObjectDigest, TransactionDigest, TransactionEffectsDigest,
 };
+use crate::execution_status::CommandArgumentError;
 use crate::object::Owner;
 use crate::CheckpointSequenceNumber;
 use schemars::JsonSchema;

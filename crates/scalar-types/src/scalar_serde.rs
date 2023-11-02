@@ -23,8 +23,12 @@ use serde_with::{Bytes, DeserializeAs, SerializeAs};
 use sui_protocol_config::ProtocolVersion;
 
 use crate::{
-    parse_sui_struct_tag, parse_sui_type_tag, DEEPBOOK_ADDRESS, SUI_CLOCK_ADDRESS,
-    SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS, SUI_SYSTEM_STATE_ADDRESS,
+    //parse_sui_struct_tag, parse_sui_type_tag,
+    DEEPBOOK_ADDRESS,
+    SUI_CLOCK_ADDRESS,
+    SUI_FRAMEWORK_ADDRESS,
+    SUI_SYSTEM_ADDRESS,
+    SUI_SYSTEM_STATE_ADDRESS,
 };
 
 #[inline]
@@ -203,16 +207,20 @@ fn to_sui_type_tag_string(value: &TypeTag) -> Result<String, fmt::Error> {
         _ => Ok(value.to_string()),
     }
 }
-
-impl<'de> DeserializeAs<'de, StructTag> for SuiStructTag {
-    fn deserialize_as<D>(deserializer: D) -> Result<StructTag, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        parse_sui_struct_tag(&s).map_err(D::Error::custom)
-    }
-}
+/*
+ * 2023-11-02 TaiVV
+ * Move code lien quan toi Move ra package rieng (xu ly sau)
+ * Tags: SCALAR_MOVE_LANGUAGE
+ */
+// impl<'de> DeserializeAs<'de, StructTag> for SuiStructTag {
+//     fn deserialize_as<D>(deserializer: D) -> Result<StructTag, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         let s = String::deserialize(deserializer)?;
+//         parse_sui_struct_tag(&s).map_err(D::Error::custom)
+//     }
+// }
 
 pub struct SuiTypeTag;
 
@@ -226,15 +234,20 @@ impl SerializeAs<TypeTag> for SuiTypeTag {
     }
 }
 
-impl<'de> DeserializeAs<'de, TypeTag> for SuiTypeTag {
-    fn deserialize_as<D>(deserializer: D) -> Result<TypeTag, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        parse_sui_type_tag(&s).map_err(D::Error::custom)
-    }
-}
+/*
+ * 2023-11-02 TaiVV
+ * Move code lien quan toi Move ra package rieng (xu ly sau)
+ * Tags: SCALAR_MOVE_LANGUAGE
+ */
+// impl<'de> DeserializeAs<'de, TypeTag> for SuiTypeTag {
+//     fn deserialize_as<D>(deserializer: D) -> Result<TypeTag, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         let s = String::deserialize(deserializer)?;
+//         parse_sui_type_tag(&s).map_err(D::Error::custom)
+//     }
+// }
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, JsonSchema)]

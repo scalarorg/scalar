@@ -6,32 +6,64 @@
     rust_2018_idioms,
     rust_2021_compatibility
 )]
+
 pub mod account_address;
+pub mod accumulator;
+pub mod authenticator_state;
 pub mod balance;
 pub mod base_types;
 pub mod coin;
 pub mod committee;
 pub mod crypto;
 pub mod digests;
+pub mod dynamic_field;
 pub mod effects;
+pub mod epoch_data;
+
+#[macro_use]
 pub mod error;
+
+pub mod event;
+pub mod executable_transaction;
+pub mod execution;
+pub mod execution_mode;
+pub mod execution_status;
+pub mod gas;
 pub mod gas_algebra;
 pub mod gas_coin;
+pub mod gas_model;
+pub mod governance;
 pub mod id;
 pub mod identifier;
 pub mod language_storage;
+pub mod message_envelope;
+pub mod messages_checkpoint;
+pub mod messages_consensus;
+pub mod multisig;
 pub mod object;
+pub mod programmable_transaction_builder;
 pub mod scalar_serde;
+pub mod signature;
+pub mod storage;
 pub mod transaction;
 pub mod type_resolver;
 pub mod u256;
 pub mod value;
+pub mod zk_login_authenticator;
+pub mod zk_login_util;
+
+#[cfg(any(test, feature = "test-utils"))]
+#[path = "./unit_tests/utils.rs"]
+pub mod utils;
+
 //pub use move_types::base_types;
 //pub use move_types::*;
 use account_address::AccountAddress;
-use base_types::{ObjectID, SequenceNumber};
+use base_types::{ObjectID, SequenceNumber, SuiAddress};
 use language_storage::{StructTag, TypeTag};
 use object::OBJECT_START_VERSION;
+
+pub use mysten_network::multiaddr;
 
 pub type CheckpointSequenceNumber = u64;
 pub type CheckpointTimestamp = u64;
@@ -97,16 +129,21 @@ const fn deepbook_addr() -> AccountAddress {
 pub fn sui_framework_address_concat_string(suffix: &str) -> String {
     format!("{}{suffix}", SUI_FRAMEWORK_ADDRESS.to_hex_literal())
 }
+/*
+ * 2023-11-02 TaiVV
+ * Tam thoi comment out code lien quan toi Move
+ * Se add lai vao cac package doc lap xu ly Move logic
+ * Tags: SCALAR_MOVE_LANGUAGE
+ */
+// pub fn parse_sui_struct_tag(s: &str) -> anyhow::Result<StructTag> {
+//     use move_command_line_common::types::ParsedStructType;
+//     ParsedStructType::parse(s)?.into_struct_tag(&resolve_address)
+// }
 
-pub fn parse_sui_struct_tag(s: &str) -> anyhow::Result<StructTag> {
-    use move_command_line_common::types::ParsedStructType;
-    ParsedStructType::parse(s)?.into_struct_tag(&resolve_address)
-}
-
-pub fn parse_sui_type_tag(s: &str) -> anyhow::Result<TypeTag> {
-    use move_command_line_common::types::ParsedType;
-    ParsedType::parse(s)?.into_type_tag(&resolve_address)
-}
+// pub fn parse_sui_type_tag(s: &str) -> anyhow::Result<TypeTag> {
+//     use move_command_line_common::types::ParsedType;
+//     ParsedType::parse(s)?.into_type_tag(&resolve_address)
+// }
 
 fn resolve_address(addr: &str) -> Option<AccountAddress> {
     match addr {
