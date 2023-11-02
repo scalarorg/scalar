@@ -1,12 +1,18 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-02 TaiVV
+ * copy and modify from sui-types/src/object.rs
+ * Tags: SCALAR_OBJECT, SCALAR_MOVE_LANGUAGE
+ * Thay the deprecated MultiSigLegacy boi MultiSing
+ */
+
 use super::balance::Balance;
 use super::base_types::{MoveObjectType, ObjectIDParseError};
-use super::bytecode::layout::TypeLayoutBuilder;
 use super::gas_coin::GAS;
 use super::language_storage::{StructTag, TypeTag};
-use super::move_package::MovePackage;
+// use super::move_package::MovePackage;
 use super::value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue};
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
@@ -306,6 +312,12 @@ impl MoveObject {
     pub fn into_inner(self) -> (MoveObjectType, Vec<u8>) {
         (self.type_, self.contents)
     }
+    /*
+     * 2023-11-02 TaiVV
+     * Tam thoi comment out code lien quan toi Move
+     * Se add lai vao cac package doc lap xu ly Move logic
+     * Tags: SCALAR_MOVE_LANGUAGE
+     */
 
     // /// Get a `MoveStructLayout` for `self`.
     // /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
@@ -670,24 +682,30 @@ impl Object {
         self.is_package() && is_system_package(self.id())
     }
 
-    /// Create a system package which is not subject to size limits. Panics if the object ID is not
-    /// a known system package.
-    pub fn new_system_package(
-        modules: &[CompiledModule],
-        version: SequenceNumber,
-        dependencies: Vec<ObjectID>,
-        previous_transaction: TransactionDigest,
-    ) -> Self {
-        let ret = Self::new_package_from_data(
-            Data::Package(MovePackage::new_system(version, modules, dependencies)),
-            previous_transaction,
-        );
+    /*
+     * 2023-11-02 TaiVV
+     * Move code lien quan toi Move ra package rieng (xu ly sau)
+     * Tạo mới MovePackage
+     * Tags: SCALAR_MOVE_LANGUAGE
+     */
+    // /// Create a system package which is not subject to size limits. Panics if the object ID is not
+    // /// a known system package.
+    // pub fn new_system_package(
+    //     modules: &[CompiledModule],
+    //     version: SequenceNumber,
+    //     dependencies: Vec<ObjectID>,
+    //     previous_transaction: TransactionDigest,
+    // ) -> Self {
+    //     let ret = Self::new_package_from_data(
+    //         Data::Package(MovePackage::new_system(version, modules, dependencies)),
+    //         previous_transaction,
+    //     );
 
-        #[cfg(not(msim))]
-        assert!(ret.is_system_package());
+    //     #[cfg(not(msim))]
+    //     assert!(ret.is_system_package());
 
-        ret
-    }
+    //     ret
+    // }
 
     pub fn new_package_from_data(data: Data, previous_transaction: TransactionDigest) -> Self {
         Object {
@@ -703,54 +721,61 @@ impl Object {
         Self::new_package_from_data(Data::Package(package), previous_transaction)
     }
 
-    pub fn new_package<'p>(
-        modules: &[CompiledModule],
-        previous_transaction: TransactionDigest,
-        max_move_package_size: u64,
-        dependencies: impl IntoIterator<Item = &'p MovePackage>,
-    ) -> Result<Self, ExecutionError> {
-        Ok(Self::new_package_from_data(
-            Data::Package(MovePackage::new_initial(
-                modules,
-                max_move_package_size,
-                dependencies,
-            )?),
-            previous_transaction,
-        ))
-    }
+    /*
+     * 2023-11-02 TaiVV
+     * Move code lien quan toi Move ra package rieng (xu ly sau)
+     * Tao moi MovePackage
+     * Tags: SCALAR_MOVE_LANGUAGE
+     */
 
-    pub fn new_upgraded_package<'p>(
-        previous_package: &MovePackage,
-        new_package_id: ObjectID,
-        modules: &[CompiledModule],
-        previous_transaction: TransactionDigest,
-        protocol_config: &ProtocolConfig,
-        dependencies: impl IntoIterator<Item = &'p MovePackage>,
-    ) -> Result<Self, ExecutionError> {
-        Ok(Self::new_package_from_data(
-            Data::Package(previous_package.new_upgraded(
-                new_package_id,
-                modules,
-                protocol_config,
-                dependencies,
-            )?),
-            previous_transaction,
-        ))
-    }
+    // pub fn new_package<'p>(
+    //     modules: &[CompiledModule],
+    //     previous_transaction: TransactionDigest,
+    //     max_move_package_size: u64,
+    //     dependencies: impl IntoIterator<Item = &'p MovePackage>,
+    // ) -> Result<Self, ExecutionError> {
+    //     Ok(Self::new_package_from_data(
+    //         Data::Package(MovePackage::new_initial(
+    //             modules,
+    //             max_move_package_size,
+    //             dependencies,
+    //         )?),
+    //         previous_transaction,
+    //     ))
+    // }
 
-    pub fn new_package_for_testing(
-        modules: &[CompiledModule],
-        previous_transaction: TransactionDigest,
-        dependencies: impl IntoIterator<Item = MovePackage>,
-    ) -> Result<Self, ExecutionError> {
-        let dependencies: Vec<_> = dependencies.into_iter().collect();
-        Self::new_package(
-            modules,
-            previous_transaction,
-            ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
-            &dependencies,
-        )
-    }
+    // pub fn new_upgraded_package<'p>(
+    //     previous_package: &MovePackage,
+    //     new_package_id: ObjectID,
+    //     modules: &[CompiledModule],
+    //     previous_transaction: TransactionDigest,
+    //     protocol_config: &ProtocolConfig,
+    //     dependencies: impl IntoIterator<Item = &'p MovePackage>,
+    // ) -> Result<Self, ExecutionError> {
+    //     Ok(Self::new_package_from_data(
+    //         Data::Package(previous_package.new_upgraded(
+    //             new_package_id,
+    //             modules,
+    //             protocol_config,
+    //             dependencies,
+    //         )?),
+    //         previous_transaction,
+    //     ))
+    // }
+
+    // pub fn new_package_for_testing(
+    //     modules: &[CompiledModule],
+    //     previous_transaction: TransactionDigest,
+    //     dependencies: impl IntoIterator<Item = MovePackage>,
+    // ) -> Result<Self, ExecutionError> {
+    //     let dependencies: Vec<_> = dependencies.into_iter().collect();
+    //     Self::new_package(
+    //         modules,
+    //         previous_transaction,
+    //         ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
+    //         &dependencies,
+    //     )
+    // }
 
     pub fn is_immutable(&self) -> bool {
         self.owner.is_immutable()

@@ -2,6 +2,14 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-02 TaiVV
+ * copy and modify from sui-types/src/base-types.rs
+ * Chuan bi cac cau truc du lieu su dung trong Scalar
+ * va giao tiep giua cac component
+ * Tags: SCALAR_TYPES
+ */
+
 use crate::account_address::AccountAddress;
 use crate::coin::Coin;
 use crate::coin::CoinMetadata;
@@ -30,12 +38,10 @@ use crate::identifier::IdentStr;
 use crate::language_storage::{ModuleId, StructTag, TypeTag};
 use crate::messages_checkpoint::CheckpointTimestamp;
 use crate::multisig::MultiSigPublicKey;
-use crate::multisig_legacy::MultiSigPublicKeyLegacy;
 use crate::object::{Object, Owner};
-use crate::parse_sui_struct_tag;
+//use crate::parse_sui_struct_tag;
+use crate::scalar_serde::{to_sui_struct_tag_string, HexAccountAddress, Readable};
 use crate::signature::GenericSignature;
-use crate::sui_serde::Readable;
-use crate::sui_serde::{to_sui_struct_tag_string, HexAccountAddress};
 use crate::transaction::Transaction;
 use crate::transaction::VerifiedTransaction;
 use crate::zk_login_authenticator::ZkLoginAuthenticator;
@@ -49,9 +55,17 @@ use fastcrypto::encoding::{Encoding, Hex};
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::AllowedRng;
 use fastcrypto_zkp::bn254::utils::big_int_str_to_bytes;
-use move_binary_format::binary_views::BinaryIndexedView;
-use move_binary_format::file_format::SignatureToken;
-use move_bytecode_utils::resolve_struct;
+
+/*
+ * 2023-11-02 TaiVV
+ * Tam thoi comment out code lien quan toi Move
+ * Se add lai vao cac package doc lap xu ly Move logic
+ * Tags: SCALAR_MOVE_LANGUAGE
+ */
+
+// use move_binary_format::binary_views::BinaryIndexedView;
+// use move_binary_format::file_format::SignatureToken;
+// use move_bytecode_utils::resolve_struct;
 
 use rand::Rng;
 use schemars::JsonSchema;
@@ -372,18 +386,25 @@ impl TryFrom<ObjectType> for StructTag {
     }
 }
 
-impl FromStr for ObjectType {
-    type Err = anyhow::Error;
+/*
+ * 2023-11-02 TaiVV
+ * Tam thoi comment out code lien quan toi Move
+ * Se add lai vao cac package doc lap xu ly Move logic
+ * Tags: SCALAR_MOVE_LANGUAGE
+ */
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.to_lowercase() == PACKAGE {
-            Ok(ObjectType::Package)
-        } else {
-            let tag = parse_sui_struct_tag(s)?;
-            Ok(ObjectType::Struct(MoveObjectType::from(tag)))
-        }
-    }
-}
+// impl FromStr for ObjectType {
+//     type Err = anyhow::Error;
+
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         if s.to_lowercase() == PACKAGE {
+//             Ok(ObjectType::Package)
+//         } else {
+//             let tag = parse_sui_struct_tag(s)?;
+//             Ok(ObjectType::Struct(MoveObjectType::from(tag)))
+//         }
+//     }
+// }
 
 #[derive(Clone, Serialize, Deserialize, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct ObjectInfo {
@@ -594,6 +615,12 @@ impl From<&PublicKey> for SuiAddress {
         SuiAddress(g_arr.digest)
     }
 }
+
+/*
+ * 2023-11-02 TaiVV
+ * copy and modify from sui-types/src/unit-test/utils.rs
+ * Tags: SCALAR_UTILS, SCALAR_UNIT_TEST
+ */
 
 impl From<&MultiSigPublicKeyLegacy> for SuiAddress {
     /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
@@ -846,31 +873,37 @@ impl TxContext {
             ids_created: 0,
         }
     }
+    /*
+     * 2023-11-02 TaiVV
+     * Tam thoi comment out code lien quan toi Move
+     * Se add lai vao cac package doc lap xu ly Move logic
+     * Tags: SCALAR_MOVE_LANGUAGE
+     */
 
-    /// Returns whether the type signature is &mut TxContext, &TxContext, or none of the above.
-    pub fn kind(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> TxContextKind {
-        use SignatureToken as S;
-        let (kind, s) = match s {
-            S::MutableReference(s) => (TxContextKind::Mutable, s),
-            S::Reference(s) => (TxContextKind::Immutable, s),
-            _ => return TxContextKind::None,
-        };
+    // /// Returns whether the type signature is &mut TxContext, &TxContext, or none of the above.
+    // pub fn kind(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> TxContextKind {
+    //     use SignatureToken as S;
+    //     let (kind, s) = match s {
+    //         S::MutableReference(s) => (TxContextKind::Mutable, s),
+    //         S::Reference(s) => (TxContextKind::Immutable, s),
+    //         _ => return TxContextKind::None,
+    //     };
 
-        let S::Struct(idx) = &**s else {
-            return TxContextKind::None;
-        };
+    //     let S::Struct(idx) = &**s else {
+    //         return TxContextKind::None;
+    //     };
 
-        let (module_addr, module_name, struct_name) = resolve_struct(view, *idx);
-        let is_tx_context_type = module_name == TX_CONTEXT_MODULE_NAME
-            && module_addr == &SUI_FRAMEWORK_ADDRESS
-            && struct_name == TX_CONTEXT_STRUCT_NAME;
+    //     let (module_addr, module_name, struct_name) = resolve_struct(view, *idx);
+    //     let is_tx_context_type = module_name == TX_CONTEXT_MODULE_NAME
+    //         && module_addr == &SUI_FRAMEWORK_ADDRESS
+    //         && struct_name == TX_CONTEXT_STRUCT_NAME;
 
-        if is_tx_context_type {
-            kind
-        } else {
-            TxContextKind::None
-        }
-    }
+    //     if is_tx_context_type {
+    //         kind
+    //     } else {
+    //         TxContextKind::None
+    //     }
+    // }
 
     pub fn epoch(&self) -> EpochId {
         self.epoch

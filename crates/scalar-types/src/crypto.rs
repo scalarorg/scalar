@@ -41,7 +41,12 @@ use strum::EnumString;
 use crate::base_types::{AuthorityName, SuiAddress};
 use crate::committee::{Committee, EpochId, StakeUnit};
 use crate::error::{SuiError, SuiResult};
-use crate::sui_serde::{Readable, SuiBitmap};
+/*
+ * 2023-11-02 TaiVV
+ * doi ten file sui_serde -> scalar_serde
+ * Tags: SCALAR_SERDE
+ */
+use crate::scalar_serde::{Readable, SuiBitmap};
 pub use enum_dispatch::enum_dispatch;
 use fastcrypto::encoding::{Base64, Encoding, Hex};
 use fastcrypto::error::FastCryptoError;
