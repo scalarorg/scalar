@@ -5,7 +5,6 @@
  * 2023-11-02 TaiVV
  * copy and modify from sui-types/src/object.rs
  * Tags: SCALAR_OBJECT, SCALAR_MOVE_LANGUAGE
- * Thay the deprecated MultiSigLegacy boi MultiSing
  */
 
 use super::balance::Balance;
@@ -487,10 +486,23 @@ impl MoveObject {
 pub enum Data {
     /// An object whose governing logic lives in a published Move module
     Move(MoveObject),
-    /// Map from each module name to raw serialized Move module bytes
-    Package(MovePackage),
+    // Map from each module name to raw serialized Move module bytes
+    // Package(MovePackage),
+    /*
+     * 2023-11-02 TaiVV
+     * Thay the Package(MovePackage) boi Package(String) de han che viec modify code
+     * Tags: SCALAR_MOVE_LANGUAGE
+     */
+    Package(String),
     // ... Sui "native" types go here
 }
+
+/*
+ * 2023-11-02 TaiVV
+ * Tam thoi comment out code lien quan toi Move
+ * Se add lai vao cac package doc lap xu ly Move logic
+ * Tags: SCALAR_MOVE_LANGUAGE
+ */
 
 impl Data {
     pub fn try_as_move(&self) -> Option<&MoveObject> {
@@ -509,29 +521,29 @@ impl Data {
         }
     }
 
-    pub fn try_as_package(&self) -> Option<&MovePackage> {
-        use Data::*;
-        match self {
-            Move(_) => None,
-            Package(p) => Some(p),
-        }
-    }
+    // pub fn try_as_package(&self) -> Option<&MovePackage> {
+    //     use Data::*;
+    //     match self {
+    //         Move(_) => None,
+    //         Package(p) => Some(p),
+    //     }
+    // }
 
-    pub fn try_as_package_mut(&mut self) -> Option<&mut MovePackage> {
-        use Data::*;
-        match self {
-            Move(_) => None,
-            Package(p) => Some(p),
-        }
-    }
+    // pub fn try_as_package_mut(&mut self) -> Option<&mut MovePackage> {
+    //     use Data::*;
+    //     match self {
+    //         Move(_) => None,
+    //         Package(p) => Some(p),
+    //     }
+    // }
 
-    pub fn try_into_package(self) -> Option<MovePackage> {
-        use Data::*;
-        match self {
-            Move(_) => None,
-            Package(p) => Some(p),
-        }
-    }
+    // pub fn try_into_package(self) -> Option<MovePackage> {
+    //     use Data::*;
+    //     match self {
+    //         Move(_) => None,
+    //         Package(p) => Some(p),
+    //     }
+    // }
 
     pub fn type_(&self) -> Option<&MoveObjectType> {
         use Data::*;
@@ -716,17 +728,17 @@ impl Object {
         }
     }
 
-    // Note: this will panic if `modules` is empty
-    pub fn new_from_package(package: MovePackage, previous_transaction: TransactionDigest) -> Self {
-        Self::new_package_from_data(Data::Package(package), previous_transaction)
-    }
-
     /*
      * 2023-11-02 TaiVV
      * Move code lien quan toi Move ra package rieng (xu ly sau)
      * Tao moi MovePackage
      * Tags: SCALAR_MOVE_LANGUAGE
      */
+
+    // // Note: this will panic if `modules` is empty
+    // pub fn new_from_package(package: MovePackage, previous_transaction: TransactionDigest) -> Self {
+    //     Self::new_package_from_data(Data::Package(package), previous_transaction)
+    // }
 
     // pub fn new_package<'p>(
     //     modules: &[CompiledModule],
@@ -903,19 +915,25 @@ impl Object {
         self.owner = Owner::AddressOwner(new_owner);
     }
 
-    /// Get a `MoveStructLayout` for `self`.
-    /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
-    /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
-    pub fn get_layout(
-        &self,
-        format: ObjectFormatOptions,
-        resolver: &impl GetModule,
-    ) -> Result<Option<MoveStructLayout>, SuiError> {
-        match &self.data {
-            Data::Move(m) => Ok(Some(m.get_layout(format, resolver)?)),
-            Data::Package(_) => Ok(None),
-        }
-    }
+    /*
+     * 2023-11-02 TaiVV
+     * Move code lien quan toi Move ra package rieng (xu ly sau)
+     * Tags: SCALAR_MOVE_LANGUAGE
+     */
+
+    // /// Get a `MoveStructLayout` for `self`.
+    // /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
+    // /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
+    // pub fn get_layout(
+    //     &self,
+    //     format: ObjectFormatOptions,
+    //     resolver: &impl GetModule,
+    // ) -> Result<Option<MoveStructLayout>, SuiError> {
+    //     match &self.data {
+    //         Data::Move(m) => Ok(Some(m.get_layout(format, resolver)?)),
+    //         Data::Package(_) => Ok(None),
+    //     }
+    // }
 
     /// Treat the object type as a Move struct with one type parameter,
     /// like this: `S<T>`.

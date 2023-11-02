@@ -7,10 +7,9 @@
     rust_2021_compatibility
 )]
 
-use base_types::{SequenceNumber, SuiAddress};
-
 pub mod account_address;
 pub mod accumulator;
+pub mod authenticator_state;
 pub mod balance;
 pub mod base_types;
 pub mod coin;
@@ -20,8 +19,15 @@ pub mod digests;
 pub mod dynamic_field;
 pub mod effects;
 pub mod epoch_data;
+
+#[macro_use]
 pub mod error;
+
 pub mod event;
+pub mod executable_transaction;
+pub mod execution;
+pub mod execution_mode;
+pub mod execution_status;
 pub mod gas;
 pub mod gas_algebra;
 pub mod gas_coin;
@@ -35,6 +41,7 @@ pub mod messages_checkpoint;
 pub mod messages_consensus;
 pub mod multisig;
 pub mod object;
+pub mod programmable_transaction_builder;
 pub mod scalar_serde;
 pub mod signature;
 pub mod storage;
@@ -52,7 +59,7 @@ pub mod utils;
 //pub use move_types::base_types;
 //pub use move_types::*;
 use account_address::AccountAddress;
-use base_types::{ObjectID, SequenceNumber};
+use base_types::{ObjectID, SequenceNumber, SuiAddress};
 use language_storage::{StructTag, TypeTag};
 use object::OBJECT_START_VERSION;
 

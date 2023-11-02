@@ -1,8 +1,15 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-02 TaiVV
+ * copy and modify from sui-types/src/id.rs
+ * Comment out MoveTypeTagTrait
+ * Tags: SCALAR_ID
+ */
+
 use crate::account_address::AccountAddress;
-use crate::MoveTypeTagTrait;
+// use crate::MoveTypeTagTrait;
 use crate::{base_types::ObjectID, SUI_FRAMEWORK_ADDRESS};
 use crate::{
     ident_str,
@@ -93,8 +100,8 @@ impl ID {
     }
 }
 
-impl MoveTypeTagTrait for ID {
-    fn get_type_tag() -> TypeTag {
-        TypeTag::Struct(Box::new(Self::type_()))
-    }
-}
+// impl MoveTypeTagTrait for ID {
+//     fn get_type_tag() -> TypeTag {
+//         TypeTag::Struct(Box::new(Self::type_()))
+//     }
+// }

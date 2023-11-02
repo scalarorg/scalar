@@ -618,28 +618,28 @@ impl From<&PublicKey> for SuiAddress {
 
 /*
  * 2023-11-02 TaiVV
- * copy and modify from sui-types/src/unit-test/utils.rs
- * Tags: SCALAR_UTILS, SCALAR_UNIT_TEST
+ * Khong support deprecated version MultiSig Legacy
+ * Tags: SCALAR_TYPES, SCALAR_MULTISIG
  */
 
-impl From<&MultiSigPublicKeyLegacy> for SuiAddress {
-    /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
-    /// is defined as the 32-byte Blake2b hash of serializing the flag, the
-    /// threshold, concatenation of all n flag, public keys and
-    /// its weight. `flag_MultiSig || threshold || flag_1 || pk_1 || weight_1
-    /// || ... || flag_n || pk_n || weight_n`.
-    fn from(multisig_pk: &MultiSigPublicKeyLegacy) -> Self {
-        let mut hasher = DefaultHash::default();
-        hasher.update([SignatureScheme::MultiSig.flag()]);
-        hasher.update(multisig_pk.threshold().to_le_bytes());
-        multisig_pk.pubkeys().iter().for_each(|(pk, w)| {
-            hasher.update([pk.flag()]);
-            hasher.update(pk.as_ref());
-            hasher.update(w.to_le_bytes());
-        });
-        SuiAddress(hasher.finalize().digest)
-    }
-}
+// impl From<&MultiSigPublicKeyLegacy> for SuiAddress {
+//     /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
+//     /// is defined as the 32-byte Blake2b hash of serializing the flag, the
+//     /// threshold, concatenation of all n flag, public keys and
+//     /// its weight. `flag_MultiSig || threshold || flag_1 || pk_1 || weight_1
+//     /// || ... || flag_n || pk_n || weight_n`.
+//     fn from(multisig_pk: &MultiSigPublicKeyLegacy) -> Self {
+//         let mut hasher = DefaultHash::default();
+//         hasher.update([SignatureScheme::MultiSig.flag()]);
+//         hasher.update(multisig_pk.threshold().to_le_bytes());
+//         multisig_pk.pubkeys().iter().for_each(|(pk, w)| {
+//             hasher.update([pk.flag()]);
+//             hasher.update(pk.as_ref());
+//             hasher.update(w.to_le_bytes());
+//         });
+//         SuiAddress(hasher.finalize().digest)
+//     }
+// }
 
 impl From<&MultiSigPublicKey> for SuiAddress {
     /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
@@ -695,7 +695,7 @@ impl TryFrom<&GenericSignature> for SuiAddress {
                 Ok(SuiAddress::from(&pub_key))
             }
             GenericSignature::MultiSig(ms) => Ok(ms.get_pk().into()),
-            GenericSignature::MultiSigLegacy(ms) => Ok(ms.get_pk().into()),
+            //GenericSignature::MultiSigLegacy(ms) => Ok(ms.get_pk().into()),
             GenericSignature::ZkLoginAuthenticator(zklogin) => zklogin.try_into(),
         }
     }
