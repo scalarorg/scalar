@@ -1,0 +1,24 @@
+[package]
+name = "scalar-network"
+version = "0.0.0"
+license = "Apache-2.0"
+authors = ["huongcodelight <huong@codelight.co>"]
+description = "A Scalar crate powered by Anemo"
+publish = false
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+anemo.workspace = true
+bincode.workspace = true
+bytes.workspace = true
+clap.workspace = true
+tokio.workspace = true
+tower.workspace = true
+futures.workspace = true
+rand.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[build-dependencies]
+anemo-build.workspace = true

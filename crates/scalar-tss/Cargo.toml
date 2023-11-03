@@ -1,0 +1,50 @@
+[package]
+name = "scalar-tss"
+version = "0.0.0"
+license = "Apache-2.0"
+authors = ["huongcodelight <huong@codelight.co>"]
+description = "A Scalar tss crate"
+publish = false
+edition = "2021"
+
+[dependencies]
+anemo.workspace = true
+tonic.workspace = true
+crypto.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+futures.workspace = true
+rand.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+backoff.workspace = true
+tokio-stream.workspace = true
+mysten-network.workspace = true
+mysten-util-mem.workspace = true
+fastcrypto.workspace = true
+uuid.workspace = true
+
+# Scalar dependencies
+chacha20poly1305 = { version = "0.9", features = [
+    "alloc",
+], default-features = false }
+k256 = { version = "0.13" }
+sled = { version = "0.34", default-features = false }
+tiny-bip39 = { version = "0.8.2", default-features = false }
+zeroize = { version = "1.4", features = [
+    "zeroize_derive",
+], default-features = false }
+scrypt = { version = "0.11", default-features = false, features = ["std"] }
+rpassword = { version = "5.0", default-features = false }
+tofn = { git = "https://github.com/massbitprotocol/tofn", rev = "b6ccfb639c70d5fdd134be2c009867fec79a8ae8" }
+
+[dev-dependencies]
+[target.'cfg(not(target_env = "msvc"))'.build-dependencies]
+protobuf-src.workspace = true
+
+[build-dependencies]
+prost-build.workspace = true
+rustversion.workspace = true
+tonic-build.workspace = true
+anemo-build.workspace = true

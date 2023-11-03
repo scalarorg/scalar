@@ -1,0 +1,8 @@
+# Somehow version rust:1.73-alpine3.18 and rust:1.72.1-alpine3.18 can not compile the code ()
+FROM arm64v8/rust:1.70-alpine3.18
+ARG PROFILE=release
+RUN apk update && apk upgrade
+#RUN apk add bash cmake clang libclang-dev libpq-dev libssl-dev software-properties-common
+RUN apk add --no-cache musl-dev make protobuf-dev clang clang-static
+WORKDIR /scalar
+ENTRYPOINT [ "sleep", "infinity"]
