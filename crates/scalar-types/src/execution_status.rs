@@ -7,9 +7,10 @@
  * Tags: SCALAR_EXECUTION
  */
 
+use crate::move_types::language_storage::ModuleId;
 use crate::ObjectID;
-use move_binary_format::file_format::{CodeOffset, TypeParameterIndex};
-use move_core_types::language_storage::ModuleId;
+//use move_binary_format::file_format::{CodeOffset, TypeParameterIndex};
+use crate::move_types::file_format::CodeOffset;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use sui_macros::EnumVariantOrder;
@@ -89,14 +90,20 @@ pub enum ExecutionFailureStatus {
     //
     // Errors from the Move VM
     //
+    /*
+     * 2023-11-03 TaiVV
+     * Comment out move related type
+     * Tags: SCALAR_EXECUTION
+     */
     // Indicates an error from a non-abort instruction
-    #[error(
-        "Move Primitive Runtime Error. Location: {0}. \
-        Arithmetic error, stack overflow, max value depth, etc."
-    )]
-    MovePrimitiveRuntimeError(MoveLocationOpt),
-    #[error("Move Runtime Abort. Location: {0}, Abort Code: {1}")]
-    MoveAbort(MoveLocation, u64),
+    // #[error(
+    //     "Move Primitive Runtime Error. Location: {0}. \
+    //     Arithmetic error, stack overflow, max value depth, etc."
+    // )]
+    // MovePrimitiveRuntimeError(MoveLocationOpt),
+    // #[error("Move Runtime Abort. Location: {0}, Abort Code: {1}")]
+    // MoveAbort(MoveLocation, u64),
+    /******************/
     #[error(
         "Move Bytecode Verification Error. \
         Please run the Bytecode Verifier for more information."
@@ -127,11 +134,16 @@ pub enum ExecutionFailureStatus {
         arg_idx: u16,
         kind: CommandArgumentError,
     },
-    #[error("Error for type argument at index {argument_idx}: {kind}")]
-    TypeArgumentError {
-        argument_idx: TypeParameterIndex,
-        kind: TypeArgumentError,
-    },
+    /*
+     * 2023-11-03 TaiVV
+     * Comment out move related type
+     * Tags: SCALAR_EXECUTION
+     */
+    // #[error("Error for type argument at index {argument_idx}: {kind}")]
+    // TypeArgumentError {
+    //     argument_idx: TypeParameterIndex,
+    //     kind: TypeArgumentError,
+    // },
     #[error(
         "Unused result without the drop ability. \
         Command result {result_idx}, return value {secondary_idx}"
@@ -279,36 +291,42 @@ impl ExecutionFailureStatus {
     }
 }
 
-impl Display for MoveLocationOpt {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.0 {
-            None => write!(f, "UNKNOWN"),
-            Some(l) => write!(f, "{l}"),
-        }
-    }
-}
+/*
+ * 2023-11-03 TaiVV
+ * Comment out Move related type
+ * Tags: SCALAR_EXECUTION
+ */
 
-impl Display for MoveLocation {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let Self {
-            module,
-            function,
-            instruction,
-            function_name,
-        } = self;
-        if let Some(fname) = function_name {
-            write!(
-                f,
-                "{module}::{fname} (function index {function}) at offset {instruction}"
-            )
-        } else {
-            write!(
-                f,
-                "{module} in function definition {function} at offset {instruction}"
-            )
-        }
-    }
-}
+// impl Display for MoveLocationOpt {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         match &self.0 {
+//             None => write!(f, "UNKNOWN"),
+//             Some(l) => write!(f, "{l}"),
+//         }
+//     }
+// }
+
+// impl Display for MoveLocation {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         let Self {
+//             module,
+//             function,
+//             instruction,
+//             function_name,
+//         } = self;
+//         if let Some(fname) = function_name {
+//             write!(
+//                 f,
+//                 "{module}::{fname} (function index {function}) at offset {instruction}"
+//             )
+//         } else {
+//             write!(
+//                 f,
+//                 "{module} in function definition {function} at offset {instruction}"
+//             )
+//         }
+//     }
+// }
 
 impl ExecutionStatus {
     pub fn new_failure(

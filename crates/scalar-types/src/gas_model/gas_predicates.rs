@@ -13,10 +13,10 @@
  * Tags: SCALAR_MOVE_LANGUAGE
  */
 
-// use crate::gas_model::tables::{
-//     initial_cost_schedule_v1, initial_cost_schedule_v2, initial_cost_schedule_v3,
-//     initial_cost_schedule_v4, initial_cost_schedule_v5,
-// };
+use crate::gas_model::tables::{
+    initial_cost_schedule_v1, initial_cost_schedule_v2, initial_cost_schedule_v3,
+    initial_cost_schedule_v4, initial_cost_schedule_v5,
+};
 use crate::gas_model::units_types::CostTable;
 use sui_protocol_config::ProtocolConfig;
 
@@ -56,20 +56,21 @@ pub fn charge_upgrades(gas_model_version: u64) -> bool {
  * 2023-11-02 TaiVV
  * Tam thoi comment out code lien quan toi Move
  * Se add lai vao cac package doc lap xu ly Move logic
+ * 2023-11-03 add move-vm-types and move-vm-profier
  * Tags: SCALAR_MOVE_LANGUAGE
  */
 
 // Return the version supported cost table
-// pub fn cost_table_for_version(gas_model: u64) -> CostTable {
-//     if gas_model <= 3 {
-//         initial_cost_schedule_v1()
-//     } else if gas_model == 4 {
-//         initial_cost_schedule_v2()
-//     } else if gas_model == 5 {
-//         initial_cost_schedule_v3()
-//     } else if gas_model <= 7 {
-//         initial_cost_schedule_v4()
-//     } else {
-//         initial_cost_schedule_v5()
-//     }
-// }
+pub fn cost_table_for_version(gas_model: u64) -> CostTable {
+    if gas_model <= 3 {
+        initial_cost_schedule_v1()
+    } else if gas_model == 4 {
+        initial_cost_schedule_v2()
+    } else if gas_model == 5 {
+        initial_cost_schedule_v3()
+    } else if gas_model <= 7 {
+        initial_cost_schedule_v4()
+    } else {
+        initial_cost_schedule_v5()
+    }
+}

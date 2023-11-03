@@ -12,9 +12,9 @@ use std::str::FromStr;
 
 use anyhow::ensure;
 //use move_bytecode_utils::module_cache::GetModule;
-use crate::{
+use crate::ident_str;
+use crate::move_types::{
     account_address::AccountAddress,
-    ident_str,
     identifier::{IdentStr, Identifier},
     language_storage::StructTag,
     value::MoveStruct,

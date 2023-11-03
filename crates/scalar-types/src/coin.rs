@@ -3,17 +3,17 @@
 
 use crate::error::ExecutionErrorKind;
 use crate::error::SuiError;
+use crate::ident_str;
 use crate::{
     balance::{Balance, Supply},
     error::ExecutionError,
     object::{Data, Object},
 };
 use crate::{base_types::ObjectID, id::UID, SUI_FRAMEWORK_ADDRESS};
-use crate::{
-    ident_str,
+use move_core_types::{
     identifier::IdentStr,
     language_storage::{StructTag, TypeTag},
-    //value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout},
+    value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout},
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -93,21 +93,21 @@ impl Coin {
         bcs::to_bytes(&self).unwrap()
     }
 
-    // pub fn layout(type_param: TypeTag) -> MoveStructLayout {
-    //     MoveStructLayout::WithTypes {
-    //         type_: Self::type_(type_param.clone()),
-    //         fields: vec![
-    //             MoveFieldLayout::new(
-    //                 ident_str!("id").to_owned(),
-    //                 MoveTypeLayout::Struct(UID::layout()),
-    //             ),
-    //             MoveFieldLayout::new(
-    //                 ident_str!("balance").to_owned(),
-    //                 MoveTypeLayout::Struct(Balance::layout(type_param)),
-    //             ),
-    //         ],
-    //     }
-    // }
+    pub fn layout(type_param: TypeTag) -> MoveStructLayout {
+        MoveStructLayout::WithTypes {
+            type_: Self::type_(type_param.clone()),
+            fields: vec![
+                MoveFieldLayout::new(
+                    ident_str!("id").to_owned(),
+                    MoveTypeLayout::Struct(UID::layout()),
+                ),
+                MoveFieldLayout::new(
+                    ident_str!("balance").to_owned(),
+                    MoveTypeLayout::Struct(Balance::layout(type_param)),
+                ),
+            ],
+        }
+    }
 
     /// Add balance to this coin, erroring if the new total balance exceeds the maximum
     pub fn add(&mut self, balance: Balance) -> Result<(), ExecutionError> {

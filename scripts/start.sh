@@ -3,27 +3,30 @@ DIR="$( cd "$( dirname "$0" )" && pwd )"
 OS=$(uname)
 BUILDER=scalar-builder
 RUNNER=scalar-runner
-COMPOSE_FILE=${DIR}/../docker/docker-compose.yaml
+
+COMPOSE_FILE="-f ${DIR}/../docker/docker-compose.yaml"
 if [ "$OS" == "Darwin" ]
 then
     ARCH=$(uname -m)
     if [ "$ARCH" == "arm64" ]
     then
-        COMPOSE_FILE=${DIR}/../docker/docker-compose-arm64.yaml
+        COMPOSE_FILE="-f ${DIR}/../docker/docker-compose-arm64.yaml"
     fi
 fi 
 
+COMPOSE_FILE="${COMPOSE_FILE} -f /../docker/docker-compose-geth.yaml"
+
 init() {
-  docker-compose -f ${COMPOSE_FILE} build
+  docker-compose ${COMPOSE_FILE} build
 }
 
 containers() {
   COMMAND=${1:-up}
   if [ "$COMMAND" == "up" ]
   then
-    docker-compose -f ${COMPOSE_FILE} up -d
+    docker-compose ${COMPOSE_FILE} up -d
   else
-    docker-compose -f ${COMPOSE_FILE} down
+    docker-compose ${COMPOSE_FILE} down
   fi  
 }
 

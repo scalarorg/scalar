@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  geth:
+    image: ethereum/client-go
+    container_name: geth-client
+    restart: unless-stopped
+    ports:
+      - "8545:8545"

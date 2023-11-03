@@ -27,7 +27,7 @@
 //! * specify keys for lookups in storage
 //! * do cross-module lookups while executing transactions
 
-use crate::gas_algebra::AbstractMemorySize;
+use super::gas_algebra::AbstractMemorySize;
 use anyhow::{bail, Result};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::prelude::*;

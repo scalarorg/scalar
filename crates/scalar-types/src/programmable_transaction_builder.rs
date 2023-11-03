@@ -10,14 +10,14 @@
  * Tags: SCALAR_TRANSACTION_BUILDER
  */
 
-use crate::{ident_str, identifier::Identifier, language_storage::TypeTag};
+use crate::move_types::language_storage::TypeTag;
+use crate::{ident_str, identifier::Identifier, move_package::PACKAGE_MODULE_NAME};
 use anyhow::Context;
 use indexmap::IndexMap;
 use serde::Serialize;
 
 use crate::{
     base_types::{ObjectID, ObjectRef, SuiAddress},
-    //move_package::PACKAGE_MODULE_NAME,
     transaction::{
         Argument, CallArg, Command, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction,
     },

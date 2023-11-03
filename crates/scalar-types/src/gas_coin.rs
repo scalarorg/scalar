@@ -1,9 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    ident_str,
-    identifier::IdentStr,
+use super::{ident_str, identifier::IdentStr};
+use crate::move_types::{
     language_storage::{StructTag, TypeTag},
     value::MoveStructLayout,
 };

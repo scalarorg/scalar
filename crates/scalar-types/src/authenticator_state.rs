@@ -8,12 +8,13 @@
  * Tags: SCALAR_AUTHENTICATOR
  */
 
-use crate::{account_address::AccountAddress, ident_str, identifier::IdentStr};
+use crate::ident_str;
+use crate::move_types::{account_address::AccountAddress, identifier::IdentStr};
 use fastcrypto_zkp::bn254::zk_login::{JwkId, JWK};
 use serde::{Deserialize, Serialize};
 
 use crate::base_types::SequenceNumber;
-use crate::dynamic_field::get_dynamic_field_from_store;
+// use crate::dynamic_field::get_dynamic_field_from_store;
 use crate::error::{SuiError, SuiResult};
 use crate::object::Owner;
 use crate::storage::ObjectStore;
@@ -112,35 +113,41 @@ impl std::cmp::Ord for ActiveJwk {
     }
 }
 
-pub fn get_authenticator_state(
-    object_store: &dyn ObjectStore,
-) -> SuiResult<Option<AuthenticatorStateInner>> {
-    let outer = object_store.get_object(&SUI_AUTHENTICATOR_STATE_OBJECT_ID)?;
-    let Some(outer) = outer else {
-        return Ok(None);
-    };
-    let move_object = outer.data.try_as_move().ok_or_else(|| {
-        SuiError::SuiSystemStateReadError(
-            "AuthenticatorState object must be a Move object".to_owned(),
-        )
-    })?;
-    let outer = bcs::from_bytes::<AuthenticatorState>(move_object.contents())
-        .map_err(|err| SuiError::SuiSystemStateReadError(err.to_string()))?;
+/*
+ * 2023-11-03 TaiVV
+ * lay du lieu tu store va desirialize thanh object AuthenticatorStateInner
+ * Tags: SCALAR_AUTHENTICATOR, SCALAR_AUTHENTICATOR_STATE
+ */
 
-    // No other versions exist yet.
-    assert_eq!(outer.version, AUTHENTICATOR_STATE_VERSION);
+// pub fn get_authenticator_state(
+//     object_store: &dyn ObjectStore,
+// ) -> SuiResult<Option<AuthenticatorStateInner>> {
+//     let outer = object_store.get_object(&SUI_AUTHENTICATOR_STATE_OBJECT_ID)?;
+//     let Some(outer) = outer else {
+//         return Ok(None);
+//     };
+//     let move_object = outer.data.try_as_move().ok_or_else(|| {
+//         SuiError::SuiSystemStateReadError(
+//             "AuthenticatorState object must be a Move object".to_owned(),
+//         )
+//     })?;
+//     let outer = bcs::from_bytes::<AuthenticatorState>(move_object.contents())
+//         .map_err(|err| SuiError::SuiSystemStateReadError(err.to_string()))?;
 
-    let id = outer.id.id.bytes;
-    let inner: AuthenticatorStateInner =
-        get_dynamic_field_from_store(object_store, id, &outer.version).map_err(|err| {
-            SuiError::DynamicFieldReadError(format!(
-                "Failed to load sui system state inner object with ID {:?} and version {:?}: {:?}",
-                id, outer.version, err
-            ))
-        })?;
+//     // No other versions exist yet.
+//     assert_eq!(outer.version, AUTHENTICATOR_STATE_VERSION);
 
-    Ok(Some(inner))
-}
+//     let id = outer.id.id.bytes;
+//     let inner: AuthenticatorStateInner =
+//         get_dynamic_field_from_store(object_store, id, &outer.version).map_err(|err| {
+//             SuiError::DynamicFieldReadError(format!(
+//                 "Failed to load sui system state inner object with ID {:?} and version {:?}: {:?}",
+//                 id, outer.version, err
+//             ))
+//         })?;
+
+//     Ok(Some(inner))
+// }
 
 pub fn get_authenticator_state_obj_initial_shared_version(
     object_store: &dyn ObjectStore,

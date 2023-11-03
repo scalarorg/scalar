@@ -2,11 +2,17 @@
 // Copyright (c) The Move Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
+/*
+ * 2023-11-03
+ * TaiVV copy and modify from external-crates/move/move-core/types/language_storage.rs
+ * Tags: SCALAR_MOVE_LANGUAGE, SCALAR_LANGUAGE_STORAGE
+ */
+
+use super::{
     account_address::AccountAddress,
     gas_algebra::{AbstractMemorySize, BOX_ABSTRACT_SIZE, ENUM_BASE_ABSTRACT_SIZE},
     identifier::{IdentStr, Identifier},
-    parser::{parse_struct_tag, parse_type_tag},
+    //parser::{parse_struct_tag, parse_type_tag},
 };
 // use move_proc_macros::test_variant_order;
 use once_cell::sync::Lazy;
@@ -106,14 +112,17 @@ impl TypeTag {
             }
     }
 }
+/*
+ * 2023-11-03
+ * TaiVV for compilability
+ */
+// impl FromStr for TypeTag {
+//     type Err = anyhow::Error;
 
-impl FromStr for TypeTag {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        parse_type_tag(s)
-    }
-}
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         parse_type_tag(s)
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Hash, Eq, Clone, PartialOrd, Ord)]
 pub struct StructTag {
@@ -198,13 +207,18 @@ impl StructTag {
     }
 }
 
-impl FromStr for StructTag {
-    type Err = anyhow::Error;
+/*
+ * 2023-11-03
+ * TaiVV for compilability
+ */
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        parse_struct_tag(s)
-    }
-}
+// impl FromStr for StructTag {
+//     type Err = anyhow::Error;
+
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         parse_struct_tag(s)
+//     }
+// }
 
 /// Represents the initial key into global storage where we first index by the address, and then
 /// the struct tag
@@ -331,10 +345,8 @@ impl From<StructTag> for TypeTag {
 
 #[cfg(test)]
 mod tests {
-    use super::TypeTag;
-    use crate::{
-        account_address::AccountAddress, identifier::Identifier, language_storage::StructTag,
-    };
+    use super::{StructTag, TypeTag};
+    use crate::move_types::{account_address::AccountAddress, identifier::Identifier};
     use std::mem;
 
     #[test]

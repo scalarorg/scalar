@@ -1,12 +1,20 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-03 TaiVV
+ * copy and modify from sui-types/src/gas_model/tables.rs
+ * Xu ly viec estimate va tinh toan gas fee cho tung transaction.
+ * Phai luu thong tin chi tiet cua move_vm hoac cac xu ly logic khac
+ * Tags: SCALAR_GAS,
+ */
+
 use std::collections::BTreeMap;
 
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 
+use crate::move_types::language_storage::ModuleId;
 use move_core_types::gas_algebra::{AbstractMemorySize, InternalGas, NumArgs, NumBytes};
-use move_core_types::language_storage::ModuleId;
 
 use move_core_types::vm_status::StatusCode;
 #[cfg(debug_assertions)]

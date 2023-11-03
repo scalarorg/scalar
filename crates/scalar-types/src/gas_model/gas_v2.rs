@@ -10,12 +10,12 @@ mod checked {
     use crate::gas::{self, GasCostSummary, SuiGasStatusAPI};
     use crate::gas_model::gas_predicates::{cost_table_for_version, txn_base_cost_as_multiplier};
     use crate::gas_model::units_types::CostTable;
+    use crate::move_types::vm_status::StatusCode;
     use crate::{
         error::{ExecutionError, ExecutionErrorKind},
         gas_model::tables::{GasStatus, ZERO_COST_SCHEDULE},
         object::{Object, Owner},
     };
-    use move_core_types::vm_status::StatusCode;
     use sui_protocol_config::*;
 
     /// A bucket defines a range of units that will be priced the same.

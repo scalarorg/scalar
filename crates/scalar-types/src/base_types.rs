@@ -10,7 +10,6 @@
  * Tags: SCALAR_TYPES
  */
 
-use crate::account_address::AccountAddress;
 use crate::coin::Coin;
 use crate::coin::CoinMetadata;
 use crate::coin::COIN_MODULE_NAME;
@@ -35,8 +34,9 @@ use crate::governance::STAKED_SUI_STRUCT_NAME;
 use crate::governance::STAKING_POOL_MODULE_NAME;
 use crate::ident_str;
 use crate::identifier::IdentStr;
-use crate::language_storage::{ModuleId, StructTag, TypeTag};
 use crate::messages_checkpoint::CheckpointTimestamp;
+use crate::move_types::account_address::AccountAddress;
+use crate::move_types::language_storage::{ModuleId, StructTag, TypeTag};
 use crate::multisig::MultiSigPublicKey;
 use crate::object::{Object, Owner};
 //use crate::parse_sui_struct_tag;

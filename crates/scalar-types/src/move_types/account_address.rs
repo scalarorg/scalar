@@ -2,12 +2,18 @@
 // Copyright (c) The Move Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-03
+ * TaiVV copy and modify from external-crates/move/move-core/types/account_address.rs
+ * Tags: SCALAR_MOVE_LANGUAGE, SCALAR_ADDRESS
+ */
+
 use hex::FromHex;
 use rand::{rngs::OsRng, Rng};
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use std::{convert::TryFrom, fmt, str::FromStr};
 
-use crate::gas_algebra::AbstractMemorySize;
+use super::gas_algebra::AbstractMemorySize;
 
 /// A struct that represents an account address.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Copy)]
@@ -305,7 +311,7 @@ impl std::error::Error for AccountAddressParseError {}
 #[cfg(test)]
 mod tests {
     use super::AccountAddress;
-    use crate::gas_algebra::AbstractMemorySize;
+    use crate::move_types::gas_algebra::AbstractMemorySize;
     use hex::FromHex;
     use proptest::prelude::*;
     use std::{
