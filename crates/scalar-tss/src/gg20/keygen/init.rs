@@ -9,14 +9,15 @@ use futures_util::StreamExt;
 use tracing::Span;
 
 // error handling
+use crate::types::KeyReservation;
 use anyhow::anyhow;
-use types::KeyReservation;
+
+use crate::types::{message_in, KeygenInit, MessageIn};
 
 use super::{
     types::{KeygenInitSanitized, MAX_PARTY_SHARE_COUNT, MAX_TOTAL_SHARE_COUNT},
     Gg20Service,
 };
-use crate::narwhal_types;
 
 impl Gg20Service {
     /// Receives a message from the stream and tries to handle keygen init operations.
@@ -24,7 +25,7 @@ impl Gg20Service {
     /// On failure, returns a [KeygenInitError] and no changes are been made in the KvStore.
     pub(super) async fn handle_keygen_init(
         &self,
-        stream: &mut tonic::Streaming<narwhal_types::MessageIn>,
+        stream: &mut tonic::Streaming<MessageIn>,
         keygen_span: Span,
     ) -> anyhow::Result<(KeygenInitSanitized, KeyReservation)> {
         // try to receive message
@@ -41,12 +42,12 @@ impl Gg20Service {
 
         // check if message is of expected type
         let keygen_init = match msg_data {
-            narwhal_types::message_in::Data::KeygenInit(k) => k,
+            message_in::Data::KeygenInit(k) => k,
             _ => {
                 return Err(anyhow!(
-                    "wrong message type; expecting KeygenInit, got {:?}",
-                    msg_data
-                ))
+                    "wrong message type; expecting KeygenInit, got",
+                    // msg_data
+                ));
             }
         };
 
@@ -64,7 +65,7 @@ impl Gg20Service {
     // needed for the execution of the protocol
     pub(super) async fn process_keygen_init(
         &self,
-        keygen_init: narwhal_types::KeygenInit,
+        keygen_init: KeygenInit,
     ) -> anyhow::Result<(KeygenInitSanitized, KeyReservation)> {
         // try to sanitize arguments
         let keygen_init: KeygenInitSanitized = Self::keygen_sanitize_args(keygen_init)
@@ -93,9 +94,7 @@ impl Gg20Service {
     ///   keygen_init.party_share_counts = [3, 2, 1] . <- sorted with respect to party_uids
     ///   keygen_init.my_party_index = 0 .             <- index inside sorted array
     ///   keygen_init.threshold = 1                    <- same as in input
-    pub(crate) fn keygen_sanitize_args(
-        args: narwhal_types::KeygenInit,
-    ) -> anyhow::Result<KeygenInitSanitized> {
+    pub(crate) fn keygen_sanitize_args(args: KeygenInit) -> anyhow::Result<KeygenInitSanitized> {
         // convert `u32`s to `usize`s
         let my_index = usize::try_from(args.my_party_index)?;
         let threshold = usize::try_from(args.threshold)?;
@@ -241,7 +240,7 @@ mod tests {
     #[test]
     fn test_ok_keygen_sanitize_args() {
         // check sorting of parties and shares
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_2".to_owned(), "party_1".to_owned()], // unsorted parties
             party_share_counts: vec![2, 1],                               // unsorted shares
@@ -266,7 +265,7 @@ mod tests {
         assert_eq!(&res.threshold, &sanitized_keygen_init.threshold);
 
         // check empty share counts
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned(), "party_2".to_owned()],
             party_share_counts: vec![], // empty share counts; should default to [1, 1]
@@ -276,7 +275,7 @@ mod tests {
         let res = Gg20Service::keygen_sanitize_args(raw_keygen_init).unwrap();
         assert_eq!(&res.party_share_counts, &vec![1, 1]);
 
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned()],
             party_share_counts: vec![MAX_PARTY_SHARE_COUNT as u32], // should be ok
@@ -286,7 +285,7 @@ mod tests {
         let res = Gg20Service::keygen_sanitize_args(raw_keygen_init).unwrap();
         assert_eq!(&res.party_share_counts, &vec![MAX_PARTY_SHARE_COUNT]);
 
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned(), "party_2".to_owned()],
             party_share_counts: vec![MAX_TOTAL_SHARE_COUNT as u32 - 1, 1], // should be ok
@@ -299,7 +298,7 @@ mod tests {
 
     #[test]
     fn test_fail_keygen_sanitize_args() {
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned(), "party_2".to_owned()],
             party_share_counts: vec![1, 1, 1], // counts are not the same number as parties
@@ -308,7 +307,7 @@ mod tests {
         };
         assert!(Gg20Service::keygen_sanitize_args(raw_keygen_init).is_err());
 
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned(), "party_2".to_owned()],
             party_share_counts: vec![1, 1],
@@ -317,7 +316,7 @@ mod tests {
         };
         assert!(Gg20Service::keygen_sanitize_args(raw_keygen_init).is_err());
 
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned(), "party_2".to_owned()],
             party_share_counts: vec![1, 1],
@@ -326,7 +325,7 @@ mod tests {
         };
         assert!(Gg20Service::keygen_sanitize_args(raw_keygen_init).is_err());
 
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned()],
             party_share_counts: vec![(MAX_PARTY_SHARE_COUNT + 1) as u32], // party has more than max number of shares
@@ -335,7 +334,7 @@ mod tests {
         };
         assert!(Gg20Service::keygen_sanitize_args(raw_keygen_init).is_err());
 
-        let raw_keygen_init = narwhal_types::KeygenInit {
+        let raw_keygen_init = KeygenInit {
             new_key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_1".to_owned(), "party_2".to_owned()],
             party_share_counts: vec![MAX_TOTAL_SHARE_COUNT as u32, 1], // total share count is more than max total shares

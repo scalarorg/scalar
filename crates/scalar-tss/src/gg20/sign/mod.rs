@@ -14,7 +14,7 @@
 //!
 //! All relevant helper structs and types are defined in [self::types]
 
-use crate::tss::narwhal_types;
+use crate::types::{MessageIn, MessageOut};
 
 use super::{broadcast::broadcast_messages, service::Gg20Service, ProtocolCommunication};
 
@@ -39,8 +39,8 @@ impl Gg20Service {
     // conveniently when spawning theads.
     pub async fn handle_sign(
         &self,
-        mut stream_in: tonic::Streaming<narwhal_types::MessageIn>,
-        mut stream_out_sender: mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        mut stream_in: tonic::Streaming<MessageIn>,
+        mut stream_out_sender: mpsc::UnboundedSender<Result<MessageOut, Status>>,
         sign_span: Span,
     ) -> anyhow::Result<()> {
         // 1. Receive SignInit, open message, sanitize arguments -> init mod

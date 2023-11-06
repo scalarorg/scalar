@@ -1,17 +1,16 @@
 use super::{create_tofnd_client, send};
-use crate::config::{Authority, Committee};
 use crate::types::{
     message_in,
     message_out::{self, SignResult},
     tss_peer_client::TssPeerClient,
-    MessageIn, MessageOut, SignInit, TrafficIn, TssAnemoDeliveryMessage, TssAnemoKeygenRequest,
-    TssAnemoSignRequest,
+    MessageIn, MessageOut, SignInit, TrafficIn, TssAnemoDeliveryMessage, TssAnemoSignRequest,
 };
 use anemo::Network;
 use anemo::PeerId;
 use anyhow::anyhow;
 use crypto::NetworkPublicKey;
 use futures::future::join_all;
+use narwhal_config::{Authority, Committee};
 use tokio::sync::mpsc::{error::SendError, UnboundedReceiver, UnboundedSender};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tonic::Status;
@@ -362,7 +361,7 @@ impl TssSigner {
             }
         }
     }
-    pub async fn handle_sign_result(&self, sign_init: &SignInit, sign_result: &SignResult) {
+    pub async fn handle_sign_result(&self, _sign_init: &SignInit, _sign_result: &SignResult) {
         // info!("Sign result {:?}, {:?}", sign_init, sign_result);
         info!("Sign result");
     }

@@ -3,12 +3,13 @@
 //! If [narwhal_types::SignInit] fails to be parsed, or no Keygen has been executed for the current session ID, an [anyhow!] error is returned
 
 // try_into() for MessageDigest
-use std::{array::TryFromSliceError, convert::TryInto};
+use std::array::TryFromSliceError;
 
 use super::{types::SignInitSanitized, Gg20Service};
-use crate::tss::{
+use crate::types::{message_in, MessageIn, MessageOut, SignInit};
+use crate::{
     gg20::types::{MessageDigest, PartyInfo},
-    {narwhal_types, TofndResult},
+    TofndResult,
 };
 
 // tonic cruft
@@ -28,8 +29,8 @@ impl Gg20Service {
     /// On failure, returns an [anyhow!] error and no changes are been made in the KvStore.
     pub(super) async fn handle_sign_init(
         &self,
-        in_stream: &mut tonic::Streaming<narwhal_types::MessageIn>,
-        out_stream: &mut mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        in_stream: &mut tonic::Streaming<MessageIn>,
+        out_stream: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
         sign_span: Span,
     ) -> TofndResult<(SignInitSanitized, PartyInfo)> {
         let msg_type = in_stream
@@ -39,7 +40,7 @@ impl Gg20Service {
             .data
             .ok_or_else(|| anyhow!("sign: missing `data` field in client message"))?;
         let sign_init = match msg_type {
-            narwhal_types::message_in::Data::SignInit(k) => k,
+            message_in::Data::SignInit(k) => k,
             _ => return Err(anyhow!("Expected sign init message")),
         };
         debug!("Hanle sign init key uid {:?}", &sign_init.key_uid);
@@ -73,9 +74,9 @@ impl Gg20Service {
 
     /// send "need recover" message to client
     fn send_kv_store_failure(
-        out_stream: &mut mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        out_stream: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
     ) -> TofndResult<()> {
-        Ok(out_stream.send(Ok(narwhal_types::MessageOut::need_recover()))?)
+        Ok(out_stream.send(Ok(MessageOut::need_recover()))?)
     }
 
     /// sanitize arguments of incoming message.
@@ -87,7 +88,7 @@ impl Gg20Service {
     /// output for party 'a':
     ///   SignInitSanitized.party_uids = [2, 0]  <- index of c, a in party_uids
     fn sign_sanitize_args(
-        sign_init: narwhal_types::SignInit,
+        sign_init: SignInit,
         all_party_uids: &[String],
     ) -> TofndResult<SignInitSanitized> {
         // create a vector of the tofnd indices of the participant uids
@@ -130,7 +131,7 @@ mod tests {
             "party_2".to_owned(), // party 2 has index 2
         ];
 
-        let raw_sign_init = narwhal_types::SignInit {
+        let raw_sign_init = SignInit {
             new_sig_uid: "test_uid".to_owned(),
             key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_2".to_owned(), "party_1".to_owned()],
@@ -160,7 +161,7 @@ mod tests {
             "party_1".to_owned(),
             "party_2".to_owned(),
         ];
-        let raw_sign_init = narwhal_types::SignInit {
+        let raw_sign_init = SignInit {
             new_sig_uid: "test_uid".to_owned(),
             key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_4".to_owned(), "party_1".to_owned()], // party 4 does not exist
@@ -168,7 +169,7 @@ mod tests {
         };
         assert!(Gg20Service::sign_sanitize_args(raw_sign_init, &all_party_uids).is_err());
 
-        let raw_sign_init = narwhal_types::SignInit {
+        let raw_sign_init = SignInit {
             new_sig_uid: "test_uid".to_owned(),
             key_uid: "test_uid".to_owned(),
             party_uids: vec!["party_2".to_owned(), "party_1".to_owned()],

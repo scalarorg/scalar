@@ -14,7 +14,7 @@
 //!
 //! All relevant helper structs and types are defined in [self::types]
 
-use crate::narwhal_types;
+// use crate::narwhal_types;
 
 use super::{
     broadcast::broadcast_messages, broadcast::broadcast_messages_channel, service::Gg20Service,
@@ -37,8 +37,8 @@ use tokio::sync::{mpsc, oneshot};
 use tracing::{info, span, Level, Span};
 
 // error handling
+use crate::types::{KeygenInit, MessageIn, MessageOut};
 use anyhow::anyhow;
-use types::{KeygenInit, MessageIn, MessageOut};
 mod execute;
 pub mod types;
 pub use self::types::*;
@@ -49,7 +49,7 @@ impl Gg20Service {
         &self,
         keygen_init: KeygenInit,
         mut rx_message_in: mpsc::UnboundedReceiver<MessageIn>,
-        mut tx_message_out: mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        mut tx_message_out: mpsc::UnboundedSender<Result<MessageOut, Status>>,
     ) -> anyhow::Result<()> {
         let keygen_span = span!(Level::INFO, "Keygen");
         // 1. Receive KeygenInit, open message, sanitize arguments -> init mod
@@ -155,8 +155,8 @@ impl Gg20Service {
     /// handle keygen gRPC
     pub async fn handle_keygen(
         &self,
-        mut stream_in: tonic::Streaming<narwhal_types::MessageIn>,
-        mut stream_out_sender: mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        mut stream_in: tonic::Streaming<MessageIn>,
+        mut stream_out_sender: mpsc::UnboundedSender<Result<MessageOut, Status>>,
         keygen_span: Span,
     ) -> anyhow::Result<()> {
         // 1. Receive KeygenInit, open message, sanitize arguments -> init mod

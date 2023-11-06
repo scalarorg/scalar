@@ -1,7 +1,8 @@
 //! This module handles the aggregation and process of sign results.
 //! When all sign threads finish, we aggregate their results and retrieve the signature of the message. The signature must be the same across all results.
 
-use crate::tss::{narwhal_types, TofndResult};
+use crate::types::MessageOut;
+use crate::TofndResult;
 
 use super::{types::TofnSignOutput, Gg20Service};
 
@@ -19,7 +20,7 @@ impl Gg20Service {
     /// if a share does not return a valid output, return an [anyhow!]
     pub(super) async fn handle_results(
         aggregator_receivers: Vec<oneshot::Receiver<TofndResult<TofnSignOutput>>>,
-        stream_out_sender: &mut mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        stream_out_sender: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
         participant_uids: &[String],
     ) -> TofndResult<()> {
         // create vec to store all sign outputs
@@ -51,7 +52,7 @@ impl Gg20Service {
         }
 
         // send signature to client
-        stream_out_sender.send(Ok(narwhal_types::MessageOut::new_sign_result(
+        stream_out_sender.send(Ok(MessageOut::new_sign_result(
             participant_uids,
             sign_outputs[0].clone(),
         )))?;

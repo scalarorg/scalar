@@ -2,16 +2,18 @@ use crate::types::gg20_server::Gg20;
 use crate::types::{
     // },
     message_in,
-    KeygenRequest,
+    KeyPresenceRequest,
+    KeyPresenceResponse,
     // gg20::{
     // KeyPresenceRequest, KeyPresenceResponse, KeygenRequest,
-    KeygenResponse,
     MessageIn,
     RecoverRequest,
     RecoverResponse,
-    SignRequest,
-    SignResponse,
     TrafficIn,
+    TssAnemoKeygenRequest,
+    TssAnemoKeygenResponse,
+    TssAnemoSignRequest,
+    TssAnemoSignResponse,
 };
 use anemo::{rpc::Status, Response};
 use tokio::sync::mpsc::UnboundedSender;
@@ -36,10 +38,10 @@ impl Gg20AnemoService {
 impl Gg20 for Gg20AnemoService {
     async fn keygen(
         &self,
-        request: anemo::Request<KeygenRequest>,
-    ) -> Result<Response<KeygenResponse>, Status> {
+        request: anemo::Request<TssAnemoKeygenRequest>,
+    ) -> Result<Response<TssAnemoKeygenResponse>, Status> {
         info!("Received keygen request");
-        let KeygenRequest { message } = request.into_body();
+        let TssAnemoKeygenRequest { message } = request.into_body();
         let msg_in = MessageIn {
             data: Some(message_in::Data::Traffic(TrafficIn {
                 from_party_uid: message.from_party_uid.clone(),
@@ -52,30 +54,32 @@ impl Gg20 for Gg20AnemoService {
             warn!("gRpc TssSend error {:?}", e);
         }
 
-        let reply = KeygenResponse {
+        let reply = TssAnemoKeygenResponse {
             message: format!("Process keygen message from {}!", message.from_party_uid),
         };
         Ok(Response::new(reply))
     }
     async fn sign(
         &self,
-        request: anemo::Request<SignRequest>,
-    ) -> Result<Response<SignResponse>, Status> {
-        let response = SignResponse {};
+        request: anemo::Request<TssAnemoSignRequest>,
+    ) -> Result<Response<TssAnemoSignResponse>, Status> {
+        let response = TssAnemoSignResponse {
+            message: "Process sign message!".into(),
+        };
         Ok(Response::new(response))
     }
     async fn recover(
         &self,
         request: anemo::Request<RecoverRequest>,
     ) -> Result<Response<RecoverResponse>, Status> {
-        let response = RecoverResponse {};
+        let response = RecoverResponse { response: 1 };
         Ok(Response::new(response))
     }
-    // async fn keypresence(
-    //     &self,
-    //     request: anemo::Request<KeyPresenceRequest>,
-    // ) -> Result<Response<KeyPresenceResponse>, Status> {
-    //     let response = KeyPresenceResponse {};
-    //     Ok(Response::new(response))
-    // }
+    async fn key_presence(
+        &self,
+        request: anemo::Request<KeyPresenceRequest>,
+    ) -> Result<Response<KeyPresenceResponse>, Status> {
+        let response = KeyPresenceResponse { response: 1 };
+        Ok(Response::new(response))
+    }
 }
