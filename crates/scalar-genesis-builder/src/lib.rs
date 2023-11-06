@@ -165,37 +165,37 @@ impl Builder {
      * 23-11-06 TaiVV
      * Comment out
      */
-    // pub fn build_unsigned_genesis_checkpoint(&mut self) -> UnsignedGenesis {
-    //     if let Some(built_genesis) = &self.built_genesis {
-    //         return built_genesis.clone();
-    //     }
+    pub fn build_unsigned_genesis_checkpoint(&mut self) -> UnsignedGenesis {
+        if let Some(built_genesis) = &self.built_genesis {
+            return built_genesis.clone();
+        }
 
-    //     // Verify that all input data is valid
-    //     self.validate().unwrap();
+        // Verify that all input data is valid
+        self.validate().unwrap();
 
-    //     let objects = self.objects.clone().into_values().collect::<Vec<_>>();
-    //     let validators = self.validators.clone().into_values().collect::<Vec<_>>();
+        let objects = self.objects.clone().into_values().collect::<Vec<_>>();
+        let validators = self.validators.clone().into_values().collect::<Vec<_>>();
 
-    //     let token_distribution_schedule =
-    //         if let Some(token_distribution_schedule) = &self.token_distribution_schedule {
-    //             token_distribution_schedule.clone()
-    //         } else {
-    //             TokenDistributionSchedule::new_for_validators_with_default_allocation(
-    //                 validators.iter().map(|v| v.info.sui_address()),
-    //             )
-    //         };
+        let token_distribution_schedule =
+            if let Some(token_distribution_schedule) = &self.token_distribution_schedule {
+                token_distribution_schedule.clone()
+            } else {
+                TokenDistributionSchedule::new_for_validators_with_default_allocation(
+                    validators.iter().map(|v| v.info.sui_address()),
+                )
+            };
 
-    //     self.built_genesis = Some(build_unsigned_genesis_data(
-    //         &self.parameters,
-    //         &token_distribution_schedule,
-    //         &validators,
-    //         &objects,
-    //     ));
+        self.built_genesis = Some(build_unsigned_genesis_data(
+            &self.parameters,
+            &token_distribution_schedule,
+            &validators,
+            &objects,
+        ));
 
-    //     self.token_distribution_schedule = Some(token_distribution_schedule);
+        self.token_distribution_schedule = Some(token_distribution_schedule);
 
-    //     self.built_genesis.clone().unwrap()
-    // }
+        self.built_genesis.clone().unwrap()
+    }
 
     fn committee(objects: &[Object]) -> Committee {
         let sui_system_object =
@@ -211,38 +211,38 @@ impl Builder {
      * Comment out
      */
 
-    // pub fn build(mut self) -> Genesis {
-    //     let UnsignedGenesis {
-    //         checkpoint,
-    //         checkpoint_contents,
-    //         transaction,
-    //         effects,
-    //         events,
-    //         objects,
-    //     } = self.build_unsigned_genesis_checkpoint();
+    pub fn build(mut self) -> Genesis {
+        let UnsignedGenesis {
+            checkpoint,
+            checkpoint_contents,
+            transaction,
+            effects,
+            events,
+            objects,
+        } = self.build_unsigned_genesis_checkpoint();
 
-    //     let committee = Self::committee(&objects);
+        let committee = Self::committee(&objects);
 
-    //     let checkpoint = {
-    //         let signatures = self.signatures.clone().into_values().collect();
+        let checkpoint = {
+            let signatures = self.signatures.clone().into_values().collect();
 
-    //         CertifiedCheckpointSummary::new(checkpoint, signatures, &committee).unwrap()
-    //     };
+            CertifiedCheckpointSummary::new(checkpoint, signatures, &committee).unwrap()
+        };
 
-    //     let genesis = Genesis::new(
-    //         checkpoint,
-    //         checkpoint_contents,
-    //         transaction,
-    //         effects,
-    //         events,
-    //         objects,
-    //     );
+        let genesis = Genesis::new(
+            checkpoint,
+            checkpoint_contents,
+            transaction,
+            effects,
+            events,
+            objects,
+        );
 
-    //     // Verify that all on-chain state was properly created
-    //     self.validate().unwrap();
+        // Verify that all on-chain state was properly created
+        self.validate().unwrap();
 
-    //     genesis
-    // }
+        genesis
+    }
 
     /// Validates the entire state of the build, no matter what the internal state is (input
     /// collection phase or output phase)
@@ -668,34 +668,34 @@ impl Builder {
  * Move Sui (Move package) ra component doc lap (xu ly sau)
  * Tags: SCALAR_MOVE, SCALAR_PACKAGE
  */
-// // Create a Genesis Txn Context to be used when generating genesis objects by hashing all of the
-// // inputs into genesis ans using that as our "Txn Digest". This is done to ensure that coin objects
-// // created between chains are unique
-// fn create_genesis_context(
-//     epoch_data: &EpochData,
-//     genesis_chain_parameters: &GenesisChainParameters,
-//     genesis_validators: &[GenesisValidatorMetadata],
-//     token_distribution_schedule: &TokenDistributionSchedule,
-//     system_packages: &[SystemPackage],
-// ) -> TxContext {
-//     let mut hasher = DefaultHash::default();
-//     hasher.update(b"sui-genesis");
-//     hasher.update(&bcs::to_bytes(genesis_chain_parameters).unwrap());
-//     hasher.update(&bcs::to_bytes(genesis_validators).unwrap());
-//     hasher.update(&bcs::to_bytes(token_distribution_schedule).unwrap());
-//     for system_package in system_packages {
-//         hasher.update(&bcs::to_bytes(system_package.bytes()).unwrap());
-//     }
+// Create a Genesis Txn Context to be used when generating genesis objects by hashing all of the
+// inputs into genesis ans using that as our "Txn Digest". This is done to ensure that coin objects
+// created between chains are unique
+fn create_genesis_context(
+    epoch_data: &EpochData,
+    genesis_chain_parameters: &GenesisChainParameters,
+    genesis_validators: &[GenesisValidatorMetadata],
+    token_distribution_schedule: &TokenDistributionSchedule,
+    //system_packages: &[SystemPackage],
+) -> TxContext {
+    let mut hasher = DefaultHash::default();
+    hasher.update(b"sui-genesis");
+    hasher.update(&bcs::to_bytes(genesis_chain_parameters).unwrap());
+    hasher.update(&bcs::to_bytes(genesis_validators).unwrap());
+    hasher.update(&bcs::to_bytes(token_distribution_schedule).unwrap());
+    // for system_package in system_packages {
+    //     hasher.update(&bcs::to_bytes(system_package.bytes()).unwrap());
+    // }
 
-//     let hash = hasher.finalize();
-//     let genesis_transaction_digest = TransactionDigest::new(hash.into());
+    let hash = hasher.finalize();
+    let genesis_transaction_digest = TransactionDigest::new(hash.into());
 
-//     TxContext::new(
-//         &SuiAddress::default(),
-//         &genesis_transaction_digest,
-//         epoch_data,
-//     )
-// }
+    TxContext::new(
+        &SuiAddress::default(),
+        &genesis_transaction_digest,
+        epoch_data,
+    )
+}
 
 fn get_genesis_protocol_config(version: ProtocolVersion) -> ProtocolConfig {
     // We have a circular dependency here. Protocol config depends on chain ID, which
@@ -709,75 +709,75 @@ fn get_genesis_protocol_config(version: ProtocolVersion) -> ProtocolConfig {
  * 23-11-06 TaiVV
  * Move Move package ra component rieng
  */
-// fn build_unsigned_genesis_data(
-//     parameters: &GenesisCeremonyParameters,
-//     token_distribution_schedule: &TokenDistributionSchedule,
-//     validators: &[GenesisValidatorInfo],
-//     objects: &[Object],
-// ) -> UnsignedGenesis {
-//     if !parameters.allow_insertion_of_extra_objects && !objects.is_empty() {
-//         panic!("insertion of extra objects at genesis time is prohibited due to 'allow_insertion_of_extra_objects' parameter");
-//     }
+fn build_unsigned_genesis_data(
+    parameters: &GenesisCeremonyParameters,
+    token_distribution_schedule: &TokenDistributionSchedule,
+    validators: &[GenesisValidatorInfo],
+    objects: &[Object],
+) -> UnsignedGenesis {
+    if !parameters.allow_insertion_of_extra_objects && !objects.is_empty() {
+        panic!("insertion of extra objects at genesis time is prohibited due to 'allow_insertion_of_extra_objects' parameter");
+    }
 
-//     let genesis_chain_parameters = parameters.to_genesis_chain_parameters();
-//     let genesis_validators = validators
-//         .iter()
-//         .cloned()
-//         .map(GenesisValidatorMetadata::from)
-//         .collect::<Vec<_>>();
+    let genesis_chain_parameters = parameters.to_genesis_chain_parameters();
+    let genesis_validators = validators
+        .iter()
+        .cloned()
+        .map(GenesisValidatorMetadata::from)
+        .collect::<Vec<_>>();
 
-//     token_distribution_schedule.validate();
-//     token_distribution_schedule.check_all_stake_operations_are_for_valid_validators(
-//         genesis_validators.iter().map(|v| v.sui_address),
-//     );
+    token_distribution_schedule.validate();
+    token_distribution_schedule.check_all_stake_operations_are_for_valid_validators(
+        genesis_validators.iter().map(|v| v.sui_address),
+    );
 
-//     let epoch_data = EpochData::new_genesis(genesis_chain_parameters.chain_start_timestamp_ms);
+    let epoch_data = EpochData::new_genesis(genesis_chain_parameters.chain_start_timestamp_ms);
 
-//     // Get the correct system packages for our protocol version. If we cannot find the snapshot
-//     // that means that we must be at the latest version and we should use the latest version of the
-//     // framework.
-//     let system_packages =
-//         sui_framework_snapshot::load_bytecode_snapshot(parameters.protocol_version.as_u64())
-//             .unwrap_or_else(|_| BuiltInFramework::iter_system_packages().cloned().collect());
+    // Get the correct system packages for our protocol version. If we cannot find the snapshot
+    // that means that we must be at the latest version and we should use the latest version of the
+    // framework.
+    // let system_packages =
+    //     sui_framework_snapshot::load_bytecode_snapshot(parameters.protocol_version.as_u64())
+    //         .unwrap_or_else(|_| BuiltInFramework::iter_system_packages().cloned().collect());
 
-//     let mut genesis_ctx = create_genesis_context(
-//         &epoch_data,
-//         &genesis_chain_parameters,
-//         &genesis_validators,
-//         token_distribution_schedule,
-//         &system_packages,
-//     );
+    let mut genesis_ctx = create_genesis_context(
+        &epoch_data,
+        &genesis_chain_parameters,
+        &genesis_validators,
+        token_distribution_schedule,
+        //&system_packages,
+    );
 
-//     // Use a throwaway metrics registry for genesis transaction execution.
-//     let registry = prometheus::Registry::new();
-//     let metrics = Arc::new(LimitsMetrics::new(&registry));
+    // Use a throwaway metrics registry for genesis transaction execution.
+    let registry = prometheus::Registry::new();
+    let metrics = Arc::new(LimitsMetrics::new(&registry));
 
-//     let objects = create_genesis_objects(
-//         &mut genesis_ctx,
-//         objects,
-//         &genesis_validators,
-//         &genesis_chain_parameters,
-//         token_distribution_schedule,
-//         system_packages,
-//         metrics.clone(),
-//     );
+    let objects = create_genesis_objects(
+        &mut genesis_ctx,
+        objects,
+        &genesis_validators,
+        &genesis_chain_parameters,
+        token_distribution_schedule,
+        // system_packages,
+        metrics.clone(),
+    );
 
-//     let protocol_config = get_genesis_protocol_config(parameters.protocol_version);
+    let protocol_config = get_genesis_protocol_config(parameters.protocol_version);
 
-//     let (genesis_transaction, genesis_effects, genesis_events, objects) =
-//         create_genesis_transaction(objects, &protocol_config, metrics, &epoch_data);
-//     let (checkpoint, checkpoint_contents) =
-//         create_genesis_checkpoint(parameters, &genesis_transaction, &genesis_effects);
+    let (genesis_transaction, genesis_effects, genesis_events, objects) =
+        create_genesis_transaction(objects, &protocol_config, metrics, &epoch_data);
+    let (checkpoint, checkpoint_contents) =
+        create_genesis_checkpoint(parameters, &genesis_transaction, &genesis_effects);
 
-//     UnsignedGenesis {
-//         checkpoint,
-//         checkpoint_contents,
-//         transaction: genesis_transaction,
-//         effects: genesis_effects,
-//         events: genesis_events,
-//         objects,
-//     }
-// }
+    UnsignedGenesis {
+        checkpoint,
+        checkpoint_contents,
+        transaction: genesis_transaction,
+        effects: genesis_effects,
+        events: genesis_events,
+        objects,
+    }
+}
 
 fn create_genesis_checkpoint(
     parameters: &GenesisCeremonyParameters,
@@ -891,62 +891,62 @@ fn create_genesis_transaction(
  * 23-11-06 TaiVV
  * Not include Move package
 **/
-// fn create_genesis_objects(
-//     genesis_ctx: &mut TxContext,
-//     input_objects: &[Object],
-//     validators: &[GenesisValidatorMetadata],
-//     parameters: &GenesisChainParameters,
-//     token_distribution_schedule: &TokenDistributionSchedule,
-//     system_packages: Vec<SystemPackage>,
-//     metrics: Arc<LimitsMetrics>,
-// ) -> Vec<Object> {
-//     let mut store = InMemoryStorage::new(Vec::new());
-//     // We don't know the chain ID here since we haven't yet created the genesis checkpoint.
-//     // However since we know there are no chain specific protool config options in genesis,
-//     // we use Chain::Unknown here.
-//     let protocol_config = ProtocolConfig::get_for_version(
-//         ProtocolVersion::new(parameters.protocol_version),
-//         Chain::Unknown,
-//     );
+fn create_genesis_objects(
+    genesis_ctx: &mut TxContext,
+    input_objects: &[Object],
+    validators: &[GenesisValidatorMetadata],
+    parameters: &GenesisChainParameters,
+    token_distribution_schedule: &TokenDistributionSchedule,
+    //system_packages: Vec<SystemPackage>,
+    metrics: Arc<LimitsMetrics>,
+) -> Vec<Object> {
+    let mut store = InMemoryStorage::new(Vec::new());
+    // We don't know the chain ID here since we haven't yet created the genesis checkpoint.
+    // However since we know there are no chain specific protool config options in genesis,
+    // we use Chain::Unknown here.
+    let protocol_config = ProtocolConfig::get_for_version(
+        ProtocolVersion::new(parameters.protocol_version),
+        Chain::Unknown,
+    );
 
-//     let silent = true;
-//     // paranoid checks are a last line of defense for malicious code, no need to run them in genesis
-//     let paranoid_checks = false;
-//     let executor = sui_execution::executor(&protocol_config, paranoid_checks, silent)
-//         .expect("Creating an executor should not fail here");
+    let silent = true;
+    // paranoid checks are a last line of defense for malicious code, no need to run them in genesis
+    let paranoid_checks = false;
+    let executor = scalar_execution::executor(&protocol_config, paranoid_checks, silent)
+        .expect("Creating an executor should not fail here");
 
-//     for system_package in system_packages.into_iter() {
-//         process_package(
-//             &mut store,
-//             executor.as_ref(),
-//             genesis_ctx,
-//             &system_package.modules(),
-//             system_package.dependencies().to_vec(),
-//             &protocol_config,
-//             metrics.clone(),
-//         )
-//         .unwrap();
-//     }
+    // for system_package in system_packages.into_iter() {
+    //     process_package(
+    //         &mut store,
+    //         executor.as_ref(),
+    //         genesis_ctx,
+    //         &system_package.modules(),
+    //         system_package.dependencies().to_vec(),
+    //         &protocol_config,
+    //         metrics.clone(),
+    //     )
+    //     .unwrap();
+    // }
 
-//     {
-//         for object in input_objects {
-//             store.insert_object(object.to_owned());
-//         }
-//     }
+    {
+        for object in input_objects {
+            store.insert_object(object.to_owned());
+        }
+    }
 
-//     generate_genesis_system_object(
-//         &mut store,
-//         executor.as_ref(),
-//         validators,
-//         genesis_ctx,
-//         parameters,
-//         token_distribution_schedule,
-//         metrics,
-//     )
-//     .unwrap();
+    generate_genesis_system_object(
+        &mut store,
+        executor.as_ref(),
+        validators,
+        genesis_ctx,
+        parameters,
+        token_distribution_schedule,
+        metrics,
+    )
+    .unwrap();
 
-//     store.into_inner().into_values().collect()
-// }
+    store.into_inner().into_values().collect()
+}
 
 fn process_package(
     store: &mut InMemoryStorage,
