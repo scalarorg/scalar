@@ -965,27 +965,33 @@ pub fn initial_cost_schedule_v5() -> CostTable {
     }
 }
 
-// Convert from our representation of gas costs to the type that the MoveVM expects for unit tests.
-// We don't want our gas depending on the MoveVM test utils and we don't want to fix our
-// representation to whatever is there, so instead we perform this translation from our gas units
-// and cost schedule to the one expected by the Move unit tests.
-pub fn initial_cost_schedule_for_unit_tests() -> move_vm_test_utils::gas_schedule::CostTable {
-    let table = initial_cost_schedule_v5();
-    move_vm_test_utils::gas_schedule::CostTable {
-        instruction_tiers: table
-            .instruction_tiers
-            .into_iter()
-            .map(|(k, v)| (k, v))
-            .collect(),
-        stack_height_tiers: table
-            .stack_height_tiers
-            .into_iter()
-            .map(|(k, v)| (k, v))
-            .collect(),
-        stack_size_tiers: table
-            .stack_size_tiers
-            .into_iter()
-            .map(|(k, v)| (k, v))
-            .collect(),
-    }
-}
+/*
+ * 2023-11-03 TaiVV
+ * Commentout test util belong to the move vm cost table
+ * Tags: SCALAR_GAS_TABLES,
+ */
+
+// // Convert from our representation of gas costs to the type that the MoveVM expects for unit tests.
+// // We don't want our gas depending on the MoveVM test utils and we don't want to fix our
+// // representation to whatever is there, so instead we perform this translation from our gas units
+// // and cost schedule to the one expected by the Move unit tests.
+// pub fn initial_cost_schedule_for_unit_tests() -> move_vm_test_utils::gas_schedule::CostTable {
+//     let table = initial_cost_schedule_v5();
+//     move_vm_test_utils::gas_schedule::CostTable {
+//         instruction_tiers: table
+//             .instruction_tiers
+//             .into_iter()
+//             .map(|(k, v)| (k, v))
+//             .collect(),
+//         stack_height_tiers: table
+//             .stack_height_tiers
+//             .into_iter()
+//             .map(|(k, v)| (k, v))
+//             .collect(),
+//         stack_size_tiers: table
+//             .stack_size_tiers
+//             .into_iter()
+//             .map(|(k, v)| (k, v))
+//             .collect(),
+//     }
+// }
