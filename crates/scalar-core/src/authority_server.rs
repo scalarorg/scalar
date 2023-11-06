@@ -7,25 +7,25 @@ use async_trait::async_trait;
 use mysten_metrics::histogram::Histogram as MystenHistogram;
 use mysten_metrics::spawn_monitored_task;
 use prometheus::{register_int_counter_with_registry, IntCounter, Registry};
-use std::{io, sync::Arc};
-use sui_network::{
-    api::{Validator, ValidatorServer},
-    tonic,
-};
-use sui_types::effects::TransactionEffectsAPI;
-use sui_types::effects::TransactionEvents;
-use sui_types::messages_consensus::ConsensusTransaction;
-use sui_types::messages_grpc::{
+use scalar_types::effects::TransactionEffectsAPI;
+use scalar_types::effects::TransactionEvents;
+use scalar_types::messages_consensus::ConsensusTransaction;
+use scalar_types::messages_grpc::{
     HandleCertificateResponse, HandleCertificateResponseV2, HandleTransactionResponse,
     ObjectInfoRequest, ObjectInfoResponse, SubmitCertificateResponse, SystemStateRequest,
     TransactionInfoRequest, TransactionInfoResponse,
 };
-use sui_types::multiaddr::Multiaddr;
-use sui_types::sui_system_state::SuiSystemState;
-use sui_types::{error::*, transaction::*};
-use sui_types::{
+use scalar_types::multiaddr::Multiaddr;
+use scalar_types::scalar_system_state::SuiSystemState;
+use scalar_types::{error::*, transaction::*};
+use scalar_types::{
     fp_ensure,
     messages_checkpoint::{CheckpointRequest, CheckpointResponse},
+};
+use std::{io, sync::Arc};
+use sui_network::{
+    api::{Validator, ValidatorServer},
+    tonic,
 };
 use tap::TapFallible;
 use tokio::task::JoinHandle;

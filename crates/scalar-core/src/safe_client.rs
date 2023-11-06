@@ -7,23 +7,23 @@ use crate::epoch::committee_store::CommitteeStore;
 use mysten_metrics::histogram::{Histogram, HistogramVec};
 use prometheus::core::GenericCounter;
 use prometheus::{register_int_counter_vec_with_registry, IntCounterVec, Registry};
-use std::sync::Arc;
-use sui_types::crypto::AuthorityPublicKeyBytes;
-use sui_types::effects::{SignedTransactionEffects, TransactionEffectsAPI};
-use sui_types::messages_checkpoint::{
+use scalar_types::crypto::AuthorityPublicKeyBytes;
+use scalar_types::effects::{SignedTransactionEffects, TransactionEffectsAPI};
+use scalar_types::messages_checkpoint::{
     CertifiedCheckpointSummary, CheckpointRequest, CheckpointResponse, CheckpointSequenceNumber,
 };
-use sui_types::messages_grpc::{
+use scalar_types::messages_grpc::{
     HandleCertificateResponse, HandleCertificateResponseV2, ObjectInfoRequest, ObjectInfoResponse,
     SystemStateRequest, TransactionInfoRequest, TransactionStatus, VerifiedObjectInfoResponse,
 };
-use sui_types::messages_safe_client::PlainTransactionInfoResponse;
-use sui_types::sui_system_state::SuiSystemState;
-use sui_types::{base_types::*, committee::*, fp_ensure};
-use sui_types::{
+use scalar_types::messages_safe_client::PlainTransactionInfoResponse;
+use scalar_types::sui_system_state::SuiSystemState;
+use scalar_types::{base_types::*, committee::*, fp_ensure};
+use scalar_types::{
     error::{SuiError, SuiResult},
     transaction::*,
 };
+use std::sync::Arc;
 use tap::TapFallible;
 use tracing::{debug, error};
 

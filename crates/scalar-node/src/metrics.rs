@@ -20,7 +20,7 @@ pub struct MetricsPushClient {
 }
 
 impl MetricsPushClient {
-    pub fn new(network_key: sui_types::crypto::NetworkKeyPair) -> Self {
+    pub fn new(network_key: scalar_types::crypto::NetworkKeyPair) -> Self {
         use fastcrypto::traits::KeyPair;
         let certificate = std::sync::Arc::new(sui_tls::SelfSignedCertificate::new(
             network_key.private(),
@@ -49,9 +49,9 @@ impl MetricsPushClient {
 
 /// Starts a task to periodically push metrics to a configured endpoint if a metrics push endpoint
 /// is configured.
-pub fn start_metrics_push_task(config: &sui_config::NodeConfig, registry: RegistryService) {
+pub fn start_metrics_push_task(config: &scalar_config::NodeConfig, registry: RegistryService) {
     use fastcrypto::traits::KeyPair;
-    use sui_config::node::MetricsConfig;
+    use scalar_config::node::MetricsConfig;
 
     const DEFAULT_METRICS_PUSH_INTERVAL: Duration = Duration::from_secs(60);
 

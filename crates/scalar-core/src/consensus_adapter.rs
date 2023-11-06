@@ -26,6 +26,9 @@ use prometheus::{
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use scalar_types::base_types::TransactionDigest;
+use scalar_types::committee::Committee;
+use scalar_types::error::{SuiError, SuiResult};
 use std::collections::{HashMap, VecDeque};
 use std::future::Future;
 use std::ops::Deref;
@@ -33,9 +36,6 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Instant;
-use sui_types::base_types::TransactionDigest;
-use sui_types::committee::Committee;
-use sui_types::error::{SuiError, SuiResult};
 
 use tap::prelude::*;
 use tokio::sync::{Semaphore, SemaphorePermit};
@@ -47,12 +47,12 @@ use crate::consensus_handler::{classify, SequencedConsensusTransactionKey};
 use crate::consensus_throughput_calculator::ConsensusThroughputProfiler;
 use crate::epoch::reconfiguration::{ReconfigState, ReconfigurationInitiator};
 use mysten_metrics::{spawn_monitored_task, GaugeGuard, GaugeGuardFutureExt};
+use scalar_types::base_types::AuthorityName;
+use scalar_types::fp_ensure;
+use scalar_types::messages_consensus::ConsensusTransaction;
+use scalar_types::messages_consensus::ConsensusTransactionKind;
 use sui_simulator::anemo::PeerId;
 use sui_simulator::narwhal_network::connectivity::ConnectionStatus;
-use sui_types::base_types::AuthorityName;
-use sui_types::fp_ensure;
-use sui_types::messages_consensus::ConsensusTransaction;
-use sui_types::messages_consensus::ConsensusTransactionKind;
 use tokio::time::Duration;
 use tracing::{debug, info, warn};
 
@@ -1085,13 +1085,13 @@ mod adapter_tests {
     use fastcrypto::traits::KeyPair;
     use rand::Rng;
     use rand::{rngs::StdRng, SeedableRng};
-    use std::sync::Arc;
-    use std::time::Duration;
-    use sui_types::{
+    use scalar_types::{
         base_types::TransactionDigest,
         committee::Committee,
         crypto::{get_key_pair_from_rng, AuthorityKeyPair, AuthorityPublicKeyBytes},
     };
+    use std::sync::Arc;
+    use std::time::Duration;
 
     fn test_committee(rng: &mut StdRng, size: usize) -> Committee {
         let authorities = (0..size)

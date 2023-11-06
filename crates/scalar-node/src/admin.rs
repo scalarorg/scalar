@@ -9,10 +9,10 @@ use axum::{
     Router,
 };
 use humantime::parse_duration;
+use scalar_types::error::SuiError;
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
-use sui_types::error::SuiError;
 use telemetry_subscribers::TracingHandle;
 use tracing::info;
 

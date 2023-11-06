@@ -20,8 +20,8 @@
 //!
 //! ```ignore
 //!     let node_handle = start_node(config, registry).await;
-//!     node_handle.with_async(|sui_node| async move {
-//!         spawn_checkpoint_processes(config, &[sui_node]).await;
+//!     node_handle.with_async(|scalar_node| async move {
+//!         spawn_checkpoint_processes(config, &[scalar_node]).await;
 //!     });
 //! ```
 //!
@@ -35,7 +35,7 @@
 //! It is possible to exfiltrate state:
 //!
 //! ```ignore
-//!    let state = node_handle.with(|sui_node| sui_node.state);
+//!    let state = node_handle.with(|scalar_node| scalar_node.state);
 //!    // DO NOT DO THIS!
 //!    do_stuff_with_state(state)
 //! ```
@@ -43,9 +43,9 @@
 //! We can't prevent this completely, but we can at least make the right way the easy way.
 
 use super::SuiNode;
+use scalar_core::authority::AuthorityState;
 use std::future::Future;
 use std::sync::Arc;
-use sui_core::authority::AuthorityState;
 
 /// Wrap SuiNode to allow correct access to SuiNode in simulator tests.
 pub struct SuiNodeHandle {
@@ -71,7 +71,7 @@ impl SuiNodeHandle {
     }
 
     pub fn state(&self) -> Arc<AuthorityState> {
-        self.with(|sui_node| sui_node.state())
+        self.with(|scalar_node| scalar_node.state())
     }
 
     pub fn shutdown_on_drop(&mut self) {

@@ -25,12 +25,12 @@ use node::{
 use prometheus::Registry;
 use std::sync::Arc;
 use storage::{CertificateStoreCacheMetrics, NodeStorage};
-use sui_keys::keypair_file::{
+use scalar_keys::keypair_file::{
     read_authority_keypair_from_file, read_network_keypair_from_file,
     write_authority_keypair_to_file, write_keypair_to_file,
 };
 use sui_protocol_config::{Chain, ProtocolConfig, ProtocolVersion};
-use sui_types::crypto::{get_key_pair_from_rng, AuthorityKeyPair, SuiKeyPair};
+use scalar_types::crypto::{get_key_pair_from_rng, AuthorityKeyPair, SuiKeyPair};
 use telemetry_subscribers::TelemetryGuards;
 use tokio::sync::mpsc::channel;
 #[cfg(feature = "benchmark")]

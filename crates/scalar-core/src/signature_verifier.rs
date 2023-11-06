@@ -12,14 +12,11 @@ use lru::LruCache;
 use mysten_metrics::monitored_scope;
 use parking_lot::{Mutex, MutexGuard, RwLock};
 use prometheus::{register_int_counter_with_registry, IntCounter, Registry};
-use shared_crypto::intent::Intent;
-use std::hash::Hash;
-use std::sync::Arc;
-use sui_types::digests::SenderSignedDataDigest;
-use sui_types::digests::ZKLoginInputsDigest;
-use sui_types::signature::GenericSignature;
-use sui_types::transaction::SenderSignedData;
-use sui_types::{
+use scalar_types::digests::SenderSignedDataDigest;
+use scalar_types::digests::ZKLoginInputsDigest;
+use scalar_types::signature::GenericSignature;
+use scalar_types::transaction::SenderSignedData;
+use scalar_types::{
     committee::Committee,
     crypto::{AuthoritySignInfoTrait, VerificationObligation},
     digests::CertificateDigest,
@@ -29,6 +26,9 @@ use sui_types::{
     signature::VerifyParams,
     transaction::{CertifiedTransaction, VerifiedCertificate},
 };
+use shared_crypto::intent::Intent;
+use std::hash::Hash;
+use std::sync::Arc;
 use tap::TapFallible;
 use tokio::runtime::Handle;
 use tokio::{

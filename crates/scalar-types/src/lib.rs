@@ -40,6 +40,7 @@ pub mod move_types;
 pub mod multisig;
 pub mod object;
 pub mod programmable_transaction_builder;
+pub mod quorum_driver_types;
 pub mod scalar_serde;
 pub mod signature;
 pub mod storage;

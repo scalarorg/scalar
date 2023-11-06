@@ -3,15 +3,15 @@
 
 use clap::Parser;
 use mysten_common::sync::async_once_cell::AsyncOnceCell;
+use scalar_config::{Config, NodeConfig};
+use scalar_core::runtime::SuiRuntimes;
+use scalar_node::metrics;
+use scalar_types::multiaddr::Multiaddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use sui_config::{Config, NodeConfig};
-use sui_core::runtime::SuiRuntimes;
-use sui_node::metrics;
 use sui_protocol_config::SupportedProtocolVersions;
 use sui_telemetry::send_telemetry_event;
-use sui_types::multiaddr::Multiaddr;
 use tokio::time::sleep;
 use tracing::{error, info};
 
@@ -97,14 +97,15 @@ fn main() {
 
     // Run node in a separate runtime so that admin/monitoring functions continue to work
     // if it deadlocks.
-    let node_once_cell = Arc::new(AsyncOnceCell::<Arc<sui_node::SuiNode>>::new());
+    let node_once_cell = Arc::new(AsyncOnceCell::<Arc<scalar_node::SuiNode>>::new());
     let node_once_cell_clone = node_once_cell.clone();
     let rpc_runtime = runtimes.json_rpc.handle().clone();
 
-    runtimes.sui_node.spawn(async move {
-        match sui_node::SuiNode::start_async(&config, registry_service, Some(rpc_runtime)).await {
-            Ok(sui_node) => node_once_cell_clone
-                .set(sui_node)
+    runtimes.scalar_node.spawn(async move {
+        match scalar_node::SuiNode::start_async(&config, registry_service, Some(rpc_runtime)).await
+        {
+            Ok(scalar_node) => node_once_cell_clone
+                .set(scalar_node)
                 .expect("Failed to set node in AsyncOnceCell"),
 
             Err(e) => {
@@ -134,7 +135,7 @@ fn main() {
             ))
             .unwrap();
 
-        sui_node::admin::run_admin_server(node, admin_interface_port, filter_handle).await
+        scalar_node::admin::run_admin_server(node, admin_interface_port, filter_handle).await
     });
 
     runtimes.metrics.spawn(async move {

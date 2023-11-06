@@ -8,7 +8,7 @@ use std::{
 };
 
 use mysten_metrics::{monitored_scope, spawn_monitored_task};
-use sui_types::{
+use scalar_types::{
     digests::TransactionEffectsDigest, executable_transaction::VerifiedExecutableTransaction,
 };
 use tokio::sync::mpsc::UnboundedSender;

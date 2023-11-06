@@ -1,17 +1,17 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use scalar_types::base_types::AuthorityName;
+use scalar_types::committee::{Committee, StakeUnit};
+use scalar_types::crypto::{AuthorityQuorumSignInfo, AuthoritySignInfo, AuthoritySignInfoTrait};
+use scalar_types::error::SuiError;
+use scalar_types::message_envelope::{Envelope, Message};
 use serde::Serialize;
 use shared_crypto::intent::Intent;
 use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 use std::sync::Arc;
-use sui_types::base_types::AuthorityName;
-use sui_types::committee::{Committee, StakeUnit};
-use sui_types::crypto::{AuthorityQuorumSignInfo, AuthoritySignInfo, AuthoritySignInfoTrait};
-use sui_types::error::SuiError;
-use sui_types::message_envelope::{Envelope, Message};
 use tracing::warn;
 
 /// StakeAggregator allows us to keep track of the total stake of a set of validators.

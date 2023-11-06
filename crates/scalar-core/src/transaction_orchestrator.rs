@@ -23,27 +23,27 @@ use prometheus::{
     register_int_counter_vec_with_registry, register_int_counter_with_registry,
     register_int_gauge_vec_with_registry, register_int_gauge_with_registry, Registry,
 };
-use std::path::Path;
-use std::sync::Arc;
-use std::time::Duration;
-use sui_storage::write_path_pending_tx_log::WritePathPendingTransactionLog;
-use sui_types::base_types::TransactionDigest;
-use sui_types::effects::{TransactionEffectsAPI, VerifiedCertifiedTransactionEffects};
-use sui_types::error::{SuiError, SuiResult};
-use sui_types::executable_transaction::VerifiedExecutableTransaction;
-use sui_types::quorum_driver_types::{
+use scalar_types::base_types::TransactionDigest;
+use scalar_types::effects::{TransactionEffectsAPI, VerifiedCertifiedTransactionEffects};
+use scalar_types::error::{SuiError, SuiResult};
+use scalar_types::executable_transaction::VerifiedExecutableTransaction;
+use scalar_types::quorum_driver_types::{
     ExecuteTransactionRequest, ExecuteTransactionRequestType, ExecuteTransactionResponse,
     FinalizedEffects, QuorumDriverEffectsQueueResult, QuorumDriverError, QuorumDriverResponse,
     QuorumDriverResult,
 };
-use sui_types::sui_system_state::SuiSystemState;
+use scalar_types::sui_system_state::SuiSystemState;
+use std::path::Path;
+use std::sync::Arc;
+use std::time::Duration;
+use sui_storage::write_path_pending_tx_log::WritePathPendingTransactionLog;
 use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::broadcast::Receiver;
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tracing::{debug, error, error_span, info, instrument, warn, Instrument};
 
-use sui_types::transaction::VerifiedTransaction;
+use scalar_types::transaction::VerifiedTransaction;
 
 // How long to wait for local execution (including parents) before a timeout
 // is returned to client.

@@ -5,6 +5,8 @@ members = [
   "crates/scalar-core",
   "crates/scalar-node",
   "crates/scalar-types",
+  "crates/scalar-config",
+  "crates/scalar-keys",
   #    "crates/scalar-tss",
   "crates/shared-crypto",
   "crates/sui-protocol-config",
@@ -63,6 +65,7 @@ backoff = { version = "0.4.0", features = [
 base64 = "0.21.2"
 bcs = { version = "0.1", default-features = false }
 bincode = "1.3.3"
+bip32 = "0.4.0"
 byteorder = "1.4.3"
 bytes = "1.4.0"
 
@@ -75,10 +78,11 @@ criterion = { version = "0.4.0", features = [
   "async_tokio",
   "html_reports",
 ] }
-
+csv = "1.2.1"
 dashmap = "5.4.0"
 derive_builder = "0.12.0"
 derive_more = "0.99.17"
+dirs = "4.0.0"
 ed25519 = { version = "1.5.0", features = ["pkcs8", "alloc", "zeroize"] }
 ed25519-consensus = { version = "2.0.1", features = ["serde"] }
 either = "1.8.0"
@@ -166,6 +170,7 @@ serde_test = "1.0.147"
 serde_with = { version = "2.1.0", features = ["hex"] }
 serde_yaml = "0.8.26"
 signature = "1.6.0"
+slip10_ed25519 = "0.1.3"
 snap = "1.1.0"
 static_assertions = "1.1.0"
 structopt = "0.3.26"
@@ -240,7 +245,9 @@ uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 #narwhal-types = { path = "narwhal/types" }
 #narwhal-worker = { path = "narwhal/worker" }
 
+scalar-config = { path = "crates/scalar-config" }
 scalar-core = { path = "crates/scalar-core" }
+scalar-keys = { path = "crates/scalar-keys" }
 scalar-node = { path = "crates/scalar-node" }
 scalar-types = { path = "crates/scalar-types" }
 scalar-tss = { path = "crates/scalar-tss" }
@@ -279,9 +286,20 @@ mysten-util-mem = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c8
 mysten-util-mem-derive = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "mysten-util-mem-derive" }
 
 sui-enum-compat-util = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "enum-compat-util" }
+sui-json = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-json" }
+sui-json-rpc = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-json-rpc" }
+sui-json-rpc-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-json-rpc-types" }
+
 sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-macros" }
+sui-network = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-network" }
 sui-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-macros" }
-sui-keys = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-keys" }
+#sui-keys = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-keys" }
+
+sui-open-rpc = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-open-rpc" }
+sui-open-rpc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-open-rpc-macros" }
+sui-storage = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-storage" }
+sui-simulator = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-simulator" }
+
 
 telemetry-subscribers = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "telemetry-subscribers" }
 store = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "typed-store" }

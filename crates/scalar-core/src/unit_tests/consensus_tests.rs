@@ -9,17 +9,17 @@ use move_core_types::{account_address::AccountAddress, ident_str};
 use narwhal_types::Transactions;
 use narwhal_types::TransactionsServer;
 use narwhal_types::{Empty, TransactionProto};
-use sui_network::tonic;
-use sui_types::crypto::deterministic_random_account_key;
-use sui_types::multiaddr::Multiaddr;
-use sui_types::transaction::TEST_ONLY_GAS_UNIT_FOR_OBJECT_BASICS;
-use sui_types::utils::to_sender_signed_transaction;
-use sui_types::SUI_FRAMEWORK_PACKAGE_ID;
-use sui_types::{
+use scalar_types::crypto::deterministic_random_account_key;
+use scalar_types::multiaddr::Multiaddr;
+use scalar_types::transaction::TEST_ONLY_GAS_UNIT_FOR_OBJECT_BASICS;
+use scalar_types::utils::to_sender_signed_transaction;
+use scalar_types::SUI_FRAMEWORK_PACKAGE_ID;
+use scalar_types::{
     base_types::ObjectID,
     object::Object,
     transaction::{CallArg, CertifiedTransaction, ObjectArg, TransactionData},
 };
+use sui_network::tonic;
 use tokio::sync::mpsc::channel;
 use tokio::sync::mpsc::{Receiver, Sender};
 

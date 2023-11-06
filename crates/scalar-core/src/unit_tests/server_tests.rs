@@ -6,7 +6,7 @@ use crate::{
     authority::authority_tests::init_state_with_object_id,
     authority_client::{AuthorityAPI, NetworkAuthorityClient},
 };
-use sui_types::{
+use scalar_types::{
     base_types::{dbg_addr, dbg_object_id},
     object::ObjectFormatOptions,
 };

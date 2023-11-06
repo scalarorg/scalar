@@ -16,16 +16,16 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use itertools::Itertools;
-use sui_test_transaction_builder::TestTransactionBuilder;
-use sui_types::base_types::TransactionDigest;
-use sui_types::committee::Committee;
-use sui_types::crypto::{get_key_pair, AccountKeyPair};
-use sui_types::effects::{TransactionEffects, TransactionEffectsAPI};
-use sui_types::error::SuiResult;
-use sui_types::object::{Object, Owner};
-use sui_types::transaction::{
+use scalar_types::base_types::TransactionDigest;
+use scalar_types::committee::Committee;
+use scalar_types::crypto::{get_key_pair, AccountKeyPair};
+use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use scalar_types::error::SuiResult;
+use scalar_types::object::{Object, Owner};
+use scalar_types::transaction::{
     Transaction, VerifiedCertificate, TEST_ONLY_GAS_UNIT_FOR_HEAVY_COMPUTATION_STORAGE,
 };
+use sui_test_transaction_builder::TestTransactionBuilder;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{sleep, timeout};
 

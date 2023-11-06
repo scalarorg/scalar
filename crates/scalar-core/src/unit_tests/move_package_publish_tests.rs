@@ -7,7 +7,7 @@ use crate::authority::{
 };
 
 use move_binary_format::CompiledModule;
-use sui_types::{
+use scalar_types::{
     base_types::ObjectID,
     error::UserInputError,
     object::{Data, ObjectRead, Owner},
@@ -16,24 +16,24 @@ use sui_types::{
 };
 
 use move_package::source_package::manifest_parser;
-use sui_move_build::{check_unpublished_dependencies, gather_published_ids, BuildConfig};
-use sui_types::{
+use scalar_types::{
     crypto::{get_key_pair, AccountKeyPair},
     error::SuiError,
 };
+use sui_move_build::{check_unpublished_dependencies, gather_published_ids, BuildConfig};
 
 use crate::authority::move_integration_tests::{
     build_multi_publish_txns, build_package, run_multi_txns,
 };
 use expect_test::expect;
+use scalar_types::effects::TransactionEffectsAPI;
+use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::{collections::HashSet, path::PathBuf};
 use sui_framework::BuiltInFramework;
-use sui_types::effects::TransactionEffectsAPI;
-use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 
 #[tokio::test]
 #[cfg_attr(msim, ignore)]

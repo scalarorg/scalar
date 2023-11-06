@@ -5,23 +5,23 @@
 extern crate core;
 
 pub mod authority;
-// pub mod authority_aggregator;
-// pub mod authority_client;
-// pub mod authority_server;
-// pub mod checkpoints;
-// pub mod consensus_adapter;
-// pub mod consensus_handler;
-// pub mod consensus_throughput_calculator;
-// pub mod consensus_validator;
-// pub mod db_checkpoint_handler;
-// pub mod epoch;
+pub mod authority_aggregator;
+pub mod authority_client;
+pub mod authority_server;
+pub mod checkpoints;
+pub mod consensus_adapter;
+pub mod consensus_handler;
+pub mod consensus_throughput_calculator;
+pub mod consensus_validator;
+pub mod db_checkpoint_handler;
+pub mod epoch;
 // mod execution_driver;
 // pub mod metrics;
 // pub mod module_cache_metrics;
-// pub mod narwhal_manager;
-// pub(crate) mod post_consensus_tx_reorder;
-// pub mod quorum_driver;
-// pub mod safe_client;
+pub mod narwhal_manager;
+pub(crate) mod post_consensus_tx_reorder;
+pub mod quorum_driver;
+pub mod safe_client;
 // mod scoring_decision;
 // mod stake_aggregator;
 // pub mod state_accumulator;
@@ -30,7 +30,7 @@ pub mod authority;
 // pub mod subscription_handler;
 // #[cfg(any(test, feature = "test-utils"))]
 // pub mod test_utils;
-// mod transaction_manager;
+mod transaction_manager;
 // pub mod transaction_orchestrator;
 // pub mod verify_indexes;
 

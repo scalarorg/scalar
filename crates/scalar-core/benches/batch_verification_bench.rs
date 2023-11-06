@@ -8,14 +8,14 @@ use rand::seq::SliceRandom;
 
 use futures::future::join_all;
 use prometheus::Registry;
+use scalar_core::test_utils::{make_cert_with_large_committee, make_dummy_tx};
+use scalar_types::committee::Committee;
+use scalar_types::crypto::{get_key_pair, AccountKeyPair, AuthorityKeyPair};
+use scalar_types::transaction::CertifiedTransaction;
 use std::sync::Arc;
-use sui_core::test_utils::{make_cert_with_large_committee, make_dummy_tx};
-use sui_types::committee::Committee;
-use sui_types::crypto::{get_key_pair, AccountKeyPair, AuthorityKeyPair};
-use sui_types::transaction::CertifiedTransaction;
 
 use fastcrypto_zkp::bn254::zk_login_api::ZkLoginEnv;
-use sui_core::signature_verifier::*;
+use scalar_core::signature_verifier::*;
 
 fn gen_certs(
     committee: &Committee,

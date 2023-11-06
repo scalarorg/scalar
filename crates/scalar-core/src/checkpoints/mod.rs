@@ -23,28 +23,28 @@ use serde::{Deserialize, Serialize};
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::consensus_handler::SequencedConsensusTransactionKey;
+use scalar_types::base_types::{EpochId, TransactionDigest};
+use scalar_types::crypto::{AuthoritySignInfo, AuthorityStrongQuorumSignInfo};
+use scalar_types::digests::{CheckpointContentsDigest, CheckpointDigest};
+use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use scalar_types::error::{SuiError, SuiResult};
+use scalar_types::gas::GasCostSummary;
+use scalar_types::message_envelope::Message;
+use scalar_types::messages_checkpoint::SignedCheckpointSummary;
+use scalar_types::messages_checkpoint::{
+    CertifiedCheckpointSummary, CheckpointContents, CheckpointSequenceNumber,
+    CheckpointSignatureMessage, CheckpointSummary, CheckpointTimestamp, EndOfEpochData,
+    FullCheckpointContents, TrustedCheckpoint, VerifiedCheckpoint, VerifiedCheckpointContents,
+};
+use scalar_types::messages_consensus::ConsensusTransactionKey;
+use scalar_types::signature::GenericSignature;
+use scalar_types::sui_system_state::{SuiSystemState, SuiSystemStateTrait};
+use scalar_types::transaction::{TransactionDataAPI, TransactionKind};
 use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use sui_protocol_config::ProtocolVersion;
-use sui_types::base_types::{EpochId, TransactionDigest};
-use sui_types::crypto::{AuthoritySignInfo, AuthorityStrongQuorumSignInfo};
-use sui_types::digests::{CheckpointContentsDigest, CheckpointDigest};
-use sui_types::effects::{TransactionEffects, TransactionEffectsAPI};
-use sui_types::error::{SuiError, SuiResult};
-use sui_types::gas::GasCostSummary;
-use sui_types::message_envelope::Message;
-use sui_types::messages_checkpoint::SignedCheckpointSummary;
-use sui_types::messages_checkpoint::{
-    CertifiedCheckpointSummary, CheckpointContents, CheckpointSequenceNumber,
-    CheckpointSignatureMessage, CheckpointSummary, CheckpointTimestamp, EndOfEpochData,
-    FullCheckpointContents, TrustedCheckpoint, VerifiedCheckpoint, VerifiedCheckpointContents,
-};
-use sui_types::messages_consensus::ConsensusTransactionKey;
-use sui_types::signature::GenericSignature;
-use sui_types::sui_system_state::{SuiSystemState, SuiSystemStateTrait};
-use sui_types::transaction::{TransactionDataAPI, TransactionKind};
 use tokio::{
     sync::{watch, Notify},
     time::timeout,
@@ -1564,17 +1564,17 @@ mod tests {
     use crate::authority::test_authority_builder::TestAuthorityBuilder;
     use crate::state_accumulator::StateAccumulator;
     use async_trait::async_trait;
+    use scalar_types::base_types::{ObjectID, SequenceNumber, TransactionEffectsDigest};
+    use scalar_types::crypto::Signature;
+    use scalar_types::effects::TransactionEffects;
+    use scalar_types::messages_checkpoint::SignedCheckpointSummary;
+    use scalar_types::move_package::MovePackage;
+    use scalar_types::object;
+    use scalar_types::transaction::{GenesisObject, VerifiedTransaction};
     use shared_crypto::intent::{Intent, IntentScope};
     use std::collections::{BTreeMap, HashMap};
     use std::ops::Deref;
     use sui_macros::sim_test;
-    use sui_types::base_types::{ObjectID, SequenceNumber, TransactionEffectsDigest};
-    use sui_types::crypto::Signature;
-    use sui_types::effects::TransactionEffects;
-    use sui_types::messages_checkpoint::SignedCheckpointSummary;
-    use sui_types::move_package::MovePackage;
-    use sui_types::object;
-    use sui_types::transaction::{GenesisObject, VerifiedTransaction};
     use tokio::sync::mpsc;
 
     #[sim_test]

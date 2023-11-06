@@ -12,28 +12,28 @@ use crate::module_cache_metrics::ResolverMetrics;
 use crate::signature_verifier::SignatureVerifierMetrics;
 use fastcrypto::traits::KeyPair;
 use prometheus::Registry;
+use scalar_config::certificate_deny_config::CertificateDenyConfig;
+use scalar_config::genesis::Genesis;
+use scalar_config::node::StateDebugDumpConfig;
+use scalar_config::node::{
+    AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
+};
+use scalar_config::transaction_deny_config::TransactionDenyConfig;
+use scalar_types::base_types::{AuthorityName, ObjectID};
+use scalar_types::crypto::AuthorityKeyPair;
+use scalar_types::digests::ChainIdentifier;
+use scalar_types::executable_transaction::VerifiedExecutableTransaction;
+use scalar_types::object::Object;
+use scalar_types::sui_system_state::SuiSystemStateTrait;
+use scalar_types::transaction::VerifiedTransaction;
 use std::path::PathBuf;
 use std::sync::Arc;
 use sui_archival::reader::ArchiveReaderBalancer;
-use sui_config::certificate_deny_config::CertificateDenyConfig;
-use sui_config::genesis::Genesis;
-use sui_config::node::StateDebugDumpConfig;
-use sui_config::node::{
-    AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
-};
-use sui_config::transaction_deny_config::TransactionDenyConfig;
 use sui_macros::nondeterministic;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
 use sui_storage::IndexStore;
 use sui_swarm_config::genesis_config::AccountConfig;
 use sui_swarm_config::network_config::NetworkConfig;
-use sui_types::base_types::{AuthorityName, ObjectID};
-use sui_types::crypto::AuthorityKeyPair;
-use sui_types::digests::ChainIdentifier;
-use sui_types::executable_transaction::VerifiedExecutableTransaction;
-use sui_types::object::Object;
-use sui_types::sui_system_state::SuiSystemStateTrait;
-use sui_types::transaction::VerifiedTransaction;
 use tempfile::tempdir;
 
 #[derive(Default)]

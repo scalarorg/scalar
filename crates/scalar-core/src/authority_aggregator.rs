@@ -13,24 +13,24 @@ use futures::{future::BoxFuture, stream::FuturesUnordered, StreamExt};
 use mysten_metrics::histogram::Histogram;
 use mysten_metrics::{monitored_future, spawn_monitored_task, GaugeGuard};
 use mysten_network::config::Config;
-use std::convert::AsRef;
-use sui_config::genesis::Genesis;
-use sui_network::{
-    default_mysten_network_config, DEFAULT_CONNECT_TIMEOUT_SEC, DEFAULT_REQUEST_TIMEOUT_SEC,
-};
-use sui_swarm_config::network_config::NetworkConfig;
-use sui_types::crypto::{AuthorityPublicKeyBytes, AuthoritySignInfo};
-use sui_types::error::UserInputError;
-use sui_types::fp_ensure;
-use sui_types::message_envelope::Message;
-use sui_types::object::Object;
-use sui_types::quorum_driver_types::GroupedErrors;
-use sui_types::sui_system_state::{SuiSystemState, SuiSystemStateTrait};
-use sui_types::{
+use scalar_config::genesis::Genesis;
+use scalar_swarm_config::network_config::NetworkConfig;
+use scalar_types::crypto::{AuthorityPublicKeyBytes, AuthoritySignInfo};
+use scalar_types::error::UserInputError;
+use scalar_types::fp_ensure;
+use scalar_types::message_envelope::Message;
+use scalar_types::object::Object;
+use scalar_types::quorum_driver_types::GroupedErrors;
+use scalar_types::scalar_system_state::{SuiSystemState, SuiSystemStateTrait};
+use scalar_types::{
     base_types::*,
     committee::{Committee, ProtocolVersion},
     error::{SuiError, SuiResult},
     transaction::*,
+};
+use std::convert::AsRef;
+use sui_network::{
+    default_mysten_network_config, DEFAULT_CONNECT_TIMEOUT_SEC, DEFAULT_REQUEST_TIMEOUT_SEC,
 };
 use thiserror::Error;
 use tracing::{debug, error, info, trace, warn, Instrument};
@@ -39,19 +39,19 @@ use prometheus::{
     register_int_counter_vec_with_registry, register_int_counter_with_registry,
     register_int_gauge_with_registry, IntCounter, IntCounterVec, IntGauge, Registry,
 };
+use scalar_types::committee::{CommitteeWithNetworkMetadata, StakeUnit};
+use scalar_types::effects::{
+    CertifiedTransactionEffects, SignedTransactionEffects, TransactionEffects, TransactionEvents,
+    VerifiedCertifiedTransactionEffects,
+};
+use scalar_types::messages_grpc::{
+    HandleCertificateResponseV2, ObjectInfoRequest, TransactionInfoRequest,
+};
+use scalar_types::messages_safe_client::PlainTransactionInfoResponse;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::string::ToString;
 use std::sync::Arc;
 use std::time::Duration;
-use sui_types::committee::{CommitteeWithNetworkMetadata, StakeUnit};
-use sui_types::effects::{
-    CertifiedTransactionEffects, SignedTransactionEffects, TransactionEffects, TransactionEvents,
-    VerifiedCertifiedTransactionEffects,
-};
-use sui_types::messages_grpc::{
-    HandleCertificateResponseV2, ObjectInfoRequest, TransactionInfoRequest,
-};
-use sui_types::messages_safe_client::PlainTransactionInfoResponse;
 use tap::TapFallible;
 use tokio::time::{sleep, timeout};
 

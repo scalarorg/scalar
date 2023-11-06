@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use scalar_types::sui_system_state::{SuiSystemState, SuiSystemStateTrait};
 use std::sync::Arc;
-use sui_types::sui_system_state::{SuiSystemState, SuiSystemStateTrait};
 use tokio::sync::broadcast::error::RecvError;
 use tracing::{info, warn};
 

@@ -6,15 +6,15 @@ use crate::authority::StableSyncAuthoritySigner;
 use crate::consensus_adapter::SubmitToConsensus;
 use crate::epoch::reconfiguration::ReconfigurationInitiator;
 use async_trait::async_trait;
-use std::sync::Arc;
-use sui_types::base_types::AuthorityName;
-use sui_types::error::SuiResult;
-use sui_types::message_envelope::Message;
-use sui_types::messages_checkpoint::{
+use scalar_types::base_types::AuthorityName;
+use scalar_types::error::SuiResult;
+use scalar_types::message_envelope::Message;
+use scalar_types::messages_checkpoint::{
     CertifiedCheckpointSummary, CheckpointContents, CheckpointSignatureMessage, CheckpointSummary,
     SignedCheckpointSummary, VerifiedCheckpoint,
 };
-use sui_types::messages_consensus::ConsensusTransaction;
+use scalar_types::messages_consensus::ConsensusTransaction;
+use std::sync::Arc;
 use tracing::{debug, info, instrument, trace};
 
 use super::CheckpointMetrics;

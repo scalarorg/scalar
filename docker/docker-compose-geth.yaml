@@ -5,4 +5,4 @@ services:
     container_name: geth-client
     restart: unless-stopped
     ports:
-      - "8545:8545"
+      - "8540:8540"

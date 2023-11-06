@@ -3,14 +3,14 @@
 
 use itertools::Itertools;
 use mysten_metrics::monitored_scope;
+use scalar_types::base_types::{ObjectID, ObjectRef, SequenceNumber, VersionNumber};
+use scalar_types::committee::EpochId;
+use scalar_types::digests::{ObjectDigest, TransactionDigest};
+use scalar_types::in_memory_storage::InMemoryStorage;
+use scalar_types::object::Object;
+use scalar_types::storage::{ObjectKey, ObjectStore};
 use serde::Serialize;
 use sui_protocol_config::ProtocolConfig;
-use sui_types::base_types::{ObjectID, ObjectRef, SequenceNumber, VersionNumber};
-use sui_types::committee::EpochId;
-use sui_types::digests::{ObjectDigest, TransactionDigest};
-use sui_types::in_memory_storage::InMemoryStorage;
-use sui_types::object::Object;
-use sui_types::storage::{ObjectKey, ObjectStore};
 use tracing::debug;
 use typed_store::Map;
 
@@ -18,11 +18,11 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use fastcrypto::hash::MultisetHash;
-use sui_types::accumulator::Accumulator;
-use sui_types::effects::TransactionEffects;
-use sui_types::effects::TransactionEffectsAPI;
-use sui_types::error::SuiResult;
-use sui_types::messages_checkpoint::{CheckpointSequenceNumber, ECMHLiveObjectSetDigest};
+use scalar_types::accumulator::Accumulator;
+use scalar_types::effects::TransactionEffects;
+use scalar_types::effects::TransactionEffectsAPI;
+use scalar_types::error::SuiResult;
+use scalar_types::messages_checkpoint::{CheckpointSequenceNumber, ECMHLiveObjectSetDigest};
 use typed_store::rocks::TypedStoreError;
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;

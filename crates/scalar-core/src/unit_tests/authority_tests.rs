@@ -26,25 +26,20 @@ use std::collections::HashSet;
 use std::fs;
 use std::{convert::TryInto, env};
 
-use sui_json_rpc_types::{
-    SuiArgument, SuiExecutionResult, SuiExecutionStatus, SuiTransactionBlockEffectsAPI, SuiTypeTag,
-};
-use sui_macros::sim_test;
-use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
-use sui_types::dynamic_field::DynamicFieldType;
-use sui_types::effects::TransactionEffects;
-use sui_types::epoch_data::EpochData;
-use sui_types::error::UserInputError;
-use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use sui_types::gas_coin::GasCoin;
-use sui_types::messages_consensus::ConsensusCommitPrologue;
-use sui_types::object::Data;
-use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_types::sui_system_state::SuiSystemStateWrapper;
-use sui_types::utils::{
+use scalar_types::dynamic_field::DynamicFieldType;
+use scalar_types::effects::TransactionEffects;
+use scalar_types::epoch_data::EpochData;
+use scalar_types::error::UserInputError;
+use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use scalar_types::gas_coin::GasCoin;
+use scalar_types::messages_consensus::ConsensusCommitPrologue;
+use scalar_types::object::Data;
+use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use scalar_types::sui_system_state::SuiSystemStateWrapper;
+use scalar_types::utils::{
     to_sender_signed_transaction, to_sender_signed_transaction_with_multi_signers,
 };
-use sui_types::{
+use scalar_types::{
     base_types::dbg_addr,
     crypto::{get_key_pair, Signature},
     crypto::{AccountKeyPair, AuthorityKeyPair},
@@ -52,6 +47,11 @@ use sui_types::{
     MOVE_STDLIB_PACKAGE_ID, SUI_CLOCK_OBJECT_ID, SUI_FRAMEWORK_PACKAGE_ID,
     SUI_SYSTEM_STATE_OBJECT_ID,
 };
+use sui_json_rpc_types::{
+    SuiArgument, SuiExecutionResult, SuiExecutionStatus, SuiTransactionBlockEffectsAPI, SuiTypeTag,
+};
+use sui_macros::sim_test;
+use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
 
 use crate::authority::authority_store_tables::AuthorityPerpetualTables;
 use crate::authority::move_integration_tests::build_and_publish_test_package_with_upgrade_cap;
@@ -3150,7 +3150,7 @@ async fn test_transfer_sui_no_amount() {
     let recipient = dbg_addr(2);
     let gas_object_id = ObjectID::random();
     let gas_object = Object::with_id_owner_for_testing(gas_object_id, sender);
-    let init_balance = sui_types::gas::get_gas_balance(&gas_object).unwrap();
+    let init_balance = scalar_types::gas::get_gas_balance(&gas_object).unwrap();
     let authority_state = init_state_with_objects(vec![gas_object.clone()]).await;
 
     let epoch_store = authority_state.load_epoch_store_one_call_per_task();
@@ -3186,7 +3186,7 @@ async fn test_transfer_sui_no_amount() {
     assert!(effects.mutated_excluding_gas().is_empty());
     assert!(gas_ref.1 < effects.gas_object().0 .1);
     assert_eq!(effects.gas_object().1, Owner::AddressOwner(recipient));
-    let new_balance = sui_types::gas::get_gas_balance(
+    let new_balance = scalar_types::gas::get_gas_balance(
         &authority_state
             .get_object(&gas_object_id)
             .await
@@ -3206,7 +3206,7 @@ async fn test_transfer_sui_with_amount() {
     let recipient = dbg_addr(2);
     let gas_object_id = ObjectID::random();
     let gas_object = Object::with_id_owner_for_testing(gas_object_id, sender);
-    let init_balance = sui_types::gas::get_gas_balance(&gas_object).unwrap();
+    let init_balance = scalar_types::gas::get_gas_balance(&gas_object).unwrap();
     let authority_state = init_state_with_objects(vec![gas_object.clone()]).await;
     let rgp = authority_state.reference_gas_price_for_testing().unwrap();
 
@@ -3237,10 +3237,10 @@ async fn test_transfer_sui_with_amount() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(sui_types::gas::get_gas_balance(&new_gas).unwrap(), 500);
+    assert_eq!(scalar_types::gas::get_gas_balance(&new_gas).unwrap(), 500);
     assert!(gas_ref.1 < effects.gas_object().0 .1);
     assert_eq!(effects.gas_object().1, Owner::AddressOwner(sender));
-    let new_balance = sui_types::gas::get_gas_balance(
+    let new_balance = scalar_types::gas::get_gas_balance(
         &authority_state
             .get_object(&gas_object_id)
             .await
@@ -4629,7 +4629,7 @@ async fn test_consensus_message_processed() {
 
     let shared_object_id = ObjectID::random();
     let shared_object = {
-        use sui_types::object::MoveObject;
+        use scalar_types::object::MoveObject;
         let obj = MoveObject::new_gas_coin(OBJECT_START_VERSION, shared_object_id, 10);
         let owner = Owner::Shared {
             initial_shared_version: obj.version(),
@@ -5075,7 +5075,7 @@ async fn test_gas_smashing() {
                 .any(|deleted| deleted.0 == *gas_coin_id));
         }
         // balance on first coin is correct
-        let balance = sui_types::gas::get_gas_balance(
+        let balance = scalar_types::gas::get_gas_balance(
             &state.get_object(&gas_coin_ids[0]).await.unwrap().unwrap(),
         )
         .unwrap();
