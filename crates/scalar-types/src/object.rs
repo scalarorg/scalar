@@ -10,9 +10,11 @@
 use super::balance::Balance;
 use super::base_types::{MoveObjectType, ObjectIDParseError};
 use super::gas_coin::GAS;
-use super::language_storage::{StructTag, TypeTag};
-// use super::move_package::MovePackage;
-use super::value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue};
+use crate::move_package::MovePackage;
+use crate::move_types::{
+    language_storage::{StructTag, TypeTag},
+    value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue},
+};
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Formatter};
@@ -351,14 +353,14 @@ impl MoveObject {
     //     }
     // }
 
-    // /// Convert `self` to the JSON representation dictated by `layout`.
-    // pub fn to_move_struct(&self, layout: &MoveStructLayout) -> Result<MoveStruct, SuiError> {
-    //     MoveStruct::simple_deserialize(&self.contents, layout).map_err(|e| {
-    //         SuiError::ObjectSerializationError {
-    //             error: e.to_string(),
-    //         }
-    //     })
-    // }
+    /// Convert `self` to the JSON representation dictated by `layout`.
+    pub fn to_move_struct(&self, layout: &MoveStructLayout) -> Result<MoveStruct, SuiError> {
+        MoveStruct::simple_deserialize(&self.contents, layout).map_err(|e| {
+            SuiError::ObjectSerializationError {
+                error: e.to_string(),
+            }
+        })
+    }
 
     // /// Convert `self` to the JSON representation dictated by `layout`.
     // pub fn to_move_struct_with_resolver(
@@ -487,13 +489,13 @@ pub enum Data {
     /// An object whose governing logic lives in a published Move module
     Move(MoveObject),
     // Map from each module name to raw serialized Move module bytes
-    // Package(MovePackage),
+    Package(MovePackage),
     /*
      * 2023-11-02 TaiVV
      * Thay the Package(MovePackage) boi Package(String) de han che viec modify code
+     * 2023-11-03 reimport MovePackage
      * Tags: SCALAR_MOVE_LANGUAGE
      */
-    Package(String),
     // ... Sui "native" types go here
 }
 
@@ -521,29 +523,29 @@ impl Data {
         }
     }
 
-    // pub fn try_as_package(&self) -> Option<&MovePackage> {
-    //     use Data::*;
-    //     match self {
-    //         Move(_) => None,
-    //         Package(p) => Some(p),
-    //     }
-    // }
+    pub fn try_as_package(&self) -> Option<&MovePackage> {
+        use Data::*;
+        match self {
+            Move(_) => None,
+            Package(p) => Some(p),
+        }
+    }
 
-    // pub fn try_as_package_mut(&mut self) -> Option<&mut MovePackage> {
-    //     use Data::*;
-    //     match self {
-    //         Move(_) => None,
-    //         Package(p) => Some(p),
-    //     }
-    // }
+    pub fn try_as_package_mut(&mut self) -> Option<&mut MovePackage> {
+        use Data::*;
+        match self {
+            Move(_) => None,
+            Package(p) => Some(p),
+        }
+    }
 
-    // pub fn try_into_package(self) -> Option<MovePackage> {
-    //     use Data::*;
-    //     match self {
-    //         Move(_) => None,
-    //         Package(p) => Some(p),
-    //     }
-    // }
+    pub fn try_into_package(self) -> Option<MovePackage> {
+        use Data::*;
+        match self {
+            Move(_) => None,
+            Package(p) => Some(p),
+        }
+    }
 
     pub fn type_(&self) -> Option<&MoveObjectType> {
         use Data::*;

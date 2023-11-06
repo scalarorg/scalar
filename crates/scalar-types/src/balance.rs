@@ -1,13 +1,19 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-03 TaiVV
+ * copy and modify from sui-types/src/balance.rs
+ * Tags: SCALAR_BALANCE
+ */
+
 use crate::error::{ExecutionError, ExecutionErrorKind};
-use crate::ident_str;
 use crate::identifier::IdentStr;
-use crate::language_storage::{StructTag, TypeTag};
+use crate::move_types::language_storage::{StructTag, TypeTag};
+use crate::move_types::value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout};
 use crate::scalar_serde::{BigInt, Readable};
 use crate::SUI_FRAMEWORK_ADDRESS;
-// use move_core_types::value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout};
+use crate::{fp_ensure, ident_str};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -74,13 +80,13 @@ impl Balance {
         bcs::to_bytes(&self).unwrap()
     }
 
-    // pub fn layout(type_param: TypeTag) -> MoveStructLayout {
-    //     MoveStructLayout::WithTypes {
-    //         type_: Self::type_(type_param),
-    //         fields: vec![MoveFieldLayout::new(
-    //             ident_str!("value").to_owned(),
-    //             MoveTypeLayout::U64,
-    //         )],
-    //     }
-    // }
+    pub fn layout(type_param: TypeTag) -> MoveStructLayout {
+        MoveStructLayout::WithTypes {
+            type_: Self::type_(type_param),
+            fields: vec![MoveFieldLayout::new(
+                ident_str!("value").to_owned(),
+                MoveTypeLayout::U64,
+            )],
+        }
+    }
 }

@@ -8,8 +8,10 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use crate::account_address::AccountAddress;
-use crate::language_storage::{StructTag, TypeTag};
+use crate::move_types::{
+    account_address::AccountAddress,
+    language_storage::{StructTag, TypeTag},
+};
 use fastcrypto::encoding::Hex;
 use schemars::JsonSchema;
 use serde;
@@ -23,12 +25,8 @@ use serde_with::{Bytes, DeserializeAs, SerializeAs};
 use sui_protocol_config::ProtocolVersion;
 
 use crate::{
-    //parse_sui_struct_tag, parse_sui_type_tag,
-    DEEPBOOK_ADDRESS,
-    SUI_CLOCK_ADDRESS,
-    SUI_FRAMEWORK_ADDRESS,
-    SUI_SYSTEM_ADDRESS,
-    SUI_SYSTEM_STATE_ADDRESS,
+    parse_sui_struct_tag, parse_sui_type_tag, DEEPBOOK_ADDRESS, SUI_CLOCK_ADDRESS,
+    SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS, SUI_SYSTEM_STATE_ADDRESS,
 };
 
 #[inline]
@@ -237,17 +235,19 @@ impl SerializeAs<TypeTag> for SuiTypeTag {
 /*
  * 2023-11-02 TaiVV
  * Move code lien quan toi Move ra package rieng (xu ly sau)
+ * reimport MovePackage
  * Tags: SCALAR_MOVE_LANGUAGE
  */
-// impl<'de> DeserializeAs<'de, TypeTag> for SuiTypeTag {
-//     fn deserialize_as<D>(deserializer: D) -> Result<TypeTag, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let s = String::deserialize(deserializer)?;
-//         parse_sui_type_tag(&s).map_err(D::Error::custom)
-//     }
-// }
+
+impl<'de> DeserializeAs<'de, TypeTag> for SuiTypeTag {
+    fn deserialize_as<D>(deserializer: D) -> Result<TypeTag, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        parse_sui_type_tag(&s).map_err(D::Error::custom)
+    }
+}
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, JsonSchema)]

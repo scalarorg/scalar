@@ -2,6 +2,12 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-03 TaiVV
+ * copy and modify from sui-types/src/transaction.rs
+ * Tags: SCALAR_TRANSACTION
+ */
+
 use super::{base_types::*, error::*};
 use crate::authenticator_state::ActiveJwk;
 use crate::committee::{EpochId, ProtocolVersion};
@@ -12,16 +18,16 @@ use crate::crypto::{
 };
 use crate::digests::{CertificateDigest, SenderSignedDataDigest};
 use crate::ident_str;
-use crate::identifier::IdentStr;
+use crate::identifier::{IdentStr, Identifier};
 use crate::message_envelope::{
     AuthenticatedMessage, Envelope, Message, TrustedEnvelope, VerifiedEnvelope,
 };
 use crate::messages_checkpoint::CheckpointTimestamp;
 use crate::messages_consensus::ConsensusCommitPrologue;
+use crate::move_types::language_storage::TypeTag;
 use crate::object::{MoveObject, Object, Owner};
 use crate::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use crate::signature::{AuthenticatorTrait, GenericSignature, VerifyParams};
-use crate::{identifier::Identifier, language_storage::TypeTag};
 use crate::{
     SUI_AUTHENTICATOR_STATE_OBJECT_ID, SUI_CLOCK_OBJECT_ID, SUI_CLOCK_OBJECT_SHARED_VERSION,
     SUI_FRAMEWORK_PACKAGE_ID, SUI_SYSTEM_STATE_OBJECT_ID, SUI_SYSTEM_STATE_OBJECT_SHARED_VERSION,
@@ -2057,7 +2063,7 @@ impl VersionedProtocolMessage for SenderSignedData {
                     }
                 }
                 GenericSignature::Signature(_)
-                | GenericSignature::MultiSigLegacy(_)
+                //| GenericSignature::MultiSigLegacy(_)
                 | GenericSignature::ZkLoginAuthenticator(_) => (),
             }
         }

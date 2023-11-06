@@ -131,13 +131,16 @@ impl ToFromBytes for GenericSignature {
                 | SignatureScheme::Secp256r1 => Ok(GenericSignature::Signature(
                     Signature::from_bytes(bytes).map_err(|_| FastCryptoError::InvalidSignature)?,
                 )),
-                SignatureScheme::MultiSig => match MultiSig::from_bytes(bytes) {
-                    Ok(multisig) => Ok(GenericSignature::MultiSig(multisig)),
-                    Err(_) => {
-                        // let multisig = MultiSigLegacy::from_bytes(bytes)?;
-                        // Ok(GenericSignature::MultiSigLegacy(multisig))
-                    }
-                },
+                SignatureScheme::MultiSig => {
+                    MultiSig::from_bytes(bytes).map(|multisig| GenericSignature::MultiSig(multisig))
+                }
+                // SignatureScheme::MultiSig => match MultiSig::from_bytes(bytes) {
+                //     Ok(multisig) => Ok(GenericSignature::MultiSig(multisig)),
+                //     Err(_) => {
+                //         let multisig = MultiSigLegacy::from_bytes(bytes)?;
+                //         Ok(GenericSignature::MultiSigLegacy(multisig))
+                //     }
+                // },
                 SignatureScheme::ZkLoginAuthenticator => {
                     let zk_login = ZkLoginAuthenticator::from_bytes(bytes)?;
                     Ok(GenericSignature::ZkLoginAuthenticator(zk_login))

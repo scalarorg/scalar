@@ -16,12 +16,8 @@ use crate::base_types::{TransactionDigest, VersionNumber};
 use crate::committee::EpochId;
 use crate::error::SuiError;
 use crate::execution::{DynamicallyLoadedObjectMetadata, ExecutionResults};
-use crate::language_storage::ModuleId;
-/*
- * 2023-11-02 TaiVV
- * Dua Move ra package rieng
- */
-//use crate::move_package::MovePackage;
+use crate::move_package::MovePackage;
+use crate::move_types::language_storage::ModuleId;
 use crate::transaction::{SenderSignedData, TransactionDataAPI};
 use crate::{
     base_types::{ObjectID, ObjectRef, SequenceNumber},
@@ -166,12 +162,13 @@ pub trait BackingPackageStore {
     /*
      * 2023-11-02 TaiVV
      * Move code lien quan toi Move ra package rieng (xu ly sau)
+     * 2023-11-03: uncomment this function
      * Tags: SCALAR_MOVE_LANGUAGE
      */
-    // fn get_package(&self, package_id: &ObjectID) -> SuiResult<Option<MovePackage>> {
-    //     self.get_package_object(package_id)
-    //         .map(|opt_obj| opt_obj.and_then(|obj| obj.data.try_into_package()))
-    // }
+    fn get_package(&self, package_id: &ObjectID) -> SuiResult<Option<MovePackage>> {
+        self.get_package_object(package_id)
+            .map(|opt_obj| opt_obj.and_then(|obj| obj.data.try_into_package()))
+    }
 }
 
 impl<S: BackingPackageStore> BackingPackageStore for std::sync::Arc<S> {

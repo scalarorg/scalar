@@ -1,6 +1,12 @@
 // Copyright (c) The Move Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-03
+ * TaiVV copy and modify from external-crates/move/move-core/types/gas_algebra.rs
+ * Tags: SCALAR_MOVE_LANGUAGE, SCALAR_GAS
+ */
+
 use serde::{Deserialize, Serialize};
 use std::{
     cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},

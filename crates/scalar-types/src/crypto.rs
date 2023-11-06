@@ -1,5 +1,9 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
+use crate::base_types::{AuthorityName, SuiAddress};
+use crate::committee::{Committee, EpochId, StakeUnit};
+use crate::error::{SuiError, SuiResult};
+use crate::fp_ensure;
 use anyhow::{anyhow, Error};
 use derive_more::{AsMut, AsRef, From};
 use eyre::eyre;
@@ -37,10 +41,6 @@ use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use strum::EnumString;
-
-use crate::base_types::{AuthorityName, SuiAddress};
-use crate::committee::{Committee, EpochId, StakeUnit};
-use crate::error::{SuiError, SuiResult};
 /*
  * 2023-11-02 TaiVV
  * doi ten file sui_serde -> scalar_serde
