@@ -4,8 +4,8 @@
 use std::{collections::BTreeMap, sync::Arc};
 
 use anyhow::{anyhow, bail, Result};
+use scalar_types::{base_types::ObjectInfo, object::Owner};
 use sui_storage::{indexes::CoinInfo, IndexStore};
-use sui_types::{base_types::ObjectInfo, object::Owner};
 use tracing::info;
 use typed_store::traits::Map;
 

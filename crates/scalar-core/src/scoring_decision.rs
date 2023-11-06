@@ -1,12 +1,21 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
+
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/scoring_decision.rs
+ * He thong duy tri va update score cua cac authority tham gia trong committee.
+ * Thong tin authorities' score duoc su dung de sap xep cac transaction hoac update committee trong cac epoch tiep theo
+ * Tags: SCALAR_SCORING, SCALAR_AUTHORITY
+ */
+
 use crate::authority::AuthorityMetrics;
 use arc_swap::ArcSwap;
 use narwhal_config::{Authority, Committee, Stake};
 use narwhal_types::ReputationScores;
+use scalar_types::base_types::AuthorityName;
 use std::collections::HashMap;
 use std::sync::Arc;
-use sui_types::base_types::AuthorityName;
 use tracing::debug;
 
 /// Updates list of authorities that are deemed to have low reputation scores by consensus

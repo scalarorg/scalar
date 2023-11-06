@@ -20,20 +20,20 @@ use narwhal_config::Committee;
 use narwhal_executor::{ExecutionIndices, ExecutionState};
 use narwhal_test_utils::latest_protocol_version;
 use narwhal_types::{BatchAPI, Certificate, CertificateAPI, ConsensusOutput, HeaderAPI};
+use scalar_types::authenticator_state::ActiveJwk;
+use scalar_types::base_types::{AuthorityName, EpochId, TransactionDigest};
+use scalar_types::executable_transaction::VerifiedExecutableTransaction;
+use scalar_types::messages_consensus::{
+    ConsensusTransaction, ConsensusTransactionKey, ConsensusTransactionKind,
+};
+use scalar_types::storage::ObjectStore;
+use scalar_types::transaction::{SenderSignedData, VerifiedTransaction};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroUsize;
 use std::sync::Arc;
-use sui_types::authenticator_state::ActiveJwk;
-use sui_types::base_types::{AuthorityName, EpochId, TransactionDigest};
-use sui_types::executable_transaction::VerifiedExecutableTransaction;
-use sui_types::messages_consensus::{
-    ConsensusTransaction, ConsensusTransactionKey, ConsensusTransactionKind,
-};
-use sui_types::storage::ObjectStore;
-use sui_types::transaction::{SenderSignedData, VerifiedTransaction};
 use tracing::{debug, error, info, instrument, trace_span};
 
 pub struct ConsensusHandler<T, C> {
@@ -614,19 +614,19 @@ mod tests {
         Batch, Certificate, CommittedSubDag, Header, HeaderV1Builder, ReputationScores,
     };
     use prometheus::Registry;
+    use scalar_types::base_types::{random_object_ref, AuthorityName, SuiAddress};
+    use scalar_types::committee::Committee;
+    use scalar_types::messages_consensus::{
+        AuthorityCapabilities, ConsensusTransaction, ConsensusTransactionKind,
+    };
+    use scalar_types::object::Object;
+    use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+    use scalar_types::transaction::{
+        CertifiedTransaction, SenderSignedData, TransactionData, TransactionDataAPI,
+    };
     use shared_crypto::intent::Intent;
     use std::collections::BTreeSet;
     use sui_protocol_config::{ConsensusTransactionOrdering, SupportedProtocolVersions};
-    use sui_types::base_types::{random_object_ref, AuthorityName, SuiAddress};
-    use sui_types::committee::Committee;
-    use sui_types::messages_consensus::{
-        AuthorityCapabilities, ConsensusTransaction, ConsensusTransactionKind,
-    };
-    use sui_types::object::Object;
-    use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-    use sui_types::transaction::{
-        CertifiedTransaction, SenderSignedData, TransactionData, TransactionDataAPI,
-    };
 
     #[tokio::test]
     pub async fn test_consensus_handler() {

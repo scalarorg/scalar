@@ -28,17 +28,17 @@ use futures::stream::FuturesOrdered;
 use itertools::izip;
 use mysten_metrics::{spawn_monitored_task, MonitoredFutureExt};
 use prometheus::Registry;
-use sui_config::node::CheckpointExecutorConfig;
-use sui_macros::{fail_point, fail_point_async};
-use sui_types::effects::{TransactionEffects, TransactionEffectsAPI};
-use sui_types::executable_transaction::VerifiedExecutableTransaction;
-use sui_types::message_envelope::Message;
-use sui_types::{
+use scalar_config::node::CheckpointExecutorConfig;
+use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use scalar_types::executable_transaction::VerifiedExecutableTransaction;
+use scalar_types::message_envelope::Message;
+use scalar_types::{
     base_types::{ExecutionDigests, TransactionDigest, TransactionEffectsDigest},
     messages_checkpoint::{CheckpointSequenceNumber, VerifiedCheckpoint},
     transaction::VerifiedTransaction,
 };
-use sui_types::{error::SuiResult, transaction::TransactionDataAPI};
+use scalar_types::{error::SuiResult, transaction::TransactionDataAPI};
+use sui_macros::{fail_point, fail_point_async};
 use tap::{TapFallible, TapOptional};
 use tokio::{
     sync::broadcast::{self, error::RecvError},

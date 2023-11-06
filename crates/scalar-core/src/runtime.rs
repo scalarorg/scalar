@@ -1,9 +1,9 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use scalar_config::NodeConfig;
 use std::env;
 use std::str::FromStr;
-use sui_config::NodeConfig;
 use tap::TapFallible;
 use tokio::runtime::Runtime;
 use tracing::warn;
@@ -11,13 +11,13 @@ use tracing::warn;
 pub struct SuiRuntimes {
     // Order in this struct is the order in which runtimes are stopped
     pub json_rpc: Runtime,
-    pub sui_node: Runtime,
+    pub scalar_node: Runtime,
     pub metrics: Runtime,
 }
 
 impl SuiRuntimes {
     pub fn new(_confg: &NodeConfig) -> Self {
-        let sui_node = tokio::runtime::Builder::new_multi_thread()
+        let scalar_node = tokio::runtime::Builder::new_multi_thread()
             .thread_name("sui-node-runtime")
             .enable_all()
             .build()
@@ -45,7 +45,7 @@ impl SuiRuntimes {
             .build()
             .unwrap();
         Self {
-            sui_node,
+            scalar_node,
             metrics,
             json_rpc,
         }

@@ -3,7 +3,7 @@
 
 use std::{collections::HashSet, sync::Arc};
 
-use sui_types::{
+use scalar_types::{
     base_types::{ObjectID, ObjectRef, SequenceNumber, SuiAddress},
     crypto::{get_key_pair, AccountKeyPair},
     digests::ObjectDigest,

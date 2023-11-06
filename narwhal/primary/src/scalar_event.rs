@@ -16,8 +16,8 @@ use network::anemo_ext::NetworkExt;
 use serde::{Deserialize, Serialize};
 use shared_crypto::intent::{Intent, IntentScope};
 use storage::EventStore;
-use sui_types::transaction::{SenderSignedTransaction, TransactionData};
-use sui_types::{
+use scalar_types::transaction::{SenderSignedTransaction, TransactionData};
+use scalar_types::{
     base_types::AuthorityName, crypto::AuthoritySignInfo, messages_consensus::ConsensusTransaction,
     transaction::CertifiedTransaction, transaction::SenderSignedData,
 };

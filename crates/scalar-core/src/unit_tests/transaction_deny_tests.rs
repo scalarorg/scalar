@@ -10,25 +10,25 @@ use crate::test_utils::make_transfer_sui_transaction;
 use fastcrypto::ed25519::Ed25519KeyPair;
 use fastcrypto::traits::KeyPair;
 use move_core_types::ident_str;
-use std::path::PathBuf;
-use std::sync::Arc;
-use sui_config::certificate_deny_config::CertificateDenyConfigBuilder;
-use sui_config::transaction_deny_config::{TransactionDenyConfig, TransactionDenyConfigBuilder};
-use sui_swarm_config::genesis_config::{AccountConfig, DEFAULT_GAS_AMOUNT};
-use sui_swarm_config::network_config::NetworkConfig;
-use sui_test_transaction_builder::TestTransactionBuilder;
-use sui_types::base_types::{ObjectID, ObjectRef, SuiAddress};
-use sui_types::effects::TransactionEffectsAPI;
-use sui_types::error::{SuiError, SuiResult, UserInputError};
-use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use sui_types::messages_grpc::HandleTransactionResponse;
-use sui_types::transaction::{
+use scalar_config::certificate_deny_config::CertificateDenyConfigBuilder;
+use scalar_config::transaction_deny_config::{TransactionDenyConfig, TransactionDenyConfigBuilder};
+use scalar_types::base_types::{ObjectID, ObjectRef, SuiAddress};
+use scalar_types::effects::TransactionEffectsAPI;
+use scalar_types::error::{SuiError, SuiResult, UserInputError};
+use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use scalar_types::messages_grpc::HandleTransactionResponse;
+use scalar_types::transaction::{
     CallArg, CertifiedTransaction, Transaction, TransactionData, VerifiedCertificate,
     VerifiedTransaction, TEST_ONLY_GAS_UNIT_FOR_TRANSFER,
 };
-use sui_types::utils::{
+use scalar_types::utils::{
     make_zklogin_tx, to_sender_signed_transaction, to_sender_signed_transaction_with_multi_signers,
 };
+use std::path::PathBuf;
+use std::sync::Arc;
+use sui_swarm_config::genesis_config::{AccountConfig, DEFAULT_GAS_AMOUNT};
+use sui_swarm_config::network_config::NetworkConfig;
+use sui_test_transaction_builder::TestTransactionBuilder;
 
 const ACCOUNT_NUM: usize = 5;
 const GAS_OBJECT_COUNT: usize = 15;

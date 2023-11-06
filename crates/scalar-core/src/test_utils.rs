@@ -11,32 +11,24 @@ use fastcrypto::traits::KeyPair;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use prometheus::Registry;
-use shared_crypto::intent::{Intent, IntentScope};
-use std::collections::{BTreeMap, HashMap};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
-use sui_config::genesis::Genesis;
-use sui_config::local_ip_utils;
-use sui_framework::BuiltInFramework;
-use sui_genesis_builder::validator_info::ValidatorInfo;
-use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
-use sui_protocol_config::ProtocolConfig;
-use sui_types::base_types::{random_object_ref, ObjectID};
-use sui_types::crypto::{
+use scalar_config::genesis::Genesis;
+use scalar_config::local_ip_utils;
+use scalar_genesis_builder::validator_info::ValidatorInfo;
+use scalar_types::base_types::{random_object_ref, ObjectID};
+use scalar_types::crypto::{
     generate_proof_of_possession, get_key_pair, AccountKeyPair, AuthorityPublicKeyBytes,
     NetworkKeyPair, SuiKeyPair,
 };
-use sui_types::crypto::{AuthorityKeyPair, Signer};
-use sui_types::effects::{SignedTransactionEffects, TransactionEffects};
-use sui_types::error::SuiError;
-use sui_types::transaction::ObjectArg;
-use sui_types::transaction::{
+use scalar_types::crypto::{AuthorityKeyPair, Signer};
+use scalar_types::effects::{SignedTransactionEffects, TransactionEffects};
+use scalar_types::error::SuiError;
+use scalar_types::transaction::ObjectArg;
+use scalar_types::transaction::{
     CallArg, SignedTransaction, Transaction, TransactionData, TEST_ONLY_GAS_UNIT_FOR_TRANSFER,
 };
-use sui_types::utils::create_fake_transaction;
-use sui_types::utils::to_sender_signed_transaction;
-use sui_types::{
+use scalar_types::utils::create_fake_transaction;
+use scalar_types::utils::to_sender_signed_transaction;
+use scalar_types::{
     base_types::{AuthorityName, ExecutionDigests, ObjectRef, SuiAddress, TransactionDigest},
     committee::Committee,
     crypto::{AuthoritySignInfo, AuthoritySignature},
@@ -44,6 +36,14 @@ use sui_types::{
     object::Object,
     transaction::CertifiedTransaction,
 };
+use shared_crypto::intent::{Intent, IntentScope};
+use std::collections::{BTreeMap, HashMap};
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
+use sui_framework::BuiltInFramework;
+use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
+use sui_protocol_config::ProtocolConfig;
 use tokio::time::timeout;
 use tracing::{info, warn};
 
@@ -220,7 +220,7 @@ async fn init_genesis(
     let pkg_id = pkg.id();
     genesis_objects.push(pkg);
 
-    let mut builder = sui_genesis_builder::Builder::new().add_objects(genesis_objects);
+    let mut builder = scalar_genesis_builder::Builder::new().add_objects(genesis_objects);
     let mut key_pairs = Vec::new();
     for i in 0..committee_size {
         let key_pair: AuthorityKeyPair = get_key_pair().1;

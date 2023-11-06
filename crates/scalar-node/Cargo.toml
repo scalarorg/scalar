@@ -28,9 +28,13 @@ const-str.workspace = true
 url.workspace = true
 humantime.workspace = true
 
+scalar-types.workspace = true
 scalar-core.workspace = true
+sui-json-rpc.workspace = true
 sui-macros.workspace = true
+sui-network.workspace = true
 sui-protocol-config.workspace = true
+sui-storage.workspace = true
 
 mysten-metrics.workspace = true
 mysten-common.workspace = true

@@ -10,16 +10,13 @@ use move_core_types::{
 use pretty_assertions::assert_str_eq;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use serde_reflection::{Registry, Result, Samples, Tracer, TracerConfig};
-use shared_crypto::intent::{Intent, IntentMessage, PersonalMessage};
-use std::{fs::File, io::Write};
-use sui_types::effects::{IDOperation, ObjectIn, ObjectOut, TransactionEffects};
-use sui_types::execution_status::{
+use scalar_types::effects::{IDOperation, ObjectIn, ObjectOut, TransactionEffects};
+use scalar_types::execution_status::{
     CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, PackageUpgradeError,
     TypeArgumentError,
 };
-use sui_types::messages_grpc::ObjectInfoRequestKind;
-use sui_types::{
+use scalar_types::messages_grpc::ObjectInfoRequestKind;
+use scalar_types::{
     base_types::MoveObjectType_,
     crypto::Signer,
     messages_checkpoint::{
@@ -28,7 +25,7 @@ use sui_types::{
     },
     transaction::TransactionExpiration,
 };
-use sui_types::{
+use scalar_types::{
     base_types::{
         self, MoveObjectType, ObjectDigest, ObjectID, TransactionDigest, TransactionEffectsDigest,
     },
@@ -44,6 +41,9 @@ use sui_types::{
         Argument, CallArg, Command, EndOfEpochTransactionKind, ObjectArg, TransactionKind,
     },
 };
+use serde_reflection::{Registry, Result, Samples, Tracer, TracerConfig};
+use shared_crypto::intent::{Intent, IntentMessage, PersonalMessage};
+use std::{fs::File, io::Write};
 use typed_store::rocks::TypedStoreError;
 
 fn get_registry() -> Result<Registry> {

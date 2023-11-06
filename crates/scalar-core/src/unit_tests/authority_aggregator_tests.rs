@@ -6,21 +6,21 @@ use crate::test_utils::make_transfer_sui_transaction;
 use move_core_types::{account_address::AccountAddress, ident_str};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use scalar_types::crypto::get_key_pair_from_rng;
+use scalar_types::crypto::{get_key_pair, AccountKeyPair, AuthorityKeyPair};
+use scalar_types::crypto::{AuthoritySignature, Signer};
+use scalar_types::crypto::{KeypairTraits, Signature};
+use scalar_types::utils::create_fake_transaction;
 use shared_crypto::intent::{Intent, IntentScope};
 use std::collections::BTreeMap;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use sui_move_build::BuildConfig;
-use sui_types::crypto::get_key_pair_from_rng;
-use sui_types::crypto::{get_key_pair, AccountKeyPair, AuthorityKeyPair};
-use sui_types::crypto::{AuthoritySignature, Signer};
-use sui_types::crypto::{KeypairTraits, Signature};
-use sui_types::utils::create_fake_transaction;
 
+use scalar_types::object::Object;
+use scalar_types::transaction::*;
 use sui_macros::sim_test;
-use sui_types::object::Object;
-use sui_types::transaction::*;
 
 use super::*;
 use crate::authority_client::AuthorityAPI;
@@ -29,17 +29,17 @@ use crate::test_authority_clients::{
     MockAuthorityApi,
 };
 use crate::test_utils::init_local_authorities;
+use scalar_types::utils::to_sender_signed_transaction;
 use sui_framework::BuiltInFramework;
-use sui_types::utils::to_sender_signed_transaction;
 use tokio::time::Instant;
 
-#[cfg(msim)]
-use sui_simulator::configs::constant_latency_ms;
-use sui_types::effects::{TransactionEffects, TransactionEffectsAPI, TransactionEvents};
-use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use sui_types::messages_grpc::{
+use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI, TransactionEvents};
+use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use scalar_types::messages_grpc::{
     HandleTransactionResponse, TransactionStatus, VerifiedObjectInfoResponse,
 };
+#[cfg(msim)]
+use sui_simulator::configs::constant_latency_ms;
 
 pub fn set_local_client_config(
     authorities: &mut AuthorityAggregator<LocalAuthorityClient>,

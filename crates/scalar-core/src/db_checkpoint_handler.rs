@@ -12,12 +12,12 @@ use futures::future::try_join_all;
 use object_store::path::Path;
 use object_store::DynObjectStore;
 use prometheus::{register_int_gauge_with_registry, IntGauge, Registry};
+use scalar_config::node::AuthorityStorePruningConfig;
 use std::fs;
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use sui_config::node::AuthorityStorePruningConfig;
 use sui_storage::mutex_table::RwLockTable;
 use sui_storage::object_store::util::{
     copy_recursively, find_all_dirs_with_epoch_prefix, find_missing_epochs_dirs,

@@ -13,7 +13,7 @@ use crate::transaction_manager::TransactionManager;
 use async_trait::async_trait;
 use narwhal_types::{validate_batch_version, BatchAPI};
 use narwhal_worker::TransactionValidator;
-use sui_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
+use scalar_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
 use tap::TapFallible;
 use tokio::runtime::Handle;
 use tracing::{info, warn};
@@ -176,14 +176,14 @@ mod tests {
     use narwhal_test_utils::latest_protocol_version;
     use narwhal_types::{Batch, BatchV1};
     use narwhal_worker::TransactionValidator;
-    use sui_types::signature::GenericSignature;
+    use scalar_types::signature::GenericSignature;
 
     use crate::authority::test_authority_builder::TestAuthorityBuilder;
+    use scalar_macros::sim_test;
+    use scalar_types::crypto::Ed25519SuiSignature;
+    use scalar_types::messages_consensus::ConsensusTransaction;
+    use scalar_types::object::Object;
     use std::sync::Arc;
-    use sui_macros::sim_test;
-    use sui_types::crypto::Ed25519SuiSignature;
-    use sui_types::messages_consensus::ConsensusTransaction;
-    use sui_types::object::Object;
 
     #[sim_test]
     async fn accept_valid_transaction() {
@@ -195,7 +195,7 @@ mod tests {
         let latest_protocol_config = &latest_protocol_version();
 
         let network_config =
-            sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
+            scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
                 .with_objects(objects.clone())
                 .build();
 
@@ -240,10 +240,11 @@ mod tests {
             .into_iter()
             .map(|mut cert| {
                 // set it to an all-zero user signature
-                cert.tx_signatures_mut_for_testing()[0] =
-                    GenericSignature::Signature(sui_types::crypto::Signature::Ed25519SuiSignature(
+                cert.tx_signatures_mut_for_testing()[0] = GenericSignature::Signature(
+                    scalar_types::crypto::Signature::Ed25519SuiSignature(
                         Ed25519SuiSignature::default(),
-                    ));
+                    ),
+                );
                 bcs::to_bytes(&ConsensusTransaction::new_certificate_message(&name1, cert)).unwrap()
             })
             .collect();

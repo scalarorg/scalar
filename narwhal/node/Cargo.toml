@@ -34,8 +34,8 @@ storage = { path = "../storage", package = "narwhal-storage" }
 types = { path = "../types", package = "narwhal-types" }
 worker = { path = "../worker", package = "narwhal-worker" }
 eyre.workspace = true
-sui-keys.workspace = true
 #sui-types.workspace = true
+#scalar-keys.workspace = true
 sui-protocol-config.workspace = true
 
 mysten-metrics.workspace = true
@@ -45,6 +45,7 @@ workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 anemo.workspace = true
 reqwest.workspace = true
+
 
 [dev-dependencies]
 pretty_assertions.workspace = true

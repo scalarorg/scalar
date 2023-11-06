@@ -5,8 +5,8 @@ use crate::consensus_handler::{
     SequencedConsensusTransactionKind, VerifiedSequencedConsensusTransaction,
 };
 use mysten_metrics::monitored_scope;
+use scalar_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
 use sui_protocol_config::ConsensusTransactionOrdering;
-use sui_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
 
 pub struct PostConsensusTxReorder {}
 

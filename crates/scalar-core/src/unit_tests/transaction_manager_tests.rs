@@ -3,10 +3,9 @@
 
 use std::{sync::Arc, time::Duration, vec};
 
-use sui_test_transaction_builder::TestTransactionBuilder;
-use sui_types::executable_transaction::VerifiedExecutableTransaction;
-use sui_types::transaction::VerifiedTransaction;
-use sui_types::{
+use scalar_types::executable_transaction::VerifiedExecutableTransaction;
+use scalar_types::transaction::VerifiedTransaction;
+use scalar_types::{
     base_types::ObjectID,
     crypto::deterministic_random_account_key,
     digests::TransactionEffectsDigest,
@@ -14,6 +13,7 @@ use sui_types::{
     transaction::{CallArg, ObjectArg},
     SUI_FRAMEWORK_PACKAGE_ID,
 };
+use sui_test_transaction_builder::TestTransactionBuilder;
 use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver},
     sync::Semaphore,

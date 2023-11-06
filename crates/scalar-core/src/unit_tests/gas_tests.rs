@@ -10,15 +10,15 @@ use crate::authority::test_authority_builder::TestAuthorityBuilder;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use once_cell::sync::Lazy;
+use scalar_types::crypto::AccountKeyPair;
+use scalar_types::effects::TransactionEvents;
+use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use scalar_types::gas_coin::GasCoin;
+use scalar_types::object::GAS_VALUE_FOR_TESTING;
+use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use scalar_types::utils::to_sender_signed_transaction;
+use scalar_types::{base_types::dbg_addr, crypto::get_key_pair};
 use sui_protocol_config::ProtocolConfig;
-use sui_types::crypto::AccountKeyPair;
-use sui_types::effects::TransactionEvents;
-use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use sui_types::gas_coin::GasCoin;
-use sui_types::object::GAS_VALUE_FOR_TESTING;
-use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_types::utils::to_sender_signed_transaction;
-use sui_types::{base_types::dbg_addr, crypto::get_key_pair};
 
 // The cost table is used only to get the max budget available which is not dependent on
 // the gas price

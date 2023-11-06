@@ -25,6 +25,9 @@ use prometheus::{
     register_int_gauge_vec_with_registry, register_int_gauge_with_registry, Histogram, IntCounter,
     IntCounterVec, IntGauge, IntGaugeVec, Registry,
 };
+use scalar_config::node::StateDebugDumpConfig;
+use scalar_config::NodeConfig;
+use scalar_types::execution::DynamicallyLoadedObjectMetadata;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -39,9 +42,6 @@ use std::{
     sync::Arc,
     thread,
 };
-use sui_config::node::StateDebugDumpConfig;
-use sui_config::NodeConfig;
-use sui_types::execution::DynamicallyLoadedObjectMetadata;
 use tap::{TapFallible, TapOptional};
 use tokio::sync::mpsc::unbounded_channel;
 use tokio::sync::{oneshot, Semaphore};
@@ -55,14 +55,60 @@ pub use authority_store::{AuthorityStore, ResolverWrapper, UpdateType};
 use mysten_metrics::{monitored_scope, spawn_monitored_task};
 
 use once_cell::sync::OnceCell;
-use shared_crypto::intent::{Intent, IntentScope};
-use sui_archival::reader::ArchiveReaderBalancer;
-use sui_config::certificate_deny_config::CertificateDenyConfig;
-use sui_config::genesis::Genesis;
-use sui_config::node::{
+use scalar_config::certificate_deny_config::CertificateDenyConfig;
+use scalar_config::genesis::Genesis;
+use scalar_config::node::{
     AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
 };
-use sui_config::transaction_deny_config::TransactionDenyConfig;
+use scalar_config::transaction_deny_config::TransactionDenyConfig;
+use scalar_types::authenticator_state::get_authenticator_state;
+use scalar_types::committee::{EpochId, ProtocolVersion};
+use scalar_types::crypto::{default_hash, AuthoritySignInfo, Signer};
+use scalar_types::digests::ChainIdentifier;
+use scalar_types::digests::TransactionEventsDigest;
+use scalar_types::dynamic_field::{DynamicFieldInfo, DynamicFieldName, DynamicFieldType};
+use scalar_types::effects::{
+    SignedTransactionEffects, TransactionEffects, TransactionEffectsAPI, TransactionEvents,
+    VerifiedCertifiedTransactionEffects, VerifiedSignedTransactionEffects,
+};
+use scalar_types::error::{ExecutionError, UserInputError};
+use scalar_types::event::{Event, EventID};
+use scalar_types::executable_transaction::VerifiedExecutableTransaction;
+use scalar_types::gas::{GasCostSummary, SuiGasStatus};
+use scalar_types::inner_temporary_store::{
+    InnerTemporaryStore, ObjectMap, TemporaryModuleResolver, TxCoins, WrittenObjects,
+};
+use scalar_types::message_envelope::Message;
+use scalar_types::messages_checkpoint::{
+    CertifiedCheckpointSummary, CheckpointCommitment, CheckpointContents, CheckpointContentsDigest,
+    CheckpointDigest, CheckpointSequenceNumber, CheckpointSummary, CheckpointTimestamp,
+    VerifiedCheckpoint,
+};
+use scalar_types::messages_checkpoint::{CheckpointRequest, CheckpointResponse};
+use scalar_types::messages_consensus::AuthorityCapabilities;
+use scalar_types::messages_grpc::{
+    HandleTransactionResponse, ObjectInfoRequest, ObjectInfoRequestKind, ObjectInfoResponse,
+    TransactionInfoRequest, TransactionInfoResponse, TransactionStatus,
+};
+use scalar_types::metrics::{BytecodeVerifierMetrics, LimitsMetrics};
+use scalar_types::object::{MoveObject, Owner, PastObjectRead, OBJECT_START_VERSION};
+use scalar_types::storage::{GetSharedLocks, ObjectKey, ObjectStore, WriteKind};
+use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+use scalar_types::sui_system_state::SuiSystemStateTrait;
+use scalar_types::sui_system_state::{get_sui_system_state, SuiSystemState};
+use scalar_types::{
+    base_types::*,
+    committee::Committee,
+    crypto::AuthoritySignature,
+    error::{SuiError, SuiResult},
+    fp_ensure,
+    object::{Object, ObjectFormatOptions, ObjectRead},
+    transaction::*,
+    SUI_SYSTEM_ADDRESS,
+};
+use scalar_types::{is_system_package, TypeTag};
+use shared_crypto::intent::{Intent, IntentScope};
+use sui_archival::reader::ArchiveReaderBalancer;
 use sui_framework::{BuiltInFramework, SystemPackage};
 use sui_json_rpc_types::{
     DevInspectResults, DryRunTransactionBlockResponse, EventFilter, SuiEvent, SuiMoveValue,
@@ -75,52 +121,6 @@ use sui_storage::indexes::{CoinInfo, ObjectIndexChanges};
 use sui_storage::key_value_store::{TransactionKeyValueStore, TransactionKeyValueStoreTrait};
 use sui_storage::key_value_store_metrics::KeyValueStoreMetrics;
 use sui_storage::IndexStore;
-use sui_types::authenticator_state::get_authenticator_state;
-use sui_types::committee::{EpochId, ProtocolVersion};
-use sui_types::crypto::{default_hash, AuthoritySignInfo, Signer};
-use sui_types::digests::ChainIdentifier;
-use sui_types::digests::TransactionEventsDigest;
-use sui_types::dynamic_field::{DynamicFieldInfo, DynamicFieldName, DynamicFieldType};
-use sui_types::effects::{
-    SignedTransactionEffects, TransactionEffects, TransactionEffectsAPI, TransactionEvents,
-    VerifiedCertifiedTransactionEffects, VerifiedSignedTransactionEffects,
-};
-use sui_types::error::{ExecutionError, UserInputError};
-use sui_types::event::{Event, EventID};
-use sui_types::executable_transaction::VerifiedExecutableTransaction;
-use sui_types::gas::{GasCostSummary, SuiGasStatus};
-use sui_types::inner_temporary_store::{
-    InnerTemporaryStore, ObjectMap, TemporaryModuleResolver, TxCoins, WrittenObjects,
-};
-use sui_types::message_envelope::Message;
-use sui_types::messages_checkpoint::{
-    CertifiedCheckpointSummary, CheckpointCommitment, CheckpointContents, CheckpointContentsDigest,
-    CheckpointDigest, CheckpointSequenceNumber, CheckpointSummary, CheckpointTimestamp,
-    VerifiedCheckpoint,
-};
-use sui_types::messages_checkpoint::{CheckpointRequest, CheckpointResponse};
-use sui_types::messages_consensus::AuthorityCapabilities;
-use sui_types::messages_grpc::{
-    HandleTransactionResponse, ObjectInfoRequest, ObjectInfoRequestKind, ObjectInfoResponse,
-    TransactionInfoRequest, TransactionInfoResponse, TransactionStatus,
-};
-use sui_types::metrics::{BytecodeVerifierMetrics, LimitsMetrics};
-use sui_types::object::{MoveObject, Owner, PastObjectRead, OBJECT_START_VERSION};
-use sui_types::storage::{GetSharedLocks, ObjectKey, ObjectStore, WriteKind};
-use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-use sui_types::sui_system_state::SuiSystemStateTrait;
-use sui_types::sui_system_state::{get_sui_system_state, SuiSystemState};
-use sui_types::{
-    base_types::*,
-    committee::Committee,
-    crypto::AuthoritySignature,
-    error::{SuiError, SuiResult},
-    fp_ensure,
-    object::{Object, ObjectFormatOptions, ObjectRead},
-    transaction::*,
-    SUI_SYSTEM_ADDRESS,
-};
-use sui_types::{is_system_package, TypeTag};
 use typed_store::Map;
 
 use crate::authority::authority_per_epoch_store::{AuthorityPerEpochStore, CertTxGuard};
@@ -700,7 +700,7 @@ impl AuthorityState {
         transaction: VerifiedTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult<VerifiedSignedTransaction> {
-        let (_gas_status, input_objects) = sui_transaction_checks::check_transaction_input(
+        let (_gas_status, input_objects) = scalar_transaction_checks::check_transaction_input(
             &self.database,
             epoch_store.protocol_config(),
             epoch_store.reference_gas_price(),
@@ -1246,7 +1246,7 @@ impl AuthorityState {
         let _metrics_guard = self.metrics.prepare_certificate_latency.start_timer();
 
         // check_certificate_input also checks shared object locks when loading the shared objects.
-        let (gas_status, input_objects) = sui_transaction_checks::check_certificate_input(
+        let (gas_status, input_objects) = scalar_transaction_checks::check_certificate_input(
             &self.database,
             epoch_store.as_ref(),
             certificate,
@@ -1326,7 +1326,7 @@ impl AuthorityState {
             let gas_object_ref = gas_object.compute_object_reference();
             gas_object_refs = vec![gas_object_ref];
             (
-                sui_transaction_checks::check_transaction_input_with_given_gas(
+                scalar_transaction_checks::check_transaction_input_with_given_gas(
                     &self.database,
                     epoch_store.protocol_config(),
                     epoch_store.reference_gas_price(),
@@ -1339,7 +1339,7 @@ impl AuthorityState {
             )
         } else {
             (
-                sui_transaction_checks::check_transaction_input(
+                scalar_transaction_checks::check_transaction_input(
                     &self.database,
                     epoch_store.protocol_config(),
                     epoch_store.reference_gas_price(),
@@ -1360,7 +1360,7 @@ impl AuthorityState {
         // don't bother with paranoid checks in dry run
         let enable_move_vm_paranoid_checks = false;
         let executor =
-            sui_execution::executor(protocol_config, enable_move_vm_paranoid_checks, silent)
+            scalar_execution::executor(protocol_config, enable_move_vm_paranoid_checks, silent)
                 .expect("Creating an executor should not fail here");
 
         let expensive_checks = false;
@@ -1482,7 +1482,7 @@ impl AuthorityState {
             Owner::AddressOwner(sender),
             TransactionDigest::genesis(),
         );
-        let (gas_object_ref, input_objects) = sui_transaction_checks::check_dev_inspect_input(
+        let (gas_object_ref, input_objects) = scalar_transaction_checks::check_dev_inspect_input(
             &self.database,
             protocol_config,
             &transaction_kind,
@@ -1500,7 +1500,7 @@ impl AuthorityState {
         let transaction_digest = TransactionDigest::new(default_hash(&data));
         let transaction_kind = data.into_kind();
         let silent = true;
-        let executor = sui_execution::executor(
+        let executor = scalar_execution::executor(
             protocol_config,
             self.expensive_safety_check_config
                 .enable_move_vm_paranoid_checks(),
@@ -4348,11 +4348,11 @@ impl TransactionKeyValueStoreTrait for AuthorityState {
 #[cfg(msim)]
 pub mod framework_injection {
     use move_binary_format::CompiledModule;
+    use scalar_types::base_types::{AuthorityName, ObjectID};
+    use scalar_types::is_system_package;
     use std::collections::BTreeMap;
     use std::{cell::RefCell, collections::BTreeSet};
     use sui_framework::{BuiltInFramework, SystemPackage};
-    use sui_types::base_types::{AuthorityName, ObjectID};
-    use sui_types::is_system_package;
 
     type FrameworkOverrideConfig = BTreeMap<ObjectID, PackageOverrideConfig>;
 

@@ -11,16 +11,16 @@ use crate::authority::test_authority_builder::TestAuthorityBuilder;
 use crate::{authority::AuthorityState, authority_client::AuthorityAPI};
 use async_trait::async_trait;
 use mysten_metrics::spawn_monitored_task;
-use sui_config::genesis::Genesis;
-use sui_types::effects::{TransactionEffectsAPI, TransactionEvents};
-use sui_types::error::SuiResult;
-use sui_types::messages_grpc::{
+use scalar_config::genesis::Genesis;
+use scalar_types::effects::{TransactionEffectsAPI, TransactionEvents};
+use scalar_types::error::SuiResult;
+use scalar_types::messages_grpc::{
     HandleCertificateResponse, HandleCertificateResponseV2, HandleTransactionResponse,
     ObjectInfoRequest, ObjectInfoResponse, SystemStateRequest, TransactionInfoRequest,
     TransactionInfoResponse,
 };
-use sui_types::sui_system_state::SuiSystemState;
-use sui_types::{
+use scalar_types::sui_system_state::SuiSystemState;
+use scalar_types::{
     crypto::AuthorityKeyPair,
     error::SuiError,
     messages_checkpoint::{CheckpointRequest, CheckpointResponse},

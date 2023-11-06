@@ -13,13 +13,13 @@ use narwhal_test_utils::latest_protocol_version;
 use narwhal_types::{BatchAPI, ConsensusOutput, TransactionProto, TransactionsClient};
 use narwhal_worker::TrivialTransactionValidator;
 use prometheus::Registry;
+use scalar_types::digests::ChainIdentifier;
+use scalar_types::messages_checkpoint::CheckpointDigest;
+use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+use scalar_types::sui_system_state::SuiSystemStateTrait;
 use std::sync::Arc;
 use std::time::Duration;
 use sui_swarm_config::network_config_builder::ConfigBuilder;
-use sui_types::digests::ChainIdentifier;
-use sui_types::messages_checkpoint::CheckpointDigest;
-use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-use sui_types::sui_system_state::SuiSystemStateTrait;
 use tokio::sync::broadcast;
 use tokio::time::{interval, sleep};
 

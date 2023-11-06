@@ -4,28 +4,35 @@
 use parking_lot::Mutex;
 use std::sync::Arc;
 
-use sui_types::base_types::TransactionDigest;
-use sui_types::committee::Committee;
-use sui_types::committee::EpochId;
-use sui_types::digests::{TransactionEffectsDigest, TransactionEventsDigest};
-use sui_types::effects::{TransactionEffects, TransactionEvents};
-use sui_types::error::SuiError;
-use sui_types::messages_checkpoint::CheckpointContentsDigest;
-use sui_types::messages_checkpoint::CheckpointDigest;
-use sui_types::messages_checkpoint::CheckpointSequenceNumber;
-use sui_types::messages_checkpoint::EndOfEpochData;
-use sui_types::messages_checkpoint::FullCheckpointContents;
-use sui_types::messages_checkpoint::VerifiedCheckpoint;
-use sui_types::messages_checkpoint::VerifiedCheckpointContents;
-use sui_types::object::Object;
-use sui_types::storage::WriteStore;
-use sui_types::storage::{ObjectKey, ReadStore};
-use sui_types::transaction::VerifiedTransaction;
+use scalar_types::base_types::TransactionDigest;
+use scalar_types::committee::Committee;
+use scalar_types::committee::EpochId;
+use scalar_types::digests::{TransactionEffectsDigest, TransactionEventsDigest};
+use scalar_types::effects::{TransactionEffects, TransactionEvents};
+use scalar_types::error::SuiError;
+use scalar_types::messages_checkpoint::CheckpointContentsDigest;
+use scalar_types::messages_checkpoint::CheckpointDigest;
+use scalar_types::messages_checkpoint::CheckpointSequenceNumber;
+use scalar_types::messages_checkpoint::EndOfEpochData;
+use scalar_types::messages_checkpoint::FullCheckpointContents;
+use scalar_types::messages_checkpoint::VerifiedCheckpoint;
+use scalar_types::messages_checkpoint::VerifiedCheckpointContents;
+use scalar_types::object::Object;
+use scalar_types::storage::WriteStore;
+use scalar_types::storage::{ObjectKey, ReadStore};
+use scalar_types::transaction::VerifiedTransaction;
 use typed_store::Map;
 
 use crate::authority::AuthorityStore;
 use crate::checkpoints::CheckpointStore;
 use crate::epoch::committee_store::CommitteeStore;
+
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/storage.rs
+ * Handle việc lưu trữ dữ liệu của node dùng RocksDb
+ * Tags: SCALAR_STORAGE, SCALAR_ROCKS
+ */
 
 #[derive(Clone)]
 pub struct RocksDbStore {
