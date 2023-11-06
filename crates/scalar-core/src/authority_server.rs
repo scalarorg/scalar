@@ -16,7 +16,7 @@ use scalar_types::messages_grpc::{
     TransactionInfoRequest, TransactionInfoResponse,
 };
 use scalar_types::multiaddr::Multiaddr;
-use scalar_types::scalar_system_state::SuiSystemState;
+use scalar_types::sui_system_state::SuiSystemState;
 use scalar_types::{error::*, transaction::*};
 use scalar_types::{
     fp_ensure,

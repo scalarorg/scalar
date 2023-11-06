@@ -19,6 +19,7 @@ enum_dispatch.workspace = true
 eyre.workspace = true
 futures.workspace = true
 im.workspace = true
+indexmap.workspace = true
 itertools.workspace = true
 lru.workspace = true
 num_cpus.workspace = true
@@ -43,7 +44,7 @@ tracing.workspace = true
 
 fastcrypto.workspace = true
 fastcrypto-zkp.workspace = true
-#move-binary-format.workspace = true
+move-binary-format.workspace = true
 #move-bytecode-utils.workspace = true
 move-core-types.workspace = true
 #move-package.workspace = true
@@ -75,11 +76,14 @@ sui-macros.workspace = true
 #sui-move-build.workspace = true
 sui-network.workspace = true
 sui-protocol-config.workspace = true
-#sui-transaction-checks.workspace = true
 sui-simulator.workspace = true
 sui-storage.workspace = true
-scalar-types.workspace = true
+
 scalar-config.workspace = true
+scalar-execution.workspace = true
+scalar-types.workspace = true
+
+scalar-transaction-checks.workspace = true
 workspace-hack.workspace = true
 
 [dev-dependencies]

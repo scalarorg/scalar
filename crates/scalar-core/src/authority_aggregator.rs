@@ -21,7 +21,7 @@ use scalar_types::fp_ensure;
 use scalar_types::message_envelope::Message;
 use scalar_types::object::Object;
 use scalar_types::quorum_driver_types::GroupedErrors;
-use scalar_types::scalar_system_state::{SuiSystemState, SuiSystemStateTrait};
+use scalar_types::sui_system_state::{SuiSystemState, SuiSystemStateTrait};
 use scalar_types::{
     base_types::*,
     committee::{Committee, ProtocolVersion},

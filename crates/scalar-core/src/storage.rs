@@ -27,6 +27,13 @@ use crate::authority::AuthorityStore;
 use crate::checkpoints::CheckpointStore;
 use crate::epoch::committee_store::CommitteeStore;
 
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/storage.rs
+ * Handle việc lưu trữ dữ liệu của node dùng RocksDb
+ * Tags: SCALAR_STORAGE, SCALAR_ROCKS
+ */
+
 #[derive(Clone)]
 pub struct RocksDbStore {
     authority_store: Arc<AuthorityStore>,

@@ -1,6 +1,14 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/subscription_handlers.rs
+ * quan ly thong tin cua cac subscriber to Scalar (co the la websocket connection),
+ * stream chi lam 2 loại: Event va transaction
+ * Tags: SCALAR_HANDLER, SCALAR_SUBSCRIPTION
+ */
+
 use std::sync::Arc;
 
 use prometheus::{

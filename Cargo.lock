@@ -9092,9 +9092,11 @@ dependencies = [
  "fs_extra",
  "futures",
  "im",
+ "indexmap 1.9.3",
  "itertools 0.11.0",
  "lru 0.12.0",
  "more-asserts",
+ "move-binary-format",
  "move-core-types",
  "mysten-common",
  "mysten-metrics",
@@ -9116,6 +9118,8 @@ dependencies = [
  "rand 0.8.5",
  "rocksdb",
  "scalar-config",
+ "scalar-execution",
+ "scalar-transaction-checks",
  "scalar-types",
  "scopeguard",
  "serde",
@@ -9141,6 +9145,45 @@ dependencies = [
  "tracing",
  "typed-store",
  "typed-store-derive",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-execution"
+version = "0.1.0"
+dependencies = [
+ "cargo_metadata",
+ "move-binary-format",
+ "petgraph 0.5.1",
+ "scalar-types",
+ "sui-protocol-config 0.1.0",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-genesis-builder"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "camino",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "insta",
+ "move-binary-format",
+ "move-core-types",
+ "prometheus",
+ "rand 0.8.5",
+ "scalar-config",
+ "scalar-execution",
+ "scalar-types",
+ "serde",
+ "serde_with",
+ "serde_yaml 0.8.26",
+ "shared-crypto 0.0.0",
+ "sui-protocol-config 0.1.0",
+ "sui-simulator",
+ "tempfile",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -9205,13 +9248,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-swarm-config"
+version = "0.0.0"
+dependencies = [
+ "anemo",
+ "anyhow",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "insta",
+ "narwhal-config",
+ "prometheus",
+ "rand 0.8.5",
+ "scalar-config",
+ "scalar-execution",
+ "scalar-genesis-builder",
+ "scalar-types",
+ "serde",
+ "serde_with",
+ "serde_yaml 0.8.26",
+ "shared-crypto 0.0.0",
+ "sui-protocol-config 0.1.0",
+ "sui-simulator",
+ "tempfile",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-transaction-checks"
+version = "0.1.0"
+dependencies = [
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "once_cell",
+ "scalar-config",
+ "scalar-execution",
+ "scalar-types",
+ "sui-macros",
+ "sui-protocol-config 0.1.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "scalar-types"
 version = "0.1.0"
 dependencies = [
+ "anemo",
  "anyhow",
  "arbitrary",
  "bcs",
+ "bincode",
  "byteorder",
+ "derivative",
  "derive_more",
  "enum-compat-util",
  "enum_dispatch",
@@ -9230,11 +9317,13 @@ dependencies = [
  "move-vm-types",
  "mysten-metrics",
  "mysten-network",
+ "narwhal-config",
  "narwhal-crypto",
  "num",
  "num-bigint",
  "once_cell",
  "primitive-types",
+ "prometheus",
  "proptest",
  "proptest-derive",
  "rand 0.8.5",

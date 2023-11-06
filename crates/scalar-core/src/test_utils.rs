@@ -13,6 +13,7 @@ use move_core_types::ident_str;
 use prometheus::Registry;
 use scalar_config::genesis::Genesis;
 use scalar_config::local_ip_utils;
+use scalar_genesis_builder::validator_info::ValidatorInfo;
 use scalar_types::base_types::{random_object_ref, ObjectID};
 use scalar_types::crypto::{
     generate_proof_of_possession, get_key_pair, AccountKeyPair, AuthorityPublicKeyBytes,
@@ -41,7 +42,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use sui_framework::BuiltInFramework;
-use sui_genesis_builder::validator_info::ValidatorInfo;
 use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
 use sui_protocol_config::ProtocolConfig;
 use tokio::time::timeout;
@@ -220,7 +220,7 @@ async fn init_genesis(
     let pkg_id = pkg.id();
     genesis_objects.push(pkg);
 
-    let mut builder = sui_genesis_builder::Builder::new().add_objects(genesis_objects);
+    let mut builder = scalar_genesis_builder::Builder::new().add_objects(genesis_objects);
     let mut key_pairs = Vec::new();
     for i in 0..committee_size {
         let key_pair: AuthorityKeyPair = get_key_pair().1;

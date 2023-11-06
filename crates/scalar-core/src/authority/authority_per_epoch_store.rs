@@ -62,6 +62,7 @@ use mysten_common::sync::notify_read::NotifyRead;
 use mysten_metrics::monitored_scope;
 use narwhal_types::{Round, TimestampMs};
 use prometheus::IntCounter;
+use scalar_execution::{self, Executor};
 use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
 use scalar_types::executable_transaction::{
     TrustedExecutableTransaction, VerifiedExecutableTransaction,
@@ -82,7 +83,6 @@ use scalar_types::sui_system_state::epoch_start_sui_system_state::{
     EpochStartSystemState, EpochStartSystemStateTrait,
 };
 use std::str::FromStr;
-use sui_execution::{self, Executor};
 use sui_macros::fail_point;
 use sui_protocol_config::{Chain, ProtocolConfig, ProtocolVersion};
 use sui_storage::mutex_table::{MutexGuard, MutexTable};
@@ -2557,7 +2557,7 @@ impl ExecutionComponents {
         expensive_safety_check_config: &ExpensiveSafetyCheckConfig,
     ) -> Self {
         let silent = true;
-        let executor = sui_execution::executor(
+        let executor = scalar_execution::executor(
             protocol_config,
             expensive_safety_check_config.enable_move_vm_paranoid_checks(),
             silent,

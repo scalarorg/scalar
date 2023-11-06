@@ -707,7 +707,7 @@ impl AuthorityState {
         transaction: VerifiedTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult<VerifiedSignedTransaction> {
-        let (_gas_status, input_objects) = sui_transaction_checks::check_transaction_input(
+        let (_gas_status, input_objects) = scalar_transaction_checks::check_transaction_input(
             &self.database,
             epoch_store.protocol_config(),
             epoch_store.reference_gas_price(),
@@ -1254,7 +1254,7 @@ impl AuthorityState {
         let _metrics_guard = self.metrics.prepare_certificate_latency.start_timer();
 
         // check_certificate_input also checks shared object locks when loading the shared objects.
-        let (gas_status, input_objects) = sui_transaction_checks::check_certificate_input(
+        let (gas_status, input_objects) = scalar_transaction_checks::check_certificate_input(
             &self.database,
             epoch_store.as_ref(),
             certificate,
@@ -1334,7 +1334,7 @@ impl AuthorityState {
             let gas_object_ref = gas_object.compute_object_reference();
             gas_object_refs = vec![gas_object_ref];
             (
-                sui_transaction_checks::check_transaction_input_with_given_gas(
+                scalar_transaction_checks::check_transaction_input_with_given_gas(
                     &self.database,
                     epoch_store.protocol_config(),
                     epoch_store.reference_gas_price(),
@@ -1347,7 +1347,7 @@ impl AuthorityState {
             )
         } else {
             (
-                sui_transaction_checks::check_transaction_input(
+                scalar_transaction_checks::check_transaction_input(
                     &self.database,
                     epoch_store.protocol_config(),
                     epoch_store.reference_gas_price(),
@@ -1368,7 +1368,7 @@ impl AuthorityState {
         // don't bother with paranoid checks in dry run
         let enable_move_vm_paranoid_checks = false;
         let executor =
-            sui_execution::executor(protocol_config, enable_move_vm_paranoid_checks, silent)
+            scalar_execution::executor(protocol_config, enable_move_vm_paranoid_checks, silent)
                 .expect("Creating an executor should not fail here");
 
         let expensive_checks = false;
@@ -1490,7 +1490,7 @@ impl AuthorityState {
             Owner::AddressOwner(sender),
             TransactionDigest::genesis(),
         );
-        let (gas_object_ref, input_objects) = sui_transaction_checks::check_dev_inspect_input(
+        let (gas_object_ref, input_objects) = scalar_transaction_checks::check_dev_inspect_input(
             &self.database,
             protocol_config,
             &transaction_kind,
@@ -1508,7 +1508,7 @@ impl AuthorityState {
         let transaction_digest = TransactionDigest::new(default_hash(&data));
         let transaction_kind = data.into_kind();
         let silent = true;
-        let executor = sui_execution::executor(
+        let executor = scalar_execution::executor(
             protocol_config,
             self.expensive_safety_check_config
                 .enable_move_vm_paranoid_checks(),

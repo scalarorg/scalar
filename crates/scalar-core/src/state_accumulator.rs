@@ -1,6 +1,13 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/state_accumulator.rs
+ * Tổng hợp trạng thái của hệ thống sau khi thực hiện các transactions.
+ * Tags: SCALAR_SCORING, SCALAR_AUTHORITY
+ */
+
 use itertools::Itertools;
 use mysten_metrics::monitored_scope;
 use scalar_types::base_types::{ObjectID, ObjectRef, SequenceNumber, VersionNumber};

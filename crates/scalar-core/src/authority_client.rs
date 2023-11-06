@@ -9,7 +9,7 @@ use scalar_types::base_types::AuthorityName;
 use scalar_types::committee::CommitteeWithNetworkMetadata;
 use scalar_types::messages_checkpoint::{CheckpointRequest, CheckpointResponse};
 use scalar_types::multiaddr::Multiaddr;
-use scalar_types::scalar_system_state::SuiSystemState;
+use scalar_types::sui_system_state::SuiSystemState;
 use scalar_types::{error::SuiError, transaction::*};
 use std::collections::BTreeMap;
 use std::time::Duration;

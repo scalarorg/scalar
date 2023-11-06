@@ -1,5 +1,14 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
+
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/scoring_decision.rs
+ * He thong duy tri va update score cua cac authority tham gia trong committee.
+ * Thong tin authorities' score duoc su dung de sap xep cac transaction hoac update committee trong cac epoch tiep theo
+ * Tags: SCALAR_SCORING, SCALAR_AUTHORITY
+ */
+
 use crate::authority::AuthorityMetrics;
 use arc_swap::ArcSwap;
 use narwhal_config::{Authority, Committee, Stake};

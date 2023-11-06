@@ -1,6 +1,14 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/streamer.rs
+ * đóng vai trò là đầu mối để thực hiện gửi dữ liệu tới các subscriber
+ * mỗi khi nhận được message từ channel
+ * Tags: SCALAR_HANDLER, SCALAR_SUBSCRIPTION
+ */
+
 use crate::subscription_handler::{SubscriptionMetrics, EVENT_DISPATCH_BUFFER_SIZE};
 use futures::Stream;
 use mysten_metrics::metered_channel::Sender;

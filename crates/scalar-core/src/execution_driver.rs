@@ -1,6 +1,12 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 2023-11-06 TaiVV
+ * copy and modify from sui-core/src/execution_driver.rs
+ * Tags: SCALAR_EXECUTION
+ */
+
 use parking_lot::RwLock;
 use std::{
     sync::{Arc, Weak},
