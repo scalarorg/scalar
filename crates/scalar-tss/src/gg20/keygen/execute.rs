@@ -19,6 +19,8 @@ use tracing::Span;
 use crate::types::TrafficIn;
 use anyhow::anyhow;
 
+use crate::types::MessageOut;
+
 impl Gg20Service {
     /// create a new keygen.
     /// The field of Gg20Service `safe_keygen` dictates whether the new keygen will use big primes of not
@@ -43,7 +45,7 @@ impl Gg20Service {
     /// if the protocol cannot be instantiated, return a [anyhow!]
     pub(super) async fn execute_keygen(
         &self,
-        chans: ProtocolCommunication<Option<TrafficIn>, Result<types::MessageOut, tonic::Status>>,
+        chans: ProtocolCommunication<Option<TrafficIn>, Result<MessageOut, tonic::Status>>,
         ctx: &Context,
         execute_span: Span,
     ) -> TofndKeygenOutput {

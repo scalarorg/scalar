@@ -8,10 +8,11 @@ use super::{
     types::{BytesVec, KeygenInitSanitized, TofnKeygenOutput, TofndKeygenOutput},
     Gg20Service,
 };
-use crate::{gg20::types::PartyInfo, kv_manager::store::Store, narwhal_types};
+use crate::types::KeyReservation;
+use crate::types::{KeygenOutput, MessageOut};
+use crate::{gg20::types::PartyInfo, kv_manager::store::Store};
 use tofn::{gg20::keygen::SecretKeyShare, sdk::api::serialize};
 use tracing::info;
-use types::KeyReservation;
 // tonic cruft
 use tokio::sync::{
     mpsc,
@@ -27,7 +28,7 @@ impl Gg20Service {
     pub(super) async fn aggregate_results(
         &self,
         aggregator_receivers: Vec<oneshot::Receiver<TofndKeygenOutput>>,
-        stream_out_sender: &mut mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        stream_out_sender: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
         key_uid_reservation: KeyReservation,
         keygen_init: KeygenInitSanitized,
     ) -> anyhow::Result<()> {
@@ -67,16 +68,14 @@ impl Gg20Service {
             .map_err(|err| anyhow!(err))?;
 
         // try to send result
-        Ok(
-            stream_out_sender.send(Ok(narwhal_types::MessageOut::new_keygen_result(
-                &keygen_init.party_uids,
-                Ok(narwhal_types::KeygenOutput {
-                    pub_key,
-                    group_recover_info,
-                    private_recover_info,
-                }),
-            )))?,
-        )
+        Ok(stream_out_sender.send(Ok(MessageOut::new_keygen_result(
+            &keygen_init.party_uids,
+            Ok(KeygenOutput {
+                pub_key,
+                group_recover_info,
+                private_recover_info,
+            }),
+        )))?)
     }
 
     /// iterate all keygen outputs, and return data that need to be permenantly stored
@@ -86,7 +85,7 @@ impl Gg20Service {
     fn process_keygen_outputs(
         keygen_init: &KeygenInitSanitized,
         keygen_outputs: Vec<TofnKeygenOutput>,
-        stream_out_sender: &mut mpsc::UnboundedSender<Result<narwhal_types::MessageOut, Status>>,
+        stream_out_sender: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
     ) -> anyhow::Result<(BytesVec, BytesVec, Vec<SecretKeyShare>)> {
         // Collect all key shares unless there's a protocol fault
         let keygen_outputs = keygen_outputs
@@ -142,7 +141,7 @@ impl Gg20Service {
             }
             Err(crimes) => {
                 // send crimes and exit with an error
-                stream_out_sender.send(Ok(narwhal_types::MessageOut::new_keygen_result(
+                stream_out_sender.send(Ok(MessageOut::new_keygen_result(
                     &keygen_init.party_uids,
                     Err(crimes.clone()),
                 )))?;

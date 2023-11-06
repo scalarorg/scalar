@@ -1,50 +1,31 @@
-mod config;
 mod encrypted_sled;
 mod gg20;
 mod kv_manager;
 pub(crate) mod mnemonic;
 // mod multisig;
+mod helper;
 mod tss_keygen;
 mod tss_party;
 mod tss_service;
 mod tss_signer;
 mod types;
-// mod narwhal_types {
-//     // pub use types::*;
-//     include!(concat!(env!("OUT_DIR"), "/tss.network.TssPeer.rs"));
-//     include!(concat!(env!("OUT_DIR"), "/tofnd.rs"));
-//     include!(concat!(env!("OUT_DIR"), "/scalar.ScalarEvent.rs"));
-// }
 use anemo::PeerId;
 use crypto::NetworkPublicKey;
 pub use gg20::*;
-use network::CancelOnDropHandler;
-use network::RetryConfig;
+// use narwhal_network::CancelOnDropHandler;
+use narwhal_network::RetryConfig;
 use std::net::Ipv4Addr;
 use tonic::transport::Channel;
 use tracing::info;
+pub use types::gg20_client::Gg20Client;
 pub use types::*;
-pub use types::{
-    gg20_client,
-    gg20_client::Gg20Client,
-    message_in,
-    message_out::{self, KeygenResult},
-    // ConditionalBroadcastReceiver,
-    KeygenInit,
-    KeygenOutput,
-    MessageIn,
-    SignInit,
-    TrafficIn,
-};
-pub use types::{
-    tss_peer_client::TssPeerClient,
-    tss_peer_server::{TssPeer, TssPeerServer},
-};
 pub mod proto;
+pub mod storage;
 pub use tss_party::*;
 pub use tss_service::*;
 pub use tss_signer::*;
 pub type TofndResult<R> = anyhow::Result<R>;
+
 pub async fn create_tofnd_client(
     port: u16,
 ) -> Result<Gg20Client<Channel>, tonic::transport::Error> {
@@ -100,4 +81,28 @@ where
     let task = tokio::spawn(retry_config.retry(message_send));
 
     CancelOnDropHandler(task)
+}
+
+/// This adapter will make a [`tokio::task::JoinHandle`] abort its handled task when the handle is dropped.
+#[derive(Debug)]
+#[must_use]
+pub struct CancelOnDropHandler<T>(tokio::task::JoinHandle<T>);
+
+impl<T> Drop for CancelOnDropHandler<T> {
+    fn drop(&mut self) {
+        self.0.abort();
+    }
+}
+
+impl<T> std::future::Future for CancelOnDropHandler<T> {
+    type Output = T;
+
+    fn poll(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        use futures::future::FutureExt;
+        // If the task panics just propagate it up
+        self.0.poll_unpin(cx).map(Result::unwrap)
+    }
 }

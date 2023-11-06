@@ -1,6 +1,6 @@
 use super::TssSigner;
 use super::{create_tofnd_client, send};
-use crate::config::{Authority, Committee};
+use crate::storage::TssStore;
 use crate::types::message_out::keygen_result::KeygenResultData;
 use anemo::{Network, PeerId};
 use anyhow::anyhow;
@@ -11,8 +11,8 @@ use k256::elliptic_curve::sec1::FromEncodedPoint;
 use k256::elliptic_curve::ScalarPrimitive;
 use k256::EncodedPoint;
 use k256::ProjectivePoint;
+use narwhal_config::{Authority, Committee};
 use std::net::Ipv4Addr;
-use storage::TssStore;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
@@ -28,18 +28,11 @@ use crate::types::{
     message_out::SignResult,
     message_out::{self, KeygenResult},
     tss_peer_client::TssPeerClient,
-    // ConditionalBroadcastReceiver,
-    KeygenInit,
-    MessageIn,
-    MessageOut,
-    SignInit,
-    TrafficIn,
-    TssAnemoDeliveryMessage,
-    TssAnemoKeygenRequest,
-    TssAnemoSignRequest,
+    ConditionalBroadcastReceiver, KeygenInit, MessageIn, MessageOut, SignInit, TrafficIn,
+    TssAnemoDeliveryMessage, TssAnemoKeygenRequest, TssAnemoSignRequest,
 };
 
-use crate::encrypted_sled::PasswordMethod;
+// use crate::encrypted_sled::PasswordMethod;
 use crate::service::Gg20Service;
 use crate::tss_keygen::TssKeyGenerator;
 
@@ -563,7 +556,9 @@ impl TssParty {
                 },
                 keygen_result = tss_keygen.keygen_execute_v2(keygen_init, &mut rx_message_out) => match keygen_result {
                     Ok(res) => {
-                        info!("Keygen result {:?}", &res);
+                        // info!("Keygen result {:?}", &res);
+                        // info!("Keygen result {:?}", &res);
+                        info!("Keygen result");
                         //Todo: Send keygen result to Evm Relayer to update external public key
                         // keygened = true;
                     },
@@ -633,6 +628,7 @@ impl TssParty {
         let tx_sign_result = self.tx_tss_sign_result.clone();
         let uid = self.get_uid();
         // let authority_id = self.authority.id().0;
+
         tokio::spawn(async move {
             info!("Init TssParty node, starting keygen process");
             let mut shuting_down = false;
@@ -652,7 +648,8 @@ impl TssParty {
                     },
                     keygen_result = tss_keygen.keygen_execute(&mut keygen_server_outgoing) => match keygen_result {
                         Ok(res) => {
-                            info!("Keygen result {:?}", &res);
+                            // info!("Keygen result {:?}", &res);
+                            info!("Keygen result");
                             //Todo: Send keygen result to Evm Relayer to update external public key
                             //keygened = true;
                         },

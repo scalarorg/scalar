@@ -1,4 +1,7 @@
+pub mod scalar;
+pub use scalar::*;
 use serde::{Deserialize, Serialize};
+use tokio::sync::broadcast;
 
 pub type KvValue = Vec<u8>;
 pub type KeyReservation = String;
@@ -13,6 +16,11 @@ pub type KeyReservation = String;
 //         self.key == other.key
 //     }
 // }
+
+#[derive(Debug)]
+pub struct ConditionalBroadcastReceiver {
+    pub receiver: broadcast::Receiver<()>,
+}
 
 /// Used by workers to send a new batch.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -52,41 +60,41 @@ pub struct TssAnemoVerifyResponse {
     pub message: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct KeygenRequest {
-    pub name: String,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct KeygenRequest {
+//     pub name: String,
+// }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct KeygenResponse {
-    pub message: String,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct KeygenResponse {
+//     pub message: String,
+// }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SignRequest {
-    pub name: String,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct SignRequest {
+//     pub name: String,
+// }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SignResponse {
-    pub message: String,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct SignResponse {
+//     pub message: String,
+// }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct VerifyRequest {
-    pub name: String,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct VerifyRequest {
+//     pub name: String,
+// }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct VerifyResponse {
-    pub message: String,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct VerifyResponse {
+//     pub message: String,
+// }
 
-mod narwhal_types {
+pub mod tss_types {
     // pub use types::*;
     include!(concat!(env!("OUT_DIR"), "/tss.network.TssPeer.rs"));
     include!(concat!(env!("OUT_DIR"), "/tofnd.rs"));
     include!(concat!(env!("OUT_DIR"), "/scalar.ScalarEvent.rs"));
 }
 
-pub use narwhal_types::*;
+pub use tss_types::*;

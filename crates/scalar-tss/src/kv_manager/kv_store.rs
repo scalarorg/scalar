@@ -2,6 +2,7 @@ use super::{
     error::{KvError, KvResult},
     store::Store,
 };
+use crate::storage::TssStore;
 use crate::types::KeyReservation;
 use crate::{
     gg20::types::Entropy,
@@ -13,7 +14,6 @@ use async_trait::async_trait;
 use futures_util::TryFutureExt;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
-use storage::TssStore;
 use tofn::{
     gg20::keygen::SecretRecoveryKey,
     sdk::api::{deserialize, serialize},
@@ -91,7 +91,7 @@ impl KvStore {
     async fn put_entropy(&self, reservation: KeyReservation, entropy: Entropy) -> KvResult<()> {
         let value = entropy
             .try_into()
-            .map_err(|err| KvError::PutErr(InnerKvError::DeserializationErr))?;
+            .map_err(|_err| KvError::PutErr(InnerKvError::DeserializationErr))?;
         self.tss_store
             .write(&reservation, &value)
             .await

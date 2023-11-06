@@ -6,7 +6,8 @@ use super::{
     types::{Context, TofndSignOutput},
     Gg20Service, ProtocolCommunication,
 };
-use crate::{gg20::protocol, narwhal_types};
+use crate::gg20::protocol;
+use crate::types::{MessageOut, TrafficIn};
 use tofn::gg20::sign::new_sign;
 
 // logging
@@ -20,10 +21,7 @@ impl Gg20Service {
     /// if the protocol cannot be instantiated, return an [anyhow!] error
     pub(super) async fn execute_sign(
         &self,
-        chans: ProtocolCommunication<
-            Option<narwhal_types::TrafficIn>,
-            Result<narwhal_types::MessageOut, tonic::Status>,
-        >,
+        chans: ProtocolCommunication<Option<TrafficIn>, Result<MessageOut, tonic::Status>>,
         ctx: &Context,
         execute_span: Span,
     ) -> TofndSignOutput {

@@ -1,7 +1,5 @@
 // use crate::proto::gg20_peer_client::Gg20PeerClient;
-
 use super::{create_tofnd_client, send};
-use crate::config::{Authority, Committee};
 use crate::types::{
     gg20_client::Gg20Client,
     message_in,
@@ -13,6 +11,7 @@ use anemo::Network;
 use anemo::PeerId;
 use crypto::NetworkPublicKey;
 use futures::future::join_all;
+use narwhal_config::{Authority, Committee};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tonic::Status;
@@ -434,9 +433,13 @@ impl TssKeyGenerator {
             })),
         };
         //Send to own tofnd gGpc Server
+        // info!(
+        //     "Send message {:?} to the local gRPC server via channel",
+        //     &msg_in
+        // );
         info!(
-            "Send message {:?} to the local gRPC server via channel",
-            &msg_in
+            "Send message to the local gRPC server via channel",
+            // &msg_in
         );
         let _ = self.tx_keygen.send(msg_in);
         //info!("Broadcast message {:?} from {:?}", msg, from);

@@ -5,7 +5,8 @@ use tofn::{
     sdk::api::{Protocol, ProtocolOutput, Round},
 };
 
-use crate::{narwhal_types, TofndResult};
+use crate::types::{MessageOut, TrafficIn};
+use crate::TofndResult;
 
 // tonic cruft
 use super::ProtocolCommunication;
@@ -20,10 +21,7 @@ use anyhow::anyhow;
 /// execute gg20 protocol
 pub(super) async fn execute_protocol<F, K, P, const MAX_MSG_IN_LEN: usize>(
     mut party: Protocol<F, K, P, MAX_MSG_IN_LEN>,
-    mut chans: ProtocolCommunication<
-        Option<types::TrafficIn>,
-        Result<types::MessageOut, tonic::Status>,
-    >,
+    mut chans: ProtocolCommunication<Option<TrafficIn>, Result<MessageOut, tonic::Status>>,
     party_uids: &[String],
     party_share_counts: &[usize],
     span: Span,
@@ -67,7 +65,7 @@ where
 }
 
 fn handle_outgoing<F, K, P, const MAX_MSG_IN_LEN: usize>(
-    sender: &UnboundedSender<Result<types::MessageOut, tonic::Status>>,
+    sender: &UnboundedSender<Result<MessageOut, tonic::Status>>,
     round: &Round<F, K, P, MAX_MSG_IN_LEN>,
     party_uids: &[String],
     round_count: usize,
@@ -80,7 +78,7 @@ fn handle_outgoing<F, K, P, const MAX_MSG_IN_LEN: usize>(
     if let Some(bcast) = round.bcast_out() {
         debug!("generating out bcast");
         // send message to gRPC client
-        sender.send(Ok(types::MessageOut::new_bcast(bcast)))?
+        sender.send(Ok(MessageOut::new_bcast(bcast)))?
     }
     // send outgoing p2ps
     if let Some(p2ps_out) = round.p2ps_out() {
@@ -102,7 +100,7 @@ fn handle_outgoing<F, K, P, const MAX_MSG_IN_LEN: usize>(
             p2p_msg_count += 1;
 
             // send message to gRPC client
-            sender.send(Ok(narwhal_types::MessageOut::new_p2p(
+            sender.send(Ok(MessageOut::new_p2p(
                 &party_uids[tofnd_idx.as_usize()],
                 p2p,
             )))?
@@ -113,7 +111,7 @@ fn handle_outgoing<F, K, P, const MAX_MSG_IN_LEN: usize>(
 }
 
 async fn handle_incoming<F, K, P, const MAX_MSG_IN_LEN: usize>(
-    receiver: &mut UnboundedReceiver<Option<narwhal_types::TrafficIn>>,
+    receiver: &mut UnboundedReceiver<Option<TrafficIn>>,
     round: &mut Round<F, K, P, MAX_MSG_IN_LEN>,
     party_uids: &[String],
     total_round_p2p_msgs: usize,
@@ -131,7 +129,8 @@ async fn handle_incoming<F, K, P, const MAX_MSG_IN_LEN: usize>(
             "{}: stream closed by client before protocol has completed",
             round_count
         ));
-        info!("handle_incoming message {:?}", &traffic);
+        info!("handle_incoming message");
+        // info!("handle_incoming message {:?}", &traffic);
         // unpeel TrafficIn
         let traffic = match traffic {
             Ok(traffic_opt) => match traffic_opt {

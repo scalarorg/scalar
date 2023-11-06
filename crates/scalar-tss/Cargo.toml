@@ -9,6 +9,7 @@ edition = "2021"
 
 [dependencies]
 anemo.workspace = true
+bcs.workspace = true
 tonic.workspace = true
 crypto.workspace = true
 tracing.workspace = true
@@ -24,6 +25,13 @@ mysten-network.workspace = true
 mysten-util-mem.workspace = true
 fastcrypto.workspace = true
 uuid.workspace = true
+async-trait.workspace = true
+narwhal-network.workspace = true
+narwhal-config.workspace = true
+
+# Storage dependencies
+typed-store.workspace = true
+tempfile.workspace = true
 
 # Scalar dependencies
 chacha20poly1305 = { version = "0.9", features = [
@@ -38,6 +46,12 @@ zeroize = { version = "1.4", features = [
 scrypt = { version = "0.11", default-features = false, features = ["std"] }
 rpassword = { version = "5.0", default-features = false }
 tofn = { git = "https://github.com/massbitprotocol/tofn", rev = "b6ccfb639c70d5fdd134be2c009867fec79a8ae8" }
+futures-util = { version = "0.3", default-features = false }
+ethers = { version = "2.0", features = ["abigen", "ipc", "rustls", "ws"]}
+
+# enable logging for tests
+tracing-test = {version = "0.2", default-features = false}
+testdir = { version = "0.6", default-features = false }
 
 [dev-dependencies]
 [target.'cfg(not(target_env = "msvc"))'.build-dependencies]

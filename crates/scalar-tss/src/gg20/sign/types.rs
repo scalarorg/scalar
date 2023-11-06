@@ -24,7 +24,7 @@ pub(super) struct SignInitSanitized {
     pub(super) message_to_sign: MessageDigest,
 }
 
-use crate::tss::gg20::types::PartyInfo;
+use crate::gg20::types::PartyInfo;
 
 pub(super) struct Context {
     pub(super) sign_init: SignInitSanitized,
