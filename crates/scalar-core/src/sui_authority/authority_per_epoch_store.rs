@@ -63,6 +63,7 @@ use mysten_metrics::monitored_scope;
 use narwhal_types::{Round, TimestampMs};
 use prometheus::IntCounter;
 use scalar_execution::{self, Executor};
+use scalar_storage::mutex_table::{MutexGuard, MutexTable};
 use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
 use scalar_types::executable_transaction::{
     TrustedExecutableTransaction, VerifiedExecutableTransaction,
@@ -85,7 +86,6 @@ use scalar_types::sui_system_state::epoch_start_sui_system_state::{
 use std::str::FromStr;
 use sui_macros::fail_point;
 use sui_protocol_config::{Chain, ProtocolConfig, ProtocolVersion};
-use sui_storage::mutex_table::{MutexGuard, MutexTable};
 use tap::TapOptional;
 use tokio::time::Instant;
 use typed_store::{retry_transaction_forever, Map};

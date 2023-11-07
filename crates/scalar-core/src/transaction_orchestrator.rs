@@ -23,6 +23,7 @@ use prometheus::{
     register_int_counter_vec_with_registry, register_int_counter_with_registry,
     register_int_gauge_vec_with_registry, register_int_gauge_with_registry, Registry,
 };
+use scalar_storage::write_path_pending_tx_log::WritePathPendingTransactionLog;
 use scalar_types::base_types::TransactionDigest;
 use scalar_types::effects::{TransactionEffectsAPI, VerifiedCertifiedTransactionEffects};
 use scalar_types::error::{SuiError, SuiResult};
@@ -36,7 +37,6 @@ use scalar_types::sui_system_state::SuiSystemState;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
-use sui_storage::write_path_pending_tx_log::WritePathPendingTransactionLog;
 use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::broadcast::Receiver;
 use tokio::task::JoinHandle;

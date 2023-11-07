@@ -12,6 +12,8 @@ use fastcrypto::traits::KeyPair;
 use move_core_types::ident_str;
 use scalar_config::certificate_deny_config::CertificateDenyConfigBuilder;
 use scalar_config::transaction_deny_config::{TransactionDenyConfig, TransactionDenyConfigBuilder};
+use scalar_swarm_config::genesis_config::{AccountConfig, DEFAULT_GAS_AMOUNT};
+use scalar_swarm_config::network_config::NetworkConfig;
 use scalar_types::base_types::{ObjectID, ObjectRef, SuiAddress};
 use scalar_types::effects::TransactionEffectsAPI;
 use scalar_types::error::{SuiError, SuiResult, UserInputError};
@@ -26,8 +28,6 @@ use scalar_types::utils::{
 };
 use std::path::PathBuf;
 use std::sync::Arc;
-use sui_swarm_config::genesis_config::{AccountConfig, DEFAULT_GAS_AMOUNT};
-use sui_swarm_config::network_config::NetworkConfig;
 use sui_test_transaction_builder::TestTransactionBuilder;
 
 const ACCOUNT_NUM: usize = 5;
@@ -35,7 +35,7 @@ const GAS_OBJECT_COUNT: usize = 15;
 
 async fn setup_test(deny_config: TransactionDenyConfig) -> (NetworkConfig, Arc<AuthorityState>) {
     let network_config =
-        sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
+        scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
             .with_accounts(vec![
                 AccountConfig {
                     address: None,

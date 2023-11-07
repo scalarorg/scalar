@@ -637,7 +637,7 @@ mod tests {
         let latest_protocol_config = &latest_protocol_version();
 
         let network_config =
-            sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
+            scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
                 .with_objects(objects.clone())
                 .build();
 

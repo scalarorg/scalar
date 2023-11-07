@@ -71,19 +71,22 @@ shared-crypto.workspace = true
 #sui-framework.workspace = true
 #sui-swarm-config.workspace = true
 #sui-genesis-builder.workspace = true
-sui-json-rpc-types.workspace = true
 sui-macros.workspace = true
 #sui-move-build.workspace = true
 sui-network.workspace = true
 sui-protocol-config.workspace = true
-sui-simulator.workspace = true
-sui-storage.workspace = true
+
+scalar-archival.workspace = true
+#scalar-simulator.workspace = true
+scalar-storage.workspace = true
 
 scalar-config.workspace = true
 scalar-execution.workspace = true
+scalar-swarm-config.workspace = true
 scalar-types.workspace = true
-
 scalar-transaction-checks.workspace = true
+scalar-json-rpc-types.workspace = true
+
 workspace-hack.workspace = true
 
 [dev-dependencies]

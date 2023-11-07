@@ -427,7 +427,7 @@ async fn execute_pay_all_sui(
     gas_budget: u64,
 ) -> PaySuiTransactionBlockExecutionResult {
     let dir = tempfile::TempDir::new().unwrap();
-    let network_config = sui_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
+    let network_config = scalar_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
         .with_reference_gas_price(700)
         .with_objects(
             input_coin_objects

@@ -26,6 +26,9 @@ use std::collections::HashSet;
 use std::fs;
 use std::{convert::TryInto, env};
 
+use scalar_json_rpc_types::{
+    SuiArgument, SuiExecutionResult, SuiExecutionStatus, SuiTransactionBlockEffectsAPI, SuiTypeTag,
+};
 use scalar_types::dynamic_field::DynamicFieldType;
 use scalar_types::effects::TransactionEffects;
 use scalar_types::epoch_data::EpochData;
@@ -46,9 +49,6 @@ use scalar_types::{
     object::{Owner, GAS_VALUE_FOR_TESTING, OBJECT_START_VERSION},
     MOVE_STDLIB_PACKAGE_ID, SUI_CLOCK_OBJECT_ID, SUI_FRAMEWORK_PACKAGE_ID,
     SUI_SYSTEM_STATE_OBJECT_ID,
-};
-use sui_json_rpc_types::{
-    SuiArgument, SuiExecutionResult, SuiExecutionStatus, SuiTransactionBlockEffectsAPI, SuiTypeTag,
 };
 use sui_macros::sim_test;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
@@ -4639,7 +4639,7 @@ async fn test_consensus_message_processed() {
     let initial_shared_version = shared_object.version();
 
     let dir = tempfile::TempDir::new().unwrap();
-    let network_config = sui_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
+    let network_config = scalar_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
         .committee_size(2.try_into().unwrap())
         .with_objects(vec![gas_object.clone(), shared_object.clone()])
         .build();

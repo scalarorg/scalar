@@ -12,6 +12,7 @@ use crate::module_cache_metrics::ResolverMetrics;
 use crate::signature_verifier::SignatureVerifierMetrics;
 use fastcrypto::traits::KeyPair;
 use prometheus::Registry;
+use scalar_archival::reader::ArchiveReaderBalancer;
 use scalar_config::certificate_deny_config::CertificateDenyConfig;
 use scalar_config::genesis::Genesis;
 use scalar_config::node::StateDebugDumpConfig;
@@ -19,6 +20,9 @@ use scalar_config::node::{
     AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
 };
 use scalar_config::transaction_deny_config::TransactionDenyConfig;
+use scalar_storage::IndexStore;
+use scalar_swarm_config::genesis_config::AccountConfig;
+use scalar_swarm_config::network_config::NetworkConfig;
 use scalar_types::base_types::{AuthorityName, ObjectID};
 use scalar_types::crypto::AuthorityKeyPair;
 use scalar_types::digests::ChainIdentifier;
@@ -28,12 +32,8 @@ use scalar_types::sui_system_state::SuiSystemStateTrait;
 use scalar_types::transaction::VerifiedTransaction;
 use std::path::PathBuf;
 use std::sync::Arc;
-use sui_archival::reader::ArchiveReaderBalancer;
 use sui_macros::nondeterministic;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
-use sui_storage::IndexStore;
-use sui_swarm_config::genesis_config::AccountConfig;
-use sui_swarm_config::network_config::NetworkConfig;
 use tempfile::tempdir;
 
 #[derive(Default)]
@@ -145,7 +145,7 @@ impl<'a> TestAuthorityBuilder<'a> {
 
     pub async fn build(self) -> Arc<AuthorityState> {
         let local_network_config =
-            sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
+            scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
                 .with_accounts(self.accounts)
                 .with_reference_gas_price(self.reference_gas_price.unwrap_or(500))
                 .build();
