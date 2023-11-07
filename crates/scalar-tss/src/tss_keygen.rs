@@ -1,7 +1,5 @@
-// use crate::proto::gg20_peer_client::Gg20PeerClient;
 use super::{create_tofnd_client, send};
 use crate::types::{
-    gg20_client::Gg20Client,
     message_in,
     message_out::{self, KeygenResult},
     tss_peer_client::TssPeerClient,
@@ -311,7 +309,7 @@ impl TssKeyGenerator {
         info!("{:?} Execute keygen flow", my_uid);
         let port = 50010 + self.authority.id().0;
         match create_tofnd_client(port).await {
-            Err(e) => Err(tonic::Status::unavailable("Cannot create tofnd client")),
+            Err(_e) => Err(tonic::Status::unavailable("Cannot create tofnd client")),
             Ok(mut client) => {
                 let mut keygen_server_outgoing = client
                     .keygen(tonic::Request::new(UnboundedReceiverStream::new(rx_keygen)))
@@ -472,7 +470,7 @@ impl TssKeyGenerator {
                     info!("Create and send keygen request to peer");
                     let result = TssPeerClient::new(peer).keygen(request).await;
                     match result.as_ref() {
-                        Ok(r) => {
+                        Ok(_r) => {
                             //info!("TssPeerClient keygen result {:?}", r);
                         }
                         Err(e) => {
@@ -533,9 +531,9 @@ impl TssKeyGenerator {
                 };
                 async move {
                     info!("Create and send keygen request to peer");
-                    let result = Gg20Client::new(peer).keygen(request).await;
+                    let result = TssPeerClient::new(peer).keygen(request).await;
                     match result.as_ref() {
-                        Ok(r) => {
+                        Ok(_r) => {
                             //info!("Gg0PeerClient keygen result {:?}", r);
                         }
                         Err(e) => {

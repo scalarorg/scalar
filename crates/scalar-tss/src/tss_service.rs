@@ -72,13 +72,13 @@ impl TssPeer for TssPeerService {
         request: anemo::Request<TssAnemoVerifyRequest>,
     ) -> Result<Response<TssAnemoVerifyResponse>, Status> {
         let TssAnemoVerifyRequest { message } = request.into_body();
-        let msg_in = MessageIn {
-            data: Some(message_in::Data::Traffic(TrafficIn {
-                from_party_uid: message.from_party_uid.clone(),
-                is_broadcast: message.is_broadcast,
-                payload: message.payload.clone(),
-            })),
-        };
+        // let msg_in = MessageIn {
+        //     data: Some(message_in::Data::Traffic(TrafficIn {
+        //         from_party_uid: message.from_party_uid.clone(),
+        //         is_broadcast: message.is_broadcast,
+        //         payload: message.payload.clone(),
+        //     })),
+        // };
         let reply = TssAnemoVerifyResponse {
             message: format!("Hello {}!", message.from_party_uid),
         };

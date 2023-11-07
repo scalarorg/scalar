@@ -28,6 +28,7 @@ uuid.workspace = true
 async-trait.workspace = true
 narwhal-network.workspace = true
 narwhal-config.workspace = true
+prost.workspace = true
 
 # Storage dependencies
 typed-store.workspace = true

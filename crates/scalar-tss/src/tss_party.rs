@@ -452,7 +452,7 @@ impl TssParty {
         // info!("Keygen result {:?}", &key_data);
         info!("Keygen result");
         match key_data {
-            KeygenResultData::Data(data) => {
+            KeygenResultData::Data(_data) => {
                 //self.tss_store.write().await.set_key(data);
             }
             KeygenResultData::Criminals(_c) => {
@@ -461,7 +461,11 @@ impl TssParty {
             }
         }
     }
-    pub async fn verify_sign_result(&mut self, message_digest: Vec<u8>, sign_data: SignResultData) {
+    pub async fn verify_sign_result(
+        &mut self,
+        _message_digest: Vec<u8>,
+        sign_data: SignResultData,
+    ) {
         // info!("Sign result data {:?}", &sign_data);
         info!("Sign result data");
         match sign_data {
@@ -491,7 +495,7 @@ impl TssParty {
         let signature = k256::ecdsa::Signature::from_der(signature)
             .map_err(|_| anyhow!("Invalid signature"))?;
         let scalar = ScalarPrimitive::from_slice(message)?;
-        let hashed_msg = k256::Scalar::from(scalar);
+        let _hashed_msg = k256::Scalar::from(scalar);
         let prj_point =
             ProjectivePoint::from_encoded_point(&EncodedPoint::from_bytes(pub_key)?).unwrap();
         let res = prj_point
@@ -505,8 +509,8 @@ impl TssParty {
     pub fn run_v2(
         &self,
         rx_keygen: UnboundedReceiver<MessageIn>,
-        rx_sign: UnboundedReceiver<MessageIn>,
-        rx_message_out: UnboundedReceiver<MessageOut>,
+        _rx_sign: UnboundedReceiver<MessageIn>,
+        _rx_message_out: UnboundedReceiver<MessageOut>,
         mut rx_sign_init: UnboundedReceiver<SignInit>,
         mut rx_shutdown: ConditionalBroadcastReceiver,
     ) -> Vec<JoinHandle<()>> {
@@ -555,7 +559,7 @@ impl TssParty {
                     shuting_down = true;
                 },
                 keygen_result = tss_keygen.keygen_execute_v2(keygen_init, &mut rx_message_out) => match keygen_result {
-                    Ok(res) => {
+                    Ok(_res) => {
                         // info!("Keygen result {:?}", &res);
                         // info!("Keygen result {:?}", &res);
                         info!("Keygen result");
@@ -647,7 +651,7 @@ impl TssParty {
                         shuting_down = true;
                     },
                     keygen_result = tss_keygen.keygen_execute(&mut keygen_server_outgoing) => match keygen_result {
-                        Ok(res) => {
+                        Ok(_res) => {
                             // info!("Keygen result {:?}", &res);
                             info!("Keygen result");
                             //Todo: Send keygen result to Evm Relayer to update external public key
