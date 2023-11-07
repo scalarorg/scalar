@@ -1,7 +1,7 @@
 //! Public API for kvstore operations
 //! Errors are mapped to [super::error::KvError]
 
-use crate::tss::encrypted_sled::{self, Password};
+use crate::encrypted_sled::{self, Password};
 
 use super::{
     error::{KvError::*, KvResult},
@@ -11,10 +11,10 @@ use super::{
         DEFAULT_KV_NAME, DEFAULT_KV_PATH,
     },
 };
+use crate::types::KeyReservation;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{fmt::Debug, path::PathBuf};
 use tokio::sync::{mpsc, oneshot};
-use types::KeyReservation;
 
 // logging
 use tracing::{info, warn};

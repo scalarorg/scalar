@@ -28,9 +28,10 @@ use crate::types::{
     message_out::SignResult,
     message_out::{self, KeygenResult},
     tss_peer_client::TssPeerClient,
-    ConditionalBroadcastReceiver, KeygenInit, MessageIn, MessageOut, SignInit, TrafficIn,
-    TssAnemoDeliveryMessage, TssAnemoKeygenRequest, TssAnemoSignRequest,
+    KeygenInit, MessageIn, MessageOut, SignInit, TrafficIn, TssAnemoDeliveryMessage,
+    TssAnemoKeygenRequest, TssAnemoSignRequest,
 };
+use narwhal_types::ConditionalBroadcastReceiver;
 
 // use crate::encrypted_sled::PasswordMethod;
 use crate::service::Gg20Service;

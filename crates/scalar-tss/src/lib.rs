@@ -1,14 +1,18 @@
-mod encrypted_sled;
-mod gg20;
-mod kv_manager;
-pub(crate) mod mnemonic;
+pub mod encrypted_sled;
+pub mod gg20;
+pub mod kv_manager;
+pub mod mnemonic;
+mod tests;
 // mod multisig;
-mod helper;
-mod tss_keygen;
-mod tss_party;
-mod tss_service;
-mod tss_signer;
-mod types;
+pub mod helper;
+pub mod proto;
+pub mod storage;
+pub mod tss_keygen;
+pub mod tss_party;
+pub mod tss_service;
+pub mod tss_signer;
+pub mod types;
+
 use anemo::PeerId;
 use crypto::NetworkPublicKey;
 pub use gg20::*;
@@ -17,13 +21,11 @@ use narwhal_network::RetryConfig;
 use std::net::Ipv4Addr;
 use tonic::transport::Channel;
 use tracing::info;
-pub use types::gg20_client::Gg20Client;
-pub use types::*;
-pub mod proto;
-pub mod storage;
 pub use tss_party::*;
 pub use tss_service::*;
 pub use tss_signer::*;
+pub use types::gg20_client::Gg20Client;
+pub use types::*;
 pub type TofndResult<R> = anyhow::Result<R>;
 
 pub async fn create_tofnd_client(

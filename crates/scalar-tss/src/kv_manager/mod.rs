@@ -9,15 +9,15 @@ pub mod error;
 pub mod kv_store;
 pub mod store;
 // /// public API of kv manager
-// mod kv;
+mod kv;
 // /// sled bindings for basic kv operations
-// mod sled_bindings;
+mod sled_bindings;
 // /// definition of kv_manager types and default paths
-// mod types;
+mod types;
 // /// wrapers for values stored by tofnd services
 pub mod value;
 
-// pub use value::KvManager;
+pub use value::KvManager;
 
 // // tests for low-level operations
 // #[cfg(test)]
