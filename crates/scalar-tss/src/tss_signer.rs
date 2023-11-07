@@ -56,7 +56,7 @@ impl TssSigner {
         let sign_init = input.unwrap();
         let port = 50010 + self.authority.id().0;
         match create_tofnd_client(port).await {
-            Err(e) => Err(Status::not_found("tofnd client not found")),
+            Err(_e) => Err(Status::not_found("tofnd client not found")),
             Ok(mut client) => {
                 info!("Call tss gRPC server for sign flow");
                 let mut sign_server_outgoing = client
@@ -298,8 +298,9 @@ impl TssSigner {
                 async move {
                     let result = TssPeerClient::new(peer).sign(request).await;
                     match result.as_ref() {
-                        Ok(r) => {
-                            //info!("TssPeerClient sign result {:?}", r);
+                        Ok(_r) => {
+                            // info!("TssPeerClient sign result {:?}", r);
+                            info!("TssPeerClient sign result");
                         }
                         Err(e) => {
                             info!("TssPeerClient sign error {:?}", e);
@@ -312,9 +313,9 @@ impl TssSigner {
             let handle = send(network, peer, f);
             handlers.push(handle);
         }
-        let results = join_all(handlers).await;
+        let _results = join_all(handlers).await;
         //info!("All sign result {:?}", results);
-        //handlers
+        // handlers
     }
     pub async fn handle_tss_message(
         &self,

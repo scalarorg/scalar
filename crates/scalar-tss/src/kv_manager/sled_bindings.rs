@@ -7,7 +7,7 @@ use types::KeyReservation;
 use super::error::{InnerKvError::*, InnerKvResult};
 use super::types::DEFAULT_RESERVE;
 
-use crate::tss::encrypted_sled;
+use crate::encrypted_sled;
 
 /// Reserves a key. New key's value is [DEFAULT_RESERVE].
 /// Returns [SledErr] of [LogicalErr] on failure.

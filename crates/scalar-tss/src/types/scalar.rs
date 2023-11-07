@@ -6,7 +6,7 @@ use ethers::utils::keccak256;
 use fastcrypto::{hash::Digest, signature_service::SignatureService};
 use narwhal_config::{AuthorityIdentifier, Epoch};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, hash::Hasher};
+use std::collections::HashMap;
 
 //For simplicity all message convert to string using serde_json
 #[derive(Clone, Debug, Serialize, Deserialize)]
