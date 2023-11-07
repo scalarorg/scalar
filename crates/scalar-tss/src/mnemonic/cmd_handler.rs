@@ -6,7 +6,7 @@ use super::{
         InnerMnemonicError::*, InnerMnemonicResult, MnemonicError::*, MnemonicResult, SeedResult,
     },
 };
-use crate::tss::{
+use crate::{
     gg20::types::{Entropy, Password}, // TODO: move from gg20::types
     kv_manager::{
         error::{InnerKvError, KvError},
@@ -18,10 +18,10 @@ use tofn::{
     sdk::api::{deserialize, serialize},
 };
 
+use crate::types::KeyReservation;
 use rpassword::read_password;
 use std::convert::TryInto;
 use tracing::{error, info};
-use types::KeyReservation;
 
 // default key to store mnemonic
 const MNEMONIC_KEY: &str = "mnemonic";

@@ -17,10 +17,10 @@ pub type KeyReservation = String;
 //     }
 // }
 
-#[derive(Debug)]
-pub struct ConditionalBroadcastReceiver {
-    pub receiver: broadcast::Receiver<()>,
-}
+// #[derive(Debug)]
+// pub struct ConditionalBroadcastReceiver {
+//     pub receiver: broadcast::Receiver<()>,
+// }
 
 /// Used by workers to send a new batch.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]

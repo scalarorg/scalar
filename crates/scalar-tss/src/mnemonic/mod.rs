@@ -7,9 +7,9 @@
 //!     [Cmd::Export]: Writes the existing mnemonic to a file and exits; Succeeds when there is an existing mnemonic, fails otherwise.
 
 pub mod bip39_bindings;
-// mod cmd_handler;
+mod cmd_handler;
 mod file_io;
 pub(crate) mod results;
 
-// pub use cmd_handler::Cmd;
+pub use cmd_handler::Cmd;
 pub use file_io::FileIo;

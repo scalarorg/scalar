@@ -1,8 +1,8 @@
 //! Bindings for [sled::Db] operations. Errors are mapped to [super::error::InnerKvError].
 
+use crate::types::KeyReservation;
 use serde::{de::DeserializeOwned, Serialize};
 use tofn::sdk::api::{deserialize, serialize};
-use types::KeyReservation;
 
 use super::error::{InnerKvError::*, InnerKvResult};
 use super::types::DEFAULT_RESERVE;
@@ -65,10 +65,10 @@ where
     // Explanation of code ugliness: that's the standard way to compare a
     // sled retrieved value with a local value:
     // https://docs.rs/sled/0.34.6/sled/struct.Tree.html#examples-4
-    if kv.get(&reservation.key)? != Some(sled::IVec::from(DEFAULT_RESERVE)) {
+    if kv.get(&reservation)? != Some(sled::IVec::from(DEFAULT_RESERVE)) {
         return Err(LogicalErr(format!(
             "did not find reservation for key <{}> in kv store.",
-            reservation.key
+            reservation
         )));
     }
 
@@ -76,7 +76,7 @@ where
     let bytes = serialize(&value).map_err(|_| SerializationErr)?;
 
     // insert new value
-    kv.insert(&reservation.key, bytes)?;
+    kv.insert(&reservation, bytes)?;
 
     Ok(())
 }
