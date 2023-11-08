@@ -1,6 +1,9 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-
+/*
+ * 23-11-07 TaiVV
+ * Copy from sui-json-rpc-types/src/sui_move.rs
+ */
 use colored::Colorize;
 use itertools::Itertools;
 use move_binary_format::file_format::{Ability, AbilitySet, StructTypeParameter, Visibility};
@@ -11,6 +14,9 @@ use move_binary_format::normalized::{
 use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::StructTag;
 use move_core_types::value::{MoveStruct, MoveValue};
+use scalar_types::base_types::{ObjectID, SuiAddress};
+use scalar_types::gas_coin::GasCoin;
+use scalar_types::scalar_serde::SuiStructTag;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -20,9 +26,6 @@ use std::fmt;
 use std::fmt::{Display, Formatter, Write};
 use sui_macros::EnumVariantOrder;
 use tracing::warn;
-
-use scalar_types::base_types::{ObjectID, SuiAddress};
-use scalar_types::sui_serde::SuiStructTag;
 
 pub type SuiMoveTypeParameterIndex = u16;
 
@@ -552,5 +555,24 @@ impl From<MoveStruct> for SuiMoveStruct {
                     .collect(),
             },
         }
+    }
+}
+
+impl TryFrom<&SuiMoveStruct> for GasCoin {
+    type Error = anyhow::Error;
+    fn try_from(move_struct: &SuiMoveStruct) -> Result<Self, Self::Error> {
+        match move_struct {
+            SuiMoveStruct::WithFields(fields) | SuiMoveStruct::WithTypes { type_: _, fields } => {
+                if let Some(SuiMoveValue::String(balance)) = fields.get("balance") {
+                    if let Ok(balance) = balance.parse::<u64>() {
+                        if let Some(SuiMoveValue::UID { id }) = fields.get("id") {
+                            return Ok(GasCoin::new(*id, balance));
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        Err(anyhow!("Struct is not a gas coin: {move_struct:?}"))
     }
 }

@@ -13,13 +13,15 @@ use super::gas_coin::GAS;
 use crate::move_package::MovePackage;
 use crate::move_types::{
     language_storage::{StructTag, TypeTag},
+    layout::TypeLayoutBuilder,
+    module_cache::GetModule,
     value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue},
 };
+use move_binary_format::CompiledModule;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Formatter};
 use std::mem::size_of;
-// use move_binary_format::CompiledModule;
 // use move_bytecode_utils::layout::TypeLayoutBuilder;
 // use move_bytecode_utils::module_cache::GetModule;
 
@@ -331,27 +333,27 @@ impl MoveObject {
     //     Self::get_layout_from_struct_tag(self.type_().clone().into(), format, resolver)
     // }
 
-    // pub fn get_layout_from_struct_tag(
-    //     struct_tag: StructTag,
-    //     format: ObjectFormatOptions,
-    //     resolver: &impl GetModule,
-    // ) -> Result<MoveStructLayout, SuiError> {
-    //     let type_ = TypeTag::Struct(Box::new(struct_tag));
-    //     let layout = if format.include_types {
-    //         TypeLayoutBuilder::build_with_types(&type_, resolver)
-    //     } else {
-    //         TypeLayoutBuilder::build_with_fields(&type_, resolver)
-    //     }
-    //     .map_err(|e| SuiError::ObjectSerializationError {
-    //         error: e.to_string(),
-    //     })?;
-    //     match layout {
-    //         MoveTypeLayout::Struct(l) => Ok(l),
-    //         _ => unreachable!(
-    //             "We called build_with_types on Struct type, should get a struct layout"
-    //         ),
-    //     }
-    // }
+    pub fn get_layout_from_struct_tag(
+        struct_tag: StructTag,
+        format: ObjectFormatOptions,
+        resolver: &impl GetModule,
+    ) -> Result<MoveStructLayout, SuiError> {
+        let type_ = TypeTag::Struct(Box::new(struct_tag));
+        let layout = if format.include_types {
+            TypeLayoutBuilder::build_with_types(&type_, resolver)
+        } else {
+            TypeLayoutBuilder::build_with_fields(&type_, resolver)
+        }
+        .map_err(|e| SuiError::ObjectSerializationError {
+            error: e.to_string(),
+        })?;
+        match layout {
+            MoveTypeLayout::Struct(l) => Ok(l),
+            _ => unreachable!(
+                "We called build_with_types on Struct type, should get a struct layout"
+            ),
+        }
+    }
 
     /// Convert `self` to the JSON representation dictated by `layout`.
     pub fn to_move_struct(&self, layout: &MoveStructLayout) -> Result<MoveStruct, SuiError> {

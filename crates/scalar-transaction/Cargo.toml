@@ -1,7 +1,7 @@
 [package]
-name = "scalar-json"
+name = "scalar-transaction"
 version = "0.0.0"
-authors = ["Mysten Labs <build@mystenlabs.com>"]
+authors = ["Scalar <tai@scalar.org>"]
 license = "Apache-2.0"
 publish = false
 edition = "2021"
@@ -15,10 +15,8 @@ schemars.workspace = true
 
 #sui-framework.workspace = true
 scalar-types.workspace = true
-
 #scalar-move.workspace = true
 move-binary-format.workspace = true
-move-bytecode-utils.workspace = true
 move-core-types.workspace = true
 fastcrypto = { workspace = true }
 workspace-hack.workspace = true
@@ -26,4 +24,3 @@ workspace-hack.workspace = true
 [dev-dependencies]
 test-fuzz.workspace = true
 scalar-types = { workspace = true, features = ["test-utils"] }
-#sui-move-build.workspace = true

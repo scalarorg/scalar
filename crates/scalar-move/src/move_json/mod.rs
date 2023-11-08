@@ -1,9 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-/*
- * 23-11-07 TaiVV
- * Copy from sui-json. All MOVE language supports are moved to scalar-move/src/move_json/mod.rs
- */
+
 use std::collections::{BTreeMap, VecDeque};
 use std::fmt::{self, Debug, Formatter};
 use std::str::FromStr;
@@ -26,6 +23,7 @@ use move_core_types::{
     language_storage::{StructTag, TypeTag},
     value::{MoveStruct, MoveStructLayout, MoveValue},
 };
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Number, Value as JsonValue};
@@ -993,4 +991,4 @@ macro_rules! type_args {
         }
         Ok::<_, anyhow::Error>(vec![$($value.to_sui_json()?,)*])
     }};
-}
+    }

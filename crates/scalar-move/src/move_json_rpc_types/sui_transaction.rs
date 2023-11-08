@@ -1,6 +1,12 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * 23-11-07 TaiVV
+ * Copy from sui-json-rpc-types/src/sui_transaction.rs
+ * Module này xử lý sui transaction nhưng hầu hết liên quan tới MOVE Language,
+ * liên quan nhiều tới trait move_bytecode_utils::module_cache::GetModule và ComliledModule;
+ */
 use crate::balance_changes::BalanceChange;
 use crate::object_changes::ObjectChange;
 use crate::{Filter, Page, SuiEvent, SuiObjectRef};
@@ -14,7 +20,6 @@ use move_core_types::identifier::IdentStr;
 use move_core_types::language_storage::{ModuleId, StructTag, TypeTag};
 use move_core_types::value::MoveTypeLayout;
 use mysten_metrics::monitored_scope;
-use scalar_json::primitive_type;
 use scalar_json::SuiJsonValue;
 use scalar_types::authenticator_state::ActiveJwk;
 use scalar_types::base_types::{
@@ -330,11 +335,6 @@ impl Display for SuiTransactionBlockKind {
         write!(f, "{}", writer)
     }
 }
-
-/*
- * 23-11-07 TaiVV
- * Todo: Some how move this code to move language supported
- */
 
 impl SuiTransactionBlockKind {
     fn try_from(tx: TransactionKind, module_cache: &impl GetModule) -> Result<Self, anyhow::Error> {
@@ -1204,10 +1204,7 @@ impl Display for SuiProgrammableTransactionBlock {
         writeln!(f, "]")
     }
 }
-/*
- * 23-11-07 TaiVV
- * Comment out this MOVE Language related codes
- */
+
 impl SuiProgrammableTransactionBlock {
     fn try_from(
         value: ProgrammableTransaction,

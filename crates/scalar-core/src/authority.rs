@@ -3730,8 +3730,8 @@ impl AuthorityState {
     //         results.push(obj_ref);
     //     }
 
-        results
-    }
+    //     results
+    // }
 
     /*
      * 23-11-07 TaiVV

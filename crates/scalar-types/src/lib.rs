@@ -143,14 +143,14 @@ pub fn sui_framework_address_concat_string(suffix: &str) -> String {
  * Tags: SCALAR_MOVE_LANGUAGE
  */
 pub fn parse_sui_struct_tag(s: &str) -> anyhow::Result<StructTag> {
-    //use move_command_line_common::types::ParsedStructType;
-    use crate::move_types::types::ParsedStructType;
+    //use crate::move_types::types::ParsedStructType;
+    use move_command_line_common::types::ParsedStructType;
     ParsedStructType::parse(s)?.into_struct_tag(&resolve_address)
 }
 
 pub fn parse_sui_type_tag(s: &str) -> anyhow::Result<TypeTag> {
-    //use move_command_line_common::types::ParsedType;
-    use crate::move_types::types::ParsedType;
+    //use crate::move_types::types::ParsedType;
+    use move_command_line_common::types::ParsedType;
     ParsedType::parse(s)?.into_type_tag(&resolve_address)
 }
 

@@ -4,8 +4,8 @@
 use move_core_types::language_storage::StructTag;
 use scalar_types::base_types::{ObjectDigest, ObjectID, ObjectRef, SequenceNumber, SuiAddress};
 use scalar_types::object::Owner;
-use scalar_types::sui_serde::SequenceNumber as AsSequenceNumber;
-use scalar_types::sui_serde::SuiStructTag;
+use scalar_types::scalar_serde::SequenceNumber as AsSequenceNumber;
+use scalar_types::scalar_serde::SuiStructTag;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

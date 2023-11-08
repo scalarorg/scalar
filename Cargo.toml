@@ -16,6 +16,8 @@ members = [
   "crates/scalar-json",
   "crates/scalar-json-rpc",
   "crates/scalar-json-rpc-types",
+  "crates/scalar-move",
+  "crates/scalar-transaction",
   #    "crates/scalar-tss",
   "crates/shared-crypto",
   "crates/sui-protocol-config",
@@ -287,7 +289,8 @@ scalar-storage = { path = "crates/scalar-storage" }
 scalar-json = { path = "crates/scalar-json" }
 scalar-json-rpc = { path = "crates/scalar-json-rpc" }
 scalar-json-rpc-types = { path = "crates/scalar-json-rpc-types" }
-
+scalar-move = { path = "crates/scalar-move" }
+scalar-transaction = { path = "crates/scalar-transaction" }
 scalar-tss = { path = "crates/scalar-tss" }
 shared-crypto = { path = "crates/shared-crypto" }
 
@@ -361,3 +364,5 @@ move-vm-profiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c
 move-vm-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-vm-types" }
 move-binary-format = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-binary-format" }
 move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-core-types" }
+move-command-line-common = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-command-line-common" }
+move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-utils" }

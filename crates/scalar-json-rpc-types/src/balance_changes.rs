@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 use move_core_types::language_storage::TypeTag;
 use scalar_types::object::Owner;
-use scalar_types::sui_serde::SuiTypeTag;
+use scalar_types::scalar_serde::SuiTypeTag;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

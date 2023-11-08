@@ -25,10 +25,10 @@ use crate::{
 };
 use derive_more::Display;
 use fastcrypto::hash::HashFunction;
-// use move_binary_format::access::ModuleAccess;
-// use move_binary_format::binary_views::BinaryIndexedView;
-// use move_binary_format::file_format::CompiledModule;
-// use move_binary_format::normalized;
+use move_binary_format::access::ModuleAccess;
+use move_binary_format::binary_views::BinaryIndexedView;
+use move_binary_format::file_format::CompiledModule;
+use move_binary_format::normalized;
 // use move_disassembler::disassembler::Disassembler;
 // use move_ir_types::location::Spanned;
 use schemars::JsonSchema;
@@ -496,28 +496,28 @@ impl MovePackage {
      * Deserialize module
      * Tags: SCALAR_MOVE_LANGUAGE
      */
-    // pub fn deserialize_module(
-    //     &self,
-    //     module: &Identifier,
-    //     max_binary_format_version: u32,
-    //     check_no_bytes_remaining: bool,
-    // ) -> SuiResult<CompiledModule> {
-    //     // TODO use the session's cache
-    //     let bytes = self
-    //         .serialized_module_map()
-    //         .get(module.as_str())
-    //         .ok_or_else(|| SuiError::ModuleNotFound {
-    //             module_name: module.to_string(),
-    //         })?;
-    //     CompiledModule::deserialize_with_config(
-    //         bytes,
-    //         max_binary_format_version,
-    //         check_no_bytes_remaining,
-    //     )
-    //     .map_err(|error| SuiError::ModuleDeserializationFailure {
-    //         error: error.to_string(),
-    //     })
-    // }
+    pub fn deserialize_module(
+        &self,
+        module: &Identifier,
+        max_binary_format_version: u32,
+        check_no_bytes_remaining: bool,
+    ) -> SuiResult<CompiledModule> {
+        // TODO use the session's cache
+        let bytes = self
+            .serialized_module_map()
+            .get(module.as_str())
+            .ok_or_else(|| SuiError::ModuleNotFound {
+                module_name: module.to_string(),
+            })?;
+        CompiledModule::deserialize_with_config(
+            bytes,
+            max_binary_format_version,
+            check_no_bytes_remaining,
+        )
+        .map_err(|error| SuiError::ModuleDeserializationFailure {
+            error: error.to_string(),
+        })
+    }
 
     // pub fn disassemble(&self) -> SuiResult<BTreeMap<String, Value>> {
     //     disassemble_modules(self.module_map.values())

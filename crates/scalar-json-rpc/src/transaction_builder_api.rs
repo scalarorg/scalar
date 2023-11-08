@@ -18,7 +18,7 @@ use scalar_json_rpc_types::{
 };
 use scalar_types::base_types::ObjectInfo;
 use scalar_types::base_types::{ObjectID, SuiAddress};
-use scalar_types::sui_serde::BigInt;
+use scalar_types::scalar_serde::BigInt;
 use sui_open_rpc::Module;
 //use sui_transaction_builder::{DataReader, TransactionBuilder};
 

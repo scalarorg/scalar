@@ -10,15 +10,15 @@
 
 use std::str::FromStr;
 
-use anyhow::ensure;
-//use move_bytecode_utils::module_cache::GetModule;
 use crate::ident_str;
 use crate::move_types::{
     account_address::AccountAddress,
     identifier::{IdentStr, Identifier},
     language_storage::StructTag,
+    module_cache::GetModule,
     value::MoveStruct,
 };
+use anyhow::ensure;
 // use move_core_types::account_address::AccountAddress;
 // use move_core_types::ident_str;
 // use move_core_types::identifier::IdentStr;
@@ -148,22 +148,22 @@ impl Event {
      * Tags: SCALAR_MOVE_LANGUAGE
      */
 
-    // pub fn move_event_to_move_struct(
-    //     type_: &StructTag,
-    //     contents: &[u8],
-    //     resolver: &impl GetModule,
-    // ) -> SuiResult<MoveStruct> {
-    //     let layout = MoveObject::get_layout_from_struct_tag(
-    //         type_.clone(),
-    //         ObjectFormatOptions::default(),
-    //         resolver,
-    //     )?;
-    //     MoveStruct::simple_deserialize(contents, &layout).map_err(|e| {
-    //         SuiError::ObjectSerializationError {
-    //             error: e.to_string(),
-    //         }
-    //     })
-    // }
+    pub fn move_event_to_move_struct(
+        type_: &StructTag,
+        contents: &[u8],
+        resolver: &impl GetModule,
+    ) -> SuiResult<MoveStruct> {
+        let layout = MoveObject::get_layout_from_struct_tag(
+            type_.clone(),
+            ObjectFormatOptions::default(),
+            resolver,
+        )?;
+        MoveStruct::simple_deserialize(contents, &layout).map_err(|e| {
+            SuiError::ObjectSerializationError {
+                error: e.to_string(),
+            }
+        })
+    }
 
     pub fn is_system_epoch_info_event(&self) -> bool {
         self.type_.address == SUI_SYSTEM_ADDRESS
