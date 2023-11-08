@@ -1,24 +1,24 @@
 // use crate::types::gg20_server::Gg20;
-use crate::types::MessageIn;
+// use crate::types::MessageIn;
 // use anemo::{rpc::Status, Response};
-use tokio::sync::mpsc::UnboundedSender;
+// use tokio::sync::mpsc::UnboundedSender;
 // use tokio_stream::wrappers::UnboundedReceiverStream;
 // use tracing::{info, warn};
 
 // include!(concat!(env!("OUT_DIR"), "/gg20.Gg20Peer.rs"));
 
-/// Gg20Service
-#[derive(Clone)]
-pub struct Gg20AnemoService {
-    tx_keygen: UnboundedSender<MessageIn>,
-    tx_sign: UnboundedSender<MessageIn>,
-}
+// Gg20Service
+// #[derive(Clone)]
+// pub struct Gg20AnemoService {
+//     tx_keygen: UnboundedSender<MessageIn>,
+//     tx_sign: UnboundedSender<MessageIn>,
+// }
 
-impl Gg20AnemoService {
-    pub fn new(tx_keygen: UnboundedSender<MessageIn>, tx_sign: UnboundedSender<MessageIn>) -> Self {
-        Self { tx_keygen, tx_sign }
-    }
-}
+// impl Gg20AnemoService {
+//     pub fn new(tx_keygen: UnboundedSender<MessageIn>, tx_sign: UnboundedSender<MessageIn>) -> Self {
+//         Self { tx_keygen, tx_sign }
+//     }
+// }
 
 // #[anemo::async_trait]
 // impl Gg20 for Gg20AnemoService {
