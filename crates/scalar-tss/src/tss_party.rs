@@ -73,23 +73,25 @@ impl TssParty {
             tx_tss_sign_result,
         }
     }
+
     pub async fn create_tofnd_client(port: u16) -> Option<Gg20Client<Channel>> {
         let tss_host =
             std::env::var("TSS_HOST").unwrap_or_else(|_| Ipv4Addr::LOCALHOST.to_string());
         let tss_port = std::env::var("TSS_PORT")
             .ok()
             .and_then(|p| p.parse::<u16>().ok())
-            .unwrap_or_else(|| port);
-        //+ authority.id().0;
+            .unwrap_or(port);
         let tss_addr = format!("http://{}:{}", tss_host, tss_port);
+
         info!("TSS address {}", &tss_addr);
 
-        let tofnd_client = Gg20Client::connect(tss_addr.clone()).await.ok();
-        tofnd_client
+        Gg20Client::connect(tss_addr.clone()).await.ok()
     }
+
     pub fn get_uid(&self) -> String {
         PeerId(self.authority.network_key().0.to_bytes()).to_string()
     }
+
     pub fn get_parties(&self) -> Vec<String> {
         let party_uids = self
             .committee

@@ -7,6 +7,7 @@ mod tests;
 pub mod helper;
 pub mod proto;
 pub mod storage;
+pub mod tss;
 pub mod tss_keygen;
 pub mod tss_party;
 pub mod tss_service;

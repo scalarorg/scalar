@@ -7,8 +7,6 @@ use anemo::{rpc::Status, Response};
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::{info, warn};
 
-// use crate::types::{message_in, MessageIn, TrafficIn};
-
 pub struct TssPeerService {
     tx_keygen: UnboundedSender<MessageIn>,
     tx_sign: UnboundedSender<MessageIn>,
@@ -34,6 +32,7 @@ impl TssPeer for TssPeerService {
             })),
         };
         //info!("Received keygen request: {:?}", &body);
+        info!("Received keygen request");
         if let Err(e) = self.tx_keygen.send(msg_in) {
             warn!("gRpc TssSend error {:?}", e);
         }
