@@ -29,8 +29,8 @@ use crate::test_authority_clients::{
     MockAuthorityApi,
 };
 use crate::test_utils::init_local_authorities;
+use scalar_framework::BuiltInFramework;
 use scalar_types::utils::to_sender_signed_transaction;
-// use sui_framework::BuiltInFramework;
 use tokio::time::Instant;
 
 use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI, TransactionEvents};
@@ -310,64 +310,64 @@ fn effects_with_tx(digest: TransactionDigest) -> TransactionEffects {
  * Comment out related Move Package test
  */
 
-// /// The intent of this is to test whether client side timeouts
-// /// have any impact on the server execution. Turns out because
-// /// we spawn a tokio task on the server, client timing out and
-// /// terminating the connection does not stop server from completing
-// /// execution on its side
-// #[sim_test(config = "constant_latency_ms(1)")]
-// async fn test_quorum_map_and_reduce_timeout() {
-//     let build_config = BuildConfig::new_for_testing();
-//     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-//     path.extend(["src", "unit_tests", "data", "object_basics"]);
-//     let modules: Vec<_> = build_config
-//         .build(path)
-//         .unwrap()
-//         .get_modules()
-//         .cloned()
-//         .collect();
-//     let pkg = Object::new_package_for_testing(
-//         &modules,
-//         TransactionDigest::genesis(),
-//         BuiltInFramework::genesis_move_packages(),
-//     )
-//     .unwrap();
-//     let (addr1, key1): (_, AccountKeyPair) = get_key_pair();
-//     let gas_object1 = Object::with_owner_for_testing(addr1);
-//     let genesis_objects = vec![pkg.clone(), gas_object1.clone()];
-//     let (mut authorities, _, genesis, _) = init_local_authorities(4, genesis_objects).await;
-//     let rgp = reference_gas_price(&authorities);
-//     let pkg = genesis.object(pkg.id()).unwrap();
-//     let gas_object1 = genesis.object(gas_object1.id()).unwrap();
-//     let gas_ref_1 = gas_object1.compute_object_reference();
-//     let tx = create_object_move_transaction(addr1, &key1, addr1, 100, pkg.id(), gas_ref_1, rgp);
-//     let certified_tx = authorities.process_transaction(tx.clone()).await;
-//     assert!(certified_tx.is_ok());
-//     let certificate = certified_tx.unwrap().into_cert_for_testing();
-//     // Send request with a very small timeout to trigger timeout error
-//     authorities.timeouts.pre_quorum_timeout = Duration::from_nanos(0);
-//     authorities.timeouts.post_quorum_timeout = Duration::from_nanos(0);
-//     let certified_effects = authorities.process_certificate(certificate.clone()).await;
-//     // Ensure it is an error
-//     assert!(certified_effects.is_err());
-//     assert!(matches!(
-//         certified_effects,
-//         Err(AggregatorProcessCertificateError::RetryableExecuteCertificate { .. })
-//     ));
-//     tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
-//     let tx_info = TransactionInfoRequest {
-//         transaction_digest: *tx.digest(),
-//     };
-//     for (_, client) in authorities.authority_clients.iter() {
-//         let resp = client
-//             .handle_transaction_info_request(tx_info.clone())
-//             .await;
-//         // Server should return a signed effect even though previous calls
-//         // failed due to timeout
-//         assert!(resp.is_ok());
-//         assert!(resp.unwrap().is_executed());
-//     }
-// }
+/// The intent of this is to test whether client side timeouts
+/// have any impact on the server execution. Turns out because
+/// we spawn a tokio task on the server, client timing out and
+/// terminating the connection does not stop server from completing
+/// execution on its side
+#[sim_test(config = "constant_latency_ms(1)")]
+async fn test_quorum_map_and_reduce_timeout() {
+    let build_config = BuildConfig::new_for_testing();
+    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.extend(["src", "unit_tests", "data", "object_basics"]);
+    let modules: Vec<_> = build_config
+        .build(path)
+        .unwrap()
+        .get_modules()
+        .cloned()
+        .collect();
+    let pkg = Object::new_package_for_testing(
+        &modules,
+        TransactionDigest::genesis(),
+        BuiltInFramework::genesis_move_packages(),
+    )
+    .unwrap();
+    let (addr1, key1): (_, AccountKeyPair) = get_key_pair();
+    let gas_object1 = Object::with_owner_for_testing(addr1);
+    let genesis_objects = vec![pkg.clone(), gas_object1.clone()];
+    let (mut authorities, _, genesis, _) = init_local_authorities(4, genesis_objects).await;
+    let rgp = reference_gas_price(&authorities);
+    let pkg = genesis.object(pkg.id()).unwrap();
+    let gas_object1 = genesis.object(gas_object1.id()).unwrap();
+    let gas_ref_1 = gas_object1.compute_object_reference();
+    let tx = create_object_move_transaction(addr1, &key1, addr1, 100, pkg.id(), gas_ref_1, rgp);
+    let certified_tx = authorities.process_transaction(tx.clone()).await;
+    assert!(certified_tx.is_ok());
+    let certificate = certified_tx.unwrap().into_cert_for_testing();
+    // Send request with a very small timeout to trigger timeout error
+    authorities.timeouts.pre_quorum_timeout = Duration::from_nanos(0);
+    authorities.timeouts.post_quorum_timeout = Duration::from_nanos(0);
+    let certified_effects = authorities.process_certificate(certificate.clone()).await;
+    // Ensure it is an error
+    assert!(certified_effects.is_err());
+    assert!(matches!(
+        certified_effects,
+        Err(AggregatorProcessCertificateError::RetryableExecuteCertificate { .. })
+    ));
+    tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+    let tx_info = TransactionInfoRequest {
+        transaction_digest: *tx.digest(),
+    };
+    for (_, client) in authorities.authority_clients.iter() {
+        let resp = client
+            .handle_transaction_info_request(tx_info.clone())
+            .await;
+        // Server should return a signed effect even though previous calls
+        // failed due to timeout
+        assert!(resp.is_ok());
+        assert!(resp.unwrap().is_executed());
+    }
+}
 
 #[sim_test]
 async fn test_map_reducer() {

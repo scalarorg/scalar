@@ -9,6 +9,7 @@ use move_core_types::{account_address::AccountAddress, ident_str};
 use narwhal_types::Transactions;
 use narwhal_types::TransactionsServer;
 use narwhal_types::{Empty, TransactionProto};
+use scalar_network::tonic;
 use scalar_types::crypto::deterministic_random_account_key;
 use scalar_types::multiaddr::Multiaddr;
 use scalar_types::transaction::TEST_ONLY_GAS_UNIT_FOR_OBJECT_BASICS;
@@ -19,7 +20,6 @@ use scalar_types::{
     object::Object,
     transaction::{CallArg, CertifiedTransaction, ObjectArg, TransactionData},
 };
-use sui_network::tonic;
 use tokio::sync::mpsc::channel;
 use tokio::sync::mpsc::{Receiver, Sender};
 

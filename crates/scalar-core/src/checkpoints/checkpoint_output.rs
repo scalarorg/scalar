@@ -151,11 +151,11 @@ impl CertifiedCheckpointOutput for LogCheckpointOutput {
 }
 
 pub struct SendCheckpointToStateSync {
-    handle: sui_network::state_sync::Handle,
+    handle: scalar_network::state_sync::Handle,
 }
 
 impl SendCheckpointToStateSync {
-    pub fn new(handle: sui_network::state_sync::Handle) -> Self {
+    pub fn new(handle: scalar_network::state_sync::Handle) -> Self {
         Self { handle }
     }
 }

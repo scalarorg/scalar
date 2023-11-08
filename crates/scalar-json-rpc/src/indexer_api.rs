@@ -23,7 +23,7 @@ use scalar_json_rpc_types::{
     SuiTransactionBlockResponseQuery, TransactionBlocksPage, TransactionFilter,
 };
 use sui_open_rpc::Module;
-use sui_storage::key_value_store::TransactionKeyValueStore;
+use scalar_storage::key_value_store::TransactionKeyValueStore;
 use scalar_types::{
     base_types::{ObjectID, SuiAddress},
     digests::TransactionDigest,

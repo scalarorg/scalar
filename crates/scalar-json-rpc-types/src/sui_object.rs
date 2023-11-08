@@ -10,17 +10,10 @@ use std::fmt::{Display, Formatter};
 use anyhow::anyhow;
 use colored::Colorize;
 use fastcrypto::encoding::Base64;
-//use move_bytecode_utils::module_cache::GetModule;
+use move_bytecode_utils::module_cache::GetModule;
 use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::StructTag;
 use move_core_types::value::{MoveStruct, MoveStructLayout};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde::Serialize;
-use serde_json::Value;
-use serde_with::serde_as;
-use serde_with::DisplayFromStr;
-
 use scalar_types::base_types::{
     ObjectDigest, ObjectID, ObjectInfo, ObjectRef, ObjectType, SequenceNumber, SuiAddress,
     TransactionDigest,
@@ -35,9 +28,15 @@ use scalar_types::object::{Data, MoveObject, Object, ObjectFormatOptions, Object
 use scalar_types::scalar_serde::BigInt;
 use scalar_types::scalar_serde::SequenceNumber as AsSequenceNumber;
 use scalar_types::scalar_serde::SuiStructTag;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
+use serde_with::serde_as;
+use serde_with::DisplayFromStr;
 use sui_protocol_config::ProtocolConfig;
 
-use crate::Page;
+use crate::{Page, SuiMoveStruct, SuiMoveValue};
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema, Clone, PartialEq, Eq)]
 pub struct SuiObjectResponse {
@@ -312,24 +311,24 @@ impl Display for SuiObjectData {
 //     }
 // }
 
-// impl TryFrom<&SuiMoveStruct> for GasCoin {
-//     type Error = anyhow::Error;
-//     fn try_from(move_struct: &SuiMoveStruct) -> Result<Self, Self::Error> {
-//         match move_struct {
-//             SuiMoveStruct::WithFields(fields) | SuiMoveStruct::WithTypes { type_: _, fields } => {
-//                 if let Some(SuiMoveValue::String(balance)) = fields.get("balance") {
-//                     if let Ok(balance) = balance.parse::<u64>() {
-//                         if let Some(SuiMoveValue::UID { id }) = fields.get("id") {
-//                             return Ok(GasCoin::new(*id, balance));
-//                         }
-//                     }
-//                 }
-//             }
-//             _ => {}
-//         }
-//         Err(anyhow!("Struct is not a gas coin: {move_struct:?}"))
-//     }
-// }
+impl TryFrom<&SuiMoveStruct> for GasCoin {
+    type Error = anyhow::Error;
+    fn try_from(move_struct: &SuiMoveStruct) -> Result<Self, Self::Error> {
+        match move_struct {
+            SuiMoveStruct::WithFields(fields) | SuiMoveStruct::WithTypes { type_: _, fields } => {
+                if let Some(SuiMoveValue::String(balance)) = fields.get("balance") {
+                    if let Ok(balance) = balance.parse::<u64>() {
+                        if let Some(SuiMoveValue::UID { id }) = fields.get("id") {
+                            return Ok(GasCoin::new(*id, balance));
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        Err(anyhow!("Struct is not a gas coin: {move_struct:?}"))
+    }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, Eq, PartialEq, Default)]
 #[serde(rename_all = "camelCase", rename = "ObjectDataOptions", default)]
@@ -928,15 +927,15 @@ impl From<ObjectRef> for SuiObjectRef {
 //     }
 // }
 
-// pub fn type_and_fields_from_move_struct(
-//     type_: &StructTag,
-//     move_struct: MoveStruct,
-// ) -> (StructTag, SuiMoveStruct) {
-//     match move_struct.into() {
-//         SuiMoveStruct::WithTypes { type_, fields } => (type_, SuiMoveStruct::WithFields(fields)),
-//         fields => (type_.clone(), fields),
-//     }
-// }
+pub fn type_and_fields_from_move_struct(
+    type_: &StructTag,
+    move_struct: MoveStruct,
+) -> (StructTag, SuiMoveStruct) {
+    match move_struct.into() {
+        SuiMoveStruct::WithTypes { type_, fields } => (type_, SuiMoveStruct::WithFields(fields)),
+        fields => (type_.clone(), fields),
+    }
+}
 
 // #[serde_as]
 // #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]

@@ -93,6 +93,10 @@ use scalar_json_rpc::read_api::ReadApi;
 use scalar_json_rpc::transaction_builder_api::TransactionBuilderApi;
 use scalar_json_rpc::transaction_execution_api::TransactionExecutionApi;
 use scalar_json_rpc::JsonRpcServerBuilder;
+use scalar_network::api::ValidatorServer;
+use scalar_network::discovery;
+use scalar_network::discovery::TrustedPeerChangeEvent;
+use scalar_network::state_sync;
 use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
 use scalar_storage::{
     http_key_value_store::HttpKVStore,
@@ -113,10 +117,6 @@ use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSyst
 use scalar_types::sui_system_state::SuiSystemStateTrait;
 use sui_kvstore::writer::setup_key_value_store_uploader;
 use sui_macros::fail_point_async;
-use sui_network::api::ValidatorServer;
-use sui_network::discovery;
-use sui_network::discovery::TrustedPeerChangeEvent;
-use sui_network::state_sync;
 use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
 use sui_snapshot::uploader::StateSnapshotUploader;
 use typed_store::rocks::default_db_options;

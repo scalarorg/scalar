@@ -28,7 +28,7 @@ sui-verifier = { path = "../sui-verifier", package = "sui-verifier-latest" }
 
 sui-macros.workspace = true
 sui-protocol-config.workspace = true
-sui-types.workspace = true
+scalar-types.workspace = true
 parking_lot.workspace = true
 workspace-hack.workspace = true
 

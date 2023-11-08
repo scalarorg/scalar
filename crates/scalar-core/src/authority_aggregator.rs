@@ -14,6 +14,9 @@ use mysten_metrics::histogram::Histogram;
 use mysten_metrics::{monitored_future, spawn_monitored_task, GaugeGuard};
 use mysten_network::config::Config;
 use scalar_config::genesis::Genesis;
+use scalar_network::{
+    default_mysten_network_config, DEFAULT_CONNECT_TIMEOUT_SEC, DEFAULT_REQUEST_TIMEOUT_SEC,
+};
 use scalar_swarm_config::network_config::NetworkConfig;
 use scalar_types::crypto::{AuthorityPublicKeyBytes, AuthoritySignInfo};
 use scalar_types::error::UserInputError;
@@ -29,9 +32,6 @@ use scalar_types::{
     transaction::*,
 };
 use std::convert::AsRef;
-use sui_network::{
-    default_mysten_network_config, DEFAULT_CONNECT_TIMEOUT_SEC, DEFAULT_REQUEST_TIMEOUT_SEC,
-};
 use thiserror::Error;
 use tracing::{debug, error, info, trace, warn, Instrument};
 

@@ -5,6 +5,7 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
 use mysten_network::config::Config;
+use scalar_network::{api::ValidatorClient, tonic};
 use scalar_types::base_types::AuthorityName;
 use scalar_types::committee::CommitteeWithNetworkMetadata;
 use scalar_types::messages_checkpoint::{CheckpointRequest, CheckpointResponse};
@@ -13,14 +14,13 @@ use scalar_types::sui_system_state::SuiSystemState;
 use scalar_types::{error::SuiError, transaction::*};
 use std::collections::BTreeMap;
 use std::time::Duration;
-use sui_network::{api::ValidatorClient, tonic};
 
+use scalar_network::tonic::transport::Channel;
 use scalar_types::messages_grpc::{
     HandleCertificateResponse, HandleCertificateResponseV2, HandleTransactionResponse,
     ObjectInfoRequest, ObjectInfoResponse, SystemStateRequest, TransactionInfoRequest,
     TransactionInfoResponse,
 };
-use sui_network::tonic::transport::Channel;
 
 #[async_trait]
 pub trait AuthorityAPI {

@@ -14,7 +14,7 @@ use std::str::FromStr;
 
 use fastcrypto::encoding::Base58;
 use fastcrypto::traits::EncodeDecodeBase64;
-//use move_binary_format::file_format;
+use move_binary_format::file_format;
 
 use crate::crypto::bcs_signable_test::{Bar, Foo};
 use crate::crypto::{

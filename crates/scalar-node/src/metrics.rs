@@ -8,8 +8,8 @@ use prometheus::{
     Registry, PROTOBUF_FORMAT,
 };
 
+use scalar_network::tonic::Code;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use sui_network::tonic::Code;
 
 use mysten_metrics::RegistryService;
 use tracing::error;

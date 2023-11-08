@@ -39,7 +39,7 @@ pub mod object_store;
  * 23-11-07 TaiVV
  * Comment out package object cache (for move package)
  */
-//pub mod package_object_cache;
+pub mod package_object_cache;
 pub mod sharded_lru;
 pub mod write_path_pending_tx_log;
 

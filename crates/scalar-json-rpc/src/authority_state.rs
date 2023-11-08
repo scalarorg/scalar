@@ -34,8 +34,8 @@ use scalar_types::sui_system_state::SuiSystemState;
 use scalar_types::transaction::{Transaction, TransactionData, TransactionKind};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use sui_storage::indexes::TotalBalance;
-use sui_storage::key_value_store::{
+use scalar_storage::indexes::TotalBalance;
+use scalar_storage::key_value_store::{
     KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStore,
     TransactionKeyValueStoreTrait,
 };
