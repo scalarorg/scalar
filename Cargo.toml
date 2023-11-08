@@ -24,8 +24,6 @@ members = [
   # "crates/scalar-transaction",
   # "crates/scalar-tss",
   "crates/shared-crypto",
-  #"crates/sui-protocol-config",
-  #"crates/sui-protocol-config-macros",
   "crates/workspace-hack",
 
   #    "narwhal/config",
@@ -224,8 +222,6 @@ tokio = { version = "1", features = ["full", "test-util", "tracing"] }
 tokio-io-timeout = { version = "1", default-features = false }
 tokio-macros = { version = "2", default-features = false }
 tokio-retry = { version = "0.3", default-features = false }
-#tokio-rustls-2b5c6dc72f624058 = { package = "tokio-rustls", version = "0.23" }
-#tokio-rustls-adf3d7031871b0af = { package = "tokio-rustls", version = "0.24" }
 tokio-rustls = "0.24"
 tokio-stream = { version = "0.1", features = ["net", "sync"] }
 tokio-tungstenite = { version = "0.20" }
@@ -306,8 +302,6 @@ scalar-telemetry = { path = "crates/scalar-telemetry" }
 scalar-tss = { path = "crates/scalar-tss" }
 shared-crypto = { path = "crates/shared-crypto" }
 
-#sui-protocol-config = { path = "crates/sui-protocol-config" }
-#sui-protocol-config-macros = { path = "crates/sui-protocol-config-macros" }
 
 config = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-config" }
 crypto = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-crypto" }
@@ -342,18 +336,11 @@ sui-enum-compat-util = { git = "https://github.com/MystenLabs/sui", rev = "23c02
 sui-protocol-config = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-protocol-config" }
 sui-protocol-config-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-protocol-config-macros" }
 
-#sui-json = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-json" }
-#sui-json-rpc = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-json-rpc" }
-#sui-json-rpc-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-json-rpc-types" }
-
 sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-macros" }
-#sui-network = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-network" }
 sui-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-macros" }
-#sui-keys = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-keys" }
 
 sui-open-rpc = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-open-rpc" }
 sui-open-rpc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-open-rpc-macros" }
-#sui-storage = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-storage" }
 sui-simulator = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-simulator" }
 sui-tls = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-tls" }
 
