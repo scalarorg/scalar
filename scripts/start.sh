@@ -14,8 +14,8 @@ then
     fi
 fi 
 
-COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-geth.yaml"
-COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-reth.yaml"
+#COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-geth.yaml"
+#COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-reth.yaml"
 
 init() {
   docker-compose ${COMPOSE_FILE} build
