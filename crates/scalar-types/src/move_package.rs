@@ -29,8 +29,8 @@ use move_binary_format::access::ModuleAccess;
 use move_binary_format::binary_views::BinaryIndexedView;
 use move_binary_format::file_format::CompiledModule;
 use move_binary_format::normalized;
-// use move_disassembler::disassembler::Disassembler;
-// use move_ir_types::location::Spanned;
+use move_disassembler::disassembler::Disassembler;
+use move_ir_types::location::Spanned;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -523,9 +523,9 @@ impl MovePackage {
      * Comment out disassemble function
      * Tags: SCALAR_MOVE_LANGUAGE
      */
-    // pub fn disassemble(&self) -> SuiResult<BTreeMap<String, Value>> {
-    //     disassemble_modules(self.module_map.values())
-    // }
+    pub fn disassemble(&self) -> SuiResult<BTreeMap<String, Value>> {
+        disassemble_modules(self.module_map.values())
+    }
 
     pub fn normalize(
         &self,
@@ -605,34 +605,34 @@ impl UpgradeReceipt {
 //     }
 // }
 
-// pub fn disassemble_modules<'a, I>(modules: I) -> SuiResult<BTreeMap<String, Value>>
-// where
-//     I: Iterator<Item = &'a Vec<u8>>,
-// {
-//     let mut disassembled = BTreeMap::new();
-//     for bytecode in modules {
-//         // this function is only from JSON RPC - it is OK to deserialize with max Move binary
-//         // version
-//         let module = CompiledModule::deserialize_with_defaults(bytecode).map_err(|error| {
-//             SuiError::ModuleDeserializationFailure {
-//                 error: error.to_string(),
-//             }
-//         })?;
-//         let view = BinaryIndexedView::Module(&module);
-//         let d = Disassembler::from_view(view, Spanned::unsafe_no_loc(()).loc).map_err(|e| {
-//             SuiError::ObjectSerializationError {
-//                 error: e.to_string(),
-//             }
-//         })?;
-//         let bytecode_str = d
-//             .disassemble()
-//             .map_err(|e| SuiError::ObjectSerializationError {
-//                 error: e.to_string(),
-//             })?;
-//         disassembled.insert(module.name().to_string(), Value::String(bytecode_str));
-//     }
-//     Ok(disassembled)
-// }
+pub fn disassemble_modules<'a, I>(modules: I) -> SuiResult<BTreeMap<String, Value>>
+where
+    I: Iterator<Item = &'a Vec<u8>>,
+{
+    let mut disassembled = BTreeMap::new();
+    for bytecode in modules {
+        // this function is only from JSON RPC - it is OK to deserialize with max Move binary
+        // version
+        let module = CompiledModule::deserialize_with_defaults(bytecode).map_err(|error| {
+            SuiError::ModuleDeserializationFailure {
+                error: error.to_string(),
+            }
+        })?;
+        let view = BinaryIndexedView::Module(&module);
+        let d = Disassembler::from_view(view, Spanned::unsafe_no_loc(()).loc).map_err(|e| {
+            SuiError::ObjectSerializationError {
+                error: e.to_string(),
+            }
+        })?;
+        let bytecode_str = d
+            .disassemble()
+            .map_err(|e| SuiError::ObjectSerializationError {
+                error: e.to_string(),
+            })?;
+        disassembled.insert(module.name().to_string(), Value::String(bytecode_str));
+    }
+    Ok(disassembled)
+}
 
 /*
  * 2023-11-03 TaiVV

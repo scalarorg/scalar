@@ -577,7 +577,7 @@ impl<S: ?Sized + StateRead> ObjectProvider for (Arc<S>, Arc<TransactionKeyValueS
         let object_read = self.0.get_past_object_read(id, *version)?;
         match object_read {
             PastObjectRead::ObjectNotExists(_) | PastObjectRead::VersionNotFound(..) => {
-                match self.1.get_object(id, version).await? {
+                match self.1.get_object(*id, *version).await? {
                     Some(object) => Ok(object),
                     None => Ok(PastObjectRead::VersionNotFound(*id, *version).into_object()?),
                 }

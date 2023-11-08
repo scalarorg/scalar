@@ -8,7 +8,7 @@ members = [
   "crates/scalar-config",
   "crates/scalar-keys",
   "crates/scalar-transaction-checks",
-
+  "crates/scalar-transaction-builder",
   "crates/scalar-genesis-builder",
   "crates/scalar-swarm-config",
   "crates/scalar-archival",
@@ -18,6 +18,8 @@ members = [
   "crates/scalar-json-rpc-types",
   "crates/scalar-framework",
   "crates/scalar-network",
+  "crates/scalar-kvstore",
+  "crates/scalar-telemetry",
   # "crates/scalar-move",
   # "crates/scalar-transaction",
   # "crates/scalar-tss",
@@ -52,7 +54,9 @@ anyhow = "1.0.71"
 arc-swap = { version = "1.5.1", features = ["serde"] }
 async-recursion = "1.0.4"
 async-trait = "0.1.61"
+aws-config = "0.56"
 aws-sdk-ec2 = { version = "0.29" }
+aws-sdk-dynamodb = "0.29.0"
 aws-sdk-s3 = { version = "0.29" }
 axum = { version = "0.6.6", default-features = false, features = [
   "headers",
@@ -284,7 +288,7 @@ scalar-keys = { path = "crates/scalar-keys" }
 scalar-node = { path = "crates/scalar-node" }
 scalar-types = { path = "crates/scalar-types" }
 scalar-transaction-checks = { path = "crates/scalar-transaction-checks" }
-
+scalar-transaction-builder = { path = "crates/scalar-transaction-builder" }
 scalar-genesis-builder = { path = "crates/scalar-genesis-builder" }
 scalar-swarm-config = { path = "crates/scalar-swarm-config" }
 scalar-archival = { path = "crates/scalar-archival" }
@@ -294,6 +298,9 @@ scalar-json-rpc = { path = "crates/scalar-json-rpc" }
 scalar-json-rpc-types = { path = "crates/scalar-json-rpc-types" }
 scalar-framework = { path = "crates/scalar-framework" }
 scalar-network = { path = "crates/scalar-network" }
+scalar-kvstore = { path = "crates/scalar-kvstore" }
+scalar-snapshot = { path = "crates/scalar-snapshot" }
+scalar-telemetry = { path = "crates/scalar-telemetry" }
 #scalar-move = { path = "crates/scalar-move" }
 #scalar-transaction = { path = "crates/scalar-transaction" }
 scalar-tss = { path = "crates/scalar-tss" }
@@ -375,3 +382,9 @@ move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c8
 move-command-line-common = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-command-line-common" }
 move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-utils" }
 move-package = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-package" }
+move-ir-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-ir-types" }
+move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-symbol-pool" }
+move-disassembler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-disassembler" }
+move-bytecode-source-map = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-source-map" }
+move-coverage = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-coverage" }
+move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-compiler" }

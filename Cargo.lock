@@ -9011,7 +9011,9 @@ dependencies = [
  "linked-hash-map",
  "mockall",
  "move-binary-format",
+ "move-bytecode-utils",
  "move-core-types",
+ "move-package",
  "mysten-metrics",
  "once_cell",
  "prometheus",
@@ -9019,6 +9021,7 @@ dependencies = [
  "scalar-json",
  "scalar-json-rpc-types",
  "scalar-storage",
+ "scalar-transaction-builder",
  "scalar-types",
  "serde",
  "serde_json",
@@ -9085,6 +9088,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-kvstore"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "aws-config",
+ "aws-sdk-dynamodb",
+ "aws-sdk-s3",
+ "backoff",
+ "base64-url",
+ "bcs",
+ "mysten-metrics",
+ "prometheus",
+ "scalar-config",
+ "scalar-core",
+ "scalar-storage",
+ "scalar-types",
+ "serde",
+ "tokio",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "scalar-network"
 version = "0.0.0"
 dependencies = [
@@ -9140,15 +9167,21 @@ dependencies = [
  "narwhal-network",
  "prometheus",
  "reqwest",
+ "scalar-archival",
+ "scalar-config",
  "scalar-core",
  "scalar-json-rpc",
+ "scalar-kvstore",
  "scalar-network",
+ "scalar-snapshot",
  "scalar-storage",
+ "scalar-telemetry",
  "scalar-types",
  "serde",
  "snap",
  "sui-macros",
  "sui-protocol-config",
+ "sui-tls",
  "tap",
  "telemetry-subscribers",
  "tokio",
@@ -9156,6 +9189,33 @@ dependencies = [
  "tracing",
  "typed-store",
  "url",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-snapshot"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "byteorder",
+ "bytes",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "futures",
+ "indicatif",
+ "integer-encoding",
+ "num_enum",
+ "object_store",
+ "prometheus",
+ "scalar-core",
+ "scalar-storage",
+ "scalar-types",
+ "serde",
+ "sui-protocol-config",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -9240,6 +9300,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-telemetry"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "scalar-core",
+ "serde",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-transaction-builder"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bcs",
+ "futures",
+ "move-binary-format",
+ "move-core-types",
+ "scalar-json",
+ "scalar-json-rpc-types",
+ "scalar-types",
+ "sui-protocol-config",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "scalar-transaction-checks"
 version = "0.1.0"
 dependencies = [
@@ -9280,6 +9368,8 @@ dependencies = [
  "move-bytecode-utils",
  "move-command-line-common",
  "move-core-types",
+ "move-disassembler",
+ "move-ir-types",
  "move-proc-macros",
  "move-vm-profiler",
  "move-vm-types",
@@ -10265,6 +10355,28 @@ dependencies = [
  "tower",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-tls"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc#23c02802c858da6b396fa9f9acf47c72b64367bc"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-server",
+ "ed25519 1.5.3",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "pkcs8 0.9.0",
+ "rcgen",
+ "reqwest",
+ "rustls 0.21.8",
+ "rustls-webpki",
+ "tokio",
+ "tokio-rustls 0.24.1",
+ "tower-layer",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "x509-parser",
 ]
 
 [[package]]
