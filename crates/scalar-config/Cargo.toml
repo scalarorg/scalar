@@ -23,7 +23,7 @@ prometheus.workspace = true
 
 narwhal-config.workspace = true
 sui-protocol-config.workspace = true
-sui-storage.workspace = true
+scalar-storage.workspace = true
 scalar-keys.workspace = true
 scalar-types.workspace = true
 workspace-hack.workspace = true

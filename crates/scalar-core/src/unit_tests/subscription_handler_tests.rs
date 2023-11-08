@@ -11,10 +11,10 @@ use move_core_types::{
     value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout},
 };
 
+use scalar_json_rpc_types::SuiMoveStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
-use sui_json_rpc_types::SuiMoveStruct;
 
 use scalar_types::base_types::ObjectID;
 use scalar_types::gas_coin::GasCoin;

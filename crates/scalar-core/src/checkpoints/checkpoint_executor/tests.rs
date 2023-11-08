@@ -21,8 +21,8 @@ use crate::authority::test_authority_builder::TestAuthorityBuilder;
 use crate::{
     authority::AuthorityState, checkpoints::CheckpointStore, state_accumulator::StateAccumulator,
 };
+use scalar_swarm_config::test_utils::{empty_contents, CommitteeFixture};
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
-use sui_swarm_config::test_utils::{empty_contents, CommitteeFixture};
 
 /// Test checkpoint executor happy path, test that checkpoint executor correctly
 /// picks up where it left off in the event of a mid-epoch node crash.
@@ -382,7 +382,7 @@ async fn init_executor_test(
     CommitteeFixture,
 ) {
     let network_config =
-        sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir().build();
+        scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir().build();
     let state = TestAuthorityBuilder::new()
         .with_network_config(&network_config)
         .build()

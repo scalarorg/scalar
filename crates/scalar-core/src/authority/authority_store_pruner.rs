@@ -11,7 +11,9 @@ use prometheus::{
     Registry,
 };
 use rocksdb::LiveFile;
+use scalar_archival::reader::ArchiveReaderBalancer;
 use scalar_config::node::AuthorityStorePruningConfig;
+use scalar_storage::mutex_table::RwLockTable;
 use scalar_types::base_types::SequenceNumber;
 use scalar_types::effects::TransactionEffects;
 use scalar_types::effects::TransactionEffectsAPI;
@@ -27,8 +29,6 @@ use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use std::time::SystemTime;
 use std::{sync::Arc, time::Duration};
-use sui_archival::reader::ArchiveReaderBalancer;
-use sui_storage::mutex_table::RwLockTable;
 use tokio::sync::oneshot::{self, Sender};
 use tokio::time::Instant;
 use tracing::{debug, error, info};
@@ -592,6 +592,7 @@ mod tests {
         StoreObjectWrapper,
     };
     use prometheus::Registry;
+    use scalar_storage::mutex_table::RwLockTable;
     use scalar_types::base_types::ObjectDigest;
     use scalar_types::effects::TransactionEffects;
     use scalar_types::effects::TransactionEffectsAPI;
@@ -600,7 +601,6 @@ mod tests {
         object::Object,
         storage::ObjectKey,
     };
-    use sui_storage::mutex_table::RwLockTable;
     use typed_store::rocks::util::reference_count_merge_operator;
     use typed_store::rocks::{DBMap, MetricConf, ReadWriteOptions};
     use typed_store::Map;

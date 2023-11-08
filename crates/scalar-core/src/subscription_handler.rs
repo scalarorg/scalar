@@ -19,13 +19,13 @@ use tokio_stream::Stream;
 use tracing::{error, instrument, trace};
 
 use crate::streamer::Streamer;
-use scalar_types::error::SuiResult;
-use scalar_types::transaction::TransactionData;
-use sui_json_rpc_types::{
+use scalar_json_rpc_types::{
     EffectsWithInput, EventFilter, SuiTransactionBlockEffects, SuiTransactionBlockEvents,
     TransactionFilter,
 };
-use sui_json_rpc_types::{SuiEvent, SuiTransactionBlockEffectsAPI};
+use scalar_json_rpc_types::{SuiEvent, SuiTransactionBlockEffectsAPI};
+use scalar_types::error::SuiResult;
+use scalar_types::transaction::TransactionData;
 
 #[cfg(test)]
 #[path = "unit_tests/subscription_handler_tests.rs"]

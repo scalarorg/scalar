@@ -33,7 +33,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::{collections::HashSet, path::PathBuf};
-use sui_framework::BuiltInFramework;
+// use sui_framework::BuiltInFramework;
 
 #[tokio::test]
 #[cfg_attr(msim, ignore)]
@@ -151,41 +151,45 @@ async fn test_publish_empty_package() {
     )
 }
 
-#[tokio::test]
-#[cfg_attr(msim, ignore)]
-async fn test_publish_duplicate_modules() {
-    let (sender, sender_key): (_, AccountKeyPair) = get_key_pair();
-    let gas = ObjectID::random();
-    let authority = init_state_with_ids(vec![(sender, gas)]).await;
-    let gas_object = authority.get_object(&gas).await.unwrap();
-    let gas_object_ref = gas_object.unwrap().compute_object_reference();
-    let rgp = authority.reference_gas_price_for_testing().unwrap();
+/*
+ * 23-11-07 TaiVV
+ * Comment out Related Move Package
+ */
+// #[tokio::test]
+// #[cfg_attr(msim, ignore)]
+// async fn test_publish_duplicate_modules() {
+//     let (sender, sender_key): (_, AccountKeyPair) = get_key_pair();
+//     let gas = ObjectID::random();
+//     let authority = init_state_with_ids(vec![(sender, gas)]).await;
+//     let gas_object = authority.get_object(&gas).await.unwrap();
+//     let gas_object_ref = gas_object.unwrap().compute_object_reference();
+//     let rgp = authority.reference_gas_price_for_testing().unwrap();
 
-    // empty package
-    let mut modules = build_test_package("object_owner", /* with_unpublished_deps */ false);
-    assert_eq!(modules.len(), 1);
-    modules.push(modules[0].clone());
-    let data = TransactionData::new_module(
-        sender,
-        gas_object_ref,
-        modules,
-        BuiltInFramework::all_package_ids(),
-        rgp * TEST_ONLY_GAS_UNIT_FOR_PUBLISH,
-        rgp,
-    );
-    let transaction = to_sender_signed_transaction(data, &sender_key);
-    let result = send_and_confirm_transaction(&authority, transaction)
-        .await
-        .unwrap()
-        .1;
-    assert_eq!(
-        result.status(),
-        &ExecutionStatus::Failure {
-            error: ExecutionFailureStatus::VMVerificationOrDeserializationError,
-            command: Some(0)
-        }
-    )
-}
+//     // empty package
+//     let mut modules = build_test_package("object_owner", /* with_unpublished_deps */ false);
+//     assert_eq!(modules.len(), 1);
+//     modules.push(modules[0].clone());
+//     let data = TransactionData::new_module(
+//         sender,
+//         gas_object_ref,
+//         modules,
+//         BuiltInFramework::all_package_ids(),
+//         rgp * TEST_ONLY_GAS_UNIT_FOR_PUBLISH,
+//         rgp,
+//     );
+//     let transaction = to_sender_signed_transaction(data, &sender_key);
+//     let result = send_and_confirm_transaction(&authority, transaction)
+//         .await
+//         .unwrap()
+//         .1;
+//     assert_eq!(
+//         result.status(),
+//         &ExecutionStatus::Failure {
+//             error: ExecutionFailureStatus::VMVerificationOrDeserializationError,
+//             command: Some(0)
+//         }
+//     )
+// }
 
 #[tokio::test]
 #[cfg_attr(msim, ignore)]

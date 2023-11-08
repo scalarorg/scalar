@@ -24,6 +24,7 @@ use scalar_config::genesis::{GenesisCeremonyParameters, TokenDistributionSchedul
 use scalar_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
 use scalar_genesis_builder::validator_info::ValidatorInfo;
 use scalar_genesis_builder::Builder;
+use scalar_swarm_config::genesis_config::GenesisConfig;
 use scalar_types::base_types::SuiAddress;
 use scalar_types::crypto::{
     generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
@@ -31,7 +32,6 @@ use scalar_types::crypto::{
 };
 use scalar_types::multiaddr::Multiaddr;
 use std::num::NonZeroUsize;
-use sui_swarm_config::genesis_config::GenesisConfig;
 
 #[test]
 #[cfg_attr(msim, ignore)]
@@ -106,9 +106,9 @@ fn populated_genesis_snapshot_matches() {
 #[test]
 #[cfg_attr(msim, ignore)]
 fn network_config_snapshot_matches() {
+    use scalar_swarm_config::network_config_builder::ConfigBuilder;
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     use std::path::PathBuf;
-    use sui_swarm_config::network_config_builder::ConfigBuilder;
 
     let temp_dir = tempfile::tempdir().unwrap();
     let committee_size = 7;

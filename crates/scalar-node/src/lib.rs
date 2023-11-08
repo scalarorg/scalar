@@ -22,13 +22,13 @@ use fastcrypto_zkp::bn254::zk_login::JwkId;
 use fastcrypto_zkp::bn254::zk_login::OIDCProvider;
 use futures::TryFutureExt;
 use prometheus::Registry;
+use scalar_core::authority::CHAIN_IDENTIFIER;
+use scalar_core::consensus_adapter::LazyNarwhalClient;
+use scalar_json_rpc::api::JsonRpcMetrics;
 use scalar_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
 use scalar_types::digests::ChainIdentifier;
 use scalar_types::message_envelope::get_google_jwk_bytes;
 use scalar_types::sui_system_state::SuiSystemState;
-use sui_core::authority::CHAIN_IDENTIFIER;
-use sui_core::consensus_adapter::LazyNarwhalClient;
-use sui_json_rpc::api::JsonRpcMetrics;
 use tap::tap::TapFallible;
 use tokio::runtime::Handle;
 use tokio::sync::broadcast;
@@ -46,9 +46,60 @@ use mysten_metrics::{spawn_monitored_task, RegistryService};
 use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
 use narwhal_network::metrics::{NetworkConnectionMetrics, NetworkMetrics};
+use scalar_archival::reader::ArchiveReaderBalancer;
+use scalar_archival::writer::ArchiveWriter;
 use scalar_config::node::DBCheckpointConfig;
 use scalar_config::node_config_metrics::NodeConfigMetrics;
 use scalar_config::{ConsensusConfig, NodeConfig};
+use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
+use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
+use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
+use scalar_core::authority::epoch_start_configuration::EpochStartConfiguration;
+use scalar_core::authority_aggregator::AuthorityAggregator;
+use scalar_core::authority_server::{ValidatorService, ValidatorServiceMetrics};
+use scalar_core::checkpoints::checkpoint_executor;
+use scalar_core::checkpoints::{
+    CheckpointMetrics, CheckpointService, CheckpointStore, SendCheckpointToStateSync,
+    SubmitCheckpointToConsensus,
+};
+use scalar_core::consensus_adapter::{
+    CheckConnection, ConnectionMonitorStatus, ConsensusAdapter, ConsensusAdapterMetrics,
+};
+use scalar_core::consensus_handler::ConsensusHandler;
+use scalar_core::consensus_throughput_calculator::{
+    ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
+};
+use scalar_core::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
+use scalar_core::db_checkpoint_handler::DBCheckpointHandler;
+use scalar_core::epoch::committee_store::CommitteeStore;
+use scalar_core::epoch::data_removal::EpochDataRemover;
+use scalar_core::epoch::epoch_metrics::EpochMetrics;
+use scalar_core::epoch::reconfiguration::ReconfigurationInitiator;
+use scalar_core::module_cache_metrics::ResolverMetrics;
+use scalar_core::narwhal_manager::{NarwhalConfiguration, NarwhalManager, NarwhalManagerMetrics};
+use scalar_core::signature_verifier::SignatureVerifierMetrics;
+use scalar_core::state_accumulator::StateAccumulator;
+use scalar_core::storage::RocksDbStore;
+use scalar_core::transaction_orchestrator::TransactiondOrchestrator;
+use scalar_core::{
+    authority::{AuthorityState, AuthorityStore},
+    authority_client::NetworkAuthorityClient,
+};
+use scalar_json_rpc::coin_api::CoinReadApi;
+use scalar_json_rpc::governance_api::GovernanceReadApi;
+use scalar_json_rpc::indexer_api::IndexerApi;
+use scalar_json_rpc::move_utils::MoveUtils;
+use scalar_json_rpc::read_api::ReadApi;
+use scalar_json_rpc::transaction_builder_api::TransactionBuilderApi;
+use scalar_json_rpc::transaction_execution_api::TransactionExecutionApi;
+use scalar_json_rpc::JsonRpcServerBuilder;
+use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
+use scalar_storage::{
+    http_key_value_store::HttpKVStore,
+    key_value_store::{FallbackTransactionKVStore, TransactionKeyValueStore},
+    key_value_store_metrics::KeyValueStoreMetrics,
+};
+use scalar_storage::{FileCompression, IndexStore, StorageFormat};
 use scalar_types::base_types::{AuthorityName, EpochId};
 use scalar_types::committee::Committee;
 use scalar_types::crypto::KeypairTraits;
@@ -60,50 +111,6 @@ use scalar_types::quorum_driver_types::QuorumDriverEffectsQueueResult;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use scalar_types::sui_system_state::SuiSystemStateTrait;
-use sui_archival::reader::ArchiveReaderBalancer;
-use sui_archival::writer::ArchiveWriter;
-use sui_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
-use sui_core::authority::authority_store_tables::AuthorityPerpetualTables;
-use sui_core::authority::epoch_start_configuration::EpochStartConfigTrait;
-use sui_core::authority::epoch_start_configuration::EpochStartConfiguration;
-use sui_core::authority_aggregator::AuthorityAggregator;
-use sui_core::authority_server::{ValidatorService, ValidatorServiceMetrics};
-use sui_core::checkpoints::checkpoint_executor;
-use sui_core::checkpoints::{
-    CheckpointMetrics, CheckpointService, CheckpointStore, SendCheckpointToStateSync,
-    SubmitCheckpointToConsensus,
-};
-use sui_core::consensus_adapter::{
-    CheckConnection, ConnectionMonitorStatus, ConsensusAdapter, ConsensusAdapterMetrics,
-};
-use sui_core::consensus_handler::ConsensusHandler;
-use sui_core::consensus_throughput_calculator::{
-    ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
-};
-use sui_core::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
-use sui_core::db_checkpoint_handler::DBCheckpointHandler;
-use sui_core::epoch::committee_store::CommitteeStore;
-use sui_core::epoch::data_removal::EpochDataRemover;
-use sui_core::epoch::epoch_metrics::EpochMetrics;
-use sui_core::epoch::reconfiguration::ReconfigurationInitiator;
-use sui_core::module_cache_metrics::ResolverMetrics;
-use sui_core::narwhal_manager::{NarwhalConfiguration, NarwhalManager, NarwhalManagerMetrics};
-use sui_core::signature_verifier::SignatureVerifierMetrics;
-use sui_core::state_accumulator::StateAccumulator;
-use sui_core::storage::RocksDbStore;
-use sui_core::transaction_orchestrator::TransactiondOrchestrator;
-use sui_core::{
-    authority::{AuthorityState, AuthorityStore},
-    authority_client::NetworkAuthorityClient,
-};
-use sui_json_rpc::coin_api::CoinReadApi;
-use sui_json_rpc::governance_api::GovernanceReadApi;
-use sui_json_rpc::indexer_api::IndexerApi;
-use sui_json_rpc::move_utils::MoveUtils;
-use sui_json_rpc::read_api::ReadApi;
-use sui_json_rpc::transaction_builder_api::TransactionBuilderApi;
-use sui_json_rpc::transaction_execution_api::TransactionExecutionApi;
-use sui_json_rpc::JsonRpcServerBuilder;
 use sui_kvstore::writer::setup_key_value_store_uploader;
 use sui_macros::fail_point_async;
 use sui_network::api::ValidatorServer;
@@ -112,13 +119,6 @@ use sui_network::discovery::TrustedPeerChangeEvent;
 use sui_network::state_sync;
 use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
 use sui_snapshot::uploader::StateSnapshotUploader;
-use sui_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
-use sui_storage::{
-    http_key_value_store::HttpKVStore,
-    key_value_store::{FallbackTransactionKVStore, TransactionKeyValueStore},
-    key_value_store_metrics::KeyValueStoreMetrics,
-};
-use sui_storage::{FileCompression, IndexStore, StorageFormat};
 use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
@@ -607,7 +607,7 @@ impl SuiNode {
             .enable_secondary_index_checks()
         {
             if let Some(indexes) = state.indexes.clone() {
-                sui_core::verify_indexes::verify_indexes(state.database.clone(), indexes)
+                scalar_core::verify_indexes::verify_indexes(state.database.clone(), indexes)
                     .expect("secondary indexes are inconsistent");
             }
         }
@@ -1514,7 +1514,7 @@ impl SuiNode {
                 self.state
                 .prune_checkpoints_for_eligible_epochs(
                     self.config.clone(),
-                    sui_core::authority::authority_store_pruner::AuthorityStorePruningMetrics::new_for_test(),
+                    scalar_core::authority::authority_store_pruner::AuthorityStorePruningMetrics::new_for_test(),
                 )
                 .await?;
             }
@@ -1720,13 +1720,13 @@ pub fn build_http_server(
                 config.name_service_registry_id,
                 config.name_service_reverse_registry_id,
             ) {
-                sui_json_rpc::name_service::NameServiceConfig::new(
+                scalar_json_rpc::name_service::NameServiceConfig::new(
                     package_address,
                     registry_id,
                     reverse_registry_id,
                 )
             } else {
-                sui_json_rpc::name_service::NameServiceConfig::default()
+                scalar_json_rpc::name_service::NameServiceConfig::default()
             };
 
         server.register_module(IndexerApi::new(

@@ -41,7 +41,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use sui_framework::BuiltInFramework;
+// use sui_framework::BuiltInFramework;
 use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
 use sui_protocol_config::ProtocolConfig;
 use tokio::time::timeout;
@@ -105,7 +105,7 @@ where
     R: rand::CryptoRng + rand::RngCore,
 {
     let dir = tempfile::TempDir::new().unwrap();
-    let network_config = sui_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
+    let network_config = scalar_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
         .rng(rng)
         .build();
     let genesis = network_config.genesis;
@@ -209,15 +209,19 @@ async fn init_genesis(
 ) {
     // add object_basics package object to genesis
     let modules: Vec<_> = compile_basics_package().get_modules().cloned().collect();
-    let genesis_move_packages: Vec<_> = BuiltInFramework::genesis_move_packages().collect();
-    let pkg = Object::new_package(
-        &modules,
-        TransactionDigest::genesis(),
-        ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
-        &genesis_move_packages,
-    )
-    .unwrap();
-    let pkg_id = pkg.id();
+    /*
+     * 23-11-07 Taivv
+     * Not include Move Package here
+     */
+    // let genesis_move_packages: Vec<_> = BuiltInFramework::genesis_move_packages().collect();
+    // let pkg = Object::new_package(
+    //     &modules,
+    //     TransactionDigest::genesis(),
+    //     ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
+    //     &genesis_move_packages,
+    // )
+    // .unwrap();
+    // let pkg_id = pkg.id();
     genesis_objects.push(pkg);
 
     let mut builder = scalar_genesis_builder::Builder::new().add_objects(genesis_objects);

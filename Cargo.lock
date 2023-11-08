@@ -9043,6 +9043,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-archival"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "byteorder",
+ "bytes",
+ "ed25519-consensus",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "futures",
+ "indicatif",
+ "more-asserts",
+ "move-binary-format",
+ "move-core-types",
+ "num_enum",
+ "object_store",
+ "prometheus",
+ "rand 0.8.5",
+ "scalar-config",
+ "scalar-storage",
+ "scalar-swarm-config",
+ "scalar-types",
+ "serde",
+ "sui-macros",
+ "sui-simulator",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "scalar-config"
 version = "0.0.1"
 dependencies = [
@@ -9058,13 +9090,13 @@ dependencies = [
  "prometheus",
  "rand 0.8.5",
  "scalar-keys",
+ "scalar-storage",
  "scalar-types",
  "serde",
  "serde_with",
  "serde_yaml 0.8.26",
  "sui-protocol-config 0.1.0",
  "sui-simulator",
- "sui-storage",
  "tempfile",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -9117,8 +9149,12 @@ dependencies = [
  "prometheus",
  "rand 0.8.5",
  "rocksdb",
+ "scalar-archival",
  "scalar-config",
  "scalar-execution",
+ "scalar-json-rpc-types",
+ "scalar-storage",
+ "scalar-swarm-config",
  "scalar-transaction-checks",
  "scalar-types",
  "scopeguard",
@@ -9129,12 +9165,9 @@ dependencies = [
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
  "signature 1.6.4",
- "sui-json-rpc-types",
  "sui-macros",
  "sui-network",
  "sui-protocol-config 0.1.0",
- "sui-simulator",
- "sui-storage",
  "tap",
  "telemetry-subscribers",
  "tempfile",
@@ -9188,6 +9221,98 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-json"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "scalar-types",
+ "schemars",
+ "serde",
+ "serde_json",
+ "test-fuzz",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-json-rpc"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-trait",
+ "axum",
+ "bcs",
+ "cached",
+ "expect-test",
+ "eyre",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "futures",
+ "hyper",
+ "itertools 0.11.0",
+ "jsonrpsee",
+ "linked-hash-map",
+ "mockall",
+ "move-binary-format",
+ "move-core-types",
+ "mysten-metrics",
+ "once_cell",
+ "prometheus",
+ "scalar-core",
+ "scalar-json",
+ "scalar-json-rpc-types",
+ "scalar-storage",
+ "scalar-types",
+ "serde",
+ "serde_json",
+ "shared-crypto 0.0.0",
+ "signature 1.6.4",
+ "sui-open-rpc",
+ "sui-open-rpc-macros",
+ "sui-protocol-config 0.1.0",
+ "tap",
+ "telemetry-subscribers",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "typed-store",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-json-rpc-types"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "colored",
+ "enum-compat-util",
+ "enum_dispatch",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "itertools 0.11.0",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "mysten-metrics",
+ "scalar-json",
+ "scalar-types",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sui-macros",
+ "sui-protocol-config 0.1.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "scalar-keys"
 version = "0.0.0"
 dependencies = [
@@ -9203,6 +9328,32 @@ dependencies = [
  "slip10_ed25519",
  "tempfile",
  "tiny-bip39",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-move"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "colored",
+ "enum-compat-util",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "itertools 0.11.0",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "scalar-json-rpc-types",
+ "scalar-types",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sui-macros",
+ "sui-protocol-config 0.1.0",
+ "test-fuzz",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -9229,14 +9380,14 @@ dependencies = [
  "prometheus",
  "reqwest",
  "scalar-core",
+ "scalar-json-rpc",
+ "scalar-storage",
  "scalar-types",
  "serde",
  "snap",
- "sui-json-rpc",
  "sui-macros",
  "sui-network",
  "sui-protocol-config 0.1.0",
- "sui-storage",
  "tap",
  "telemetry-subscribers",
  "tokio",
@@ -9245,6 +9396,59 @@ dependencies = [
  "typed-store",
  "url",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-storage"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backoff",
+ "base64-url",
+ "bcs",
+ "byteorder",
+ "bytes",
+ "chrono",
+ "clap 4.4.7",
+ "criterion 0.4.0",
+ "eyre",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "futures",
+ "hyper",
+ "hyper-rustls 0.24.2",
+ "indicatif",
+ "integer-encoding",
+ "itertools 0.11.0",
+ "lru 0.12.0",
+ "move-binary-format",
+ "move-core-types",
+ "mysten-metrics",
+ "num_cpus",
+ "num_enum",
+ "object_store",
+ "once_cell",
+ "parking_lot 0.12.1",
+ "percent-encoding",
+ "pretty_assertions",
+ "prometheus",
+ "reqwest",
+ "rocksdb",
+ "scalar-json-rpc-types",
+ "scalar-types",
+ "serde",
+ "sui-macros",
+ "sui-protocol-config 0.1.0",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "typed-store",
+ "typed-store-derive",
+ "url",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "zstd",
 ]
 
 [[package]]
@@ -9270,6 +9474,23 @@ dependencies = [
  "sui-simulator",
  "tempfile",
  "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "scalar-transaction"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "move-binary-format",
+ "move-core-types",
+ "scalar-types",
+ "schemars",
+ "serde",
+ "serde_json",
+ "test-fuzz",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -9311,6 +9532,8 @@ dependencies = [
  "indexmap 1.9.3",
  "itertools 0.11.0",
  "move-binary-format",
+ "move-bytecode-utils",
+ "move-command-line-common",
  "move-core-types",
  "move-proc-macros",
  "move-vm-profiler",
@@ -10237,85 +10460,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui-core"
-version = "0.1.0"
-source = "git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc#23c02802c858da6b396fa9f9acf47c72b64367bc"
-dependencies = [
- "anyhow",
- "arc-swap",
- "async-trait",
- "bcs",
- "bytes",
- "chrono",
- "dashmap",
- "either",
- "enum_dispatch",
- "eyre",
- "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
- "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
- "futures",
- "im",
- "indexmap 1.9.3",
- "itertools 0.10.5",
- "lru 0.10.1",
- "move-binary-format",
- "move-bytecode-utils",
- "move-core-types",
- "move-package",
- "move-symbol-pool",
- "mysten-common",
- "mysten-metrics",
- "mysten-network",
- "narwhal-config",
- "narwhal-crypto",
- "narwhal-executor",
- "narwhal-network",
- "narwhal-node",
- "narwhal-test-utils",
- "narwhal-types",
- "narwhal-worker",
- "num_cpus",
- "object_store",
- "once_cell",
- "parking_lot 0.12.1",
- "prometheus",
- "rand 0.8.5",
- "rocksdb",
- "scopeguard",
- "serde",
- "serde_json",
- "serde_with",
- "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc)",
- "signature 1.6.4",
- "sui-archival",
- "sui-config",
- "sui-execution",
- "sui-framework",
- "sui-genesis-builder",
- "sui-json-rpc-types",
- "sui-macros",
- "sui-move-build",
- "sui-network",
- "sui-protocol-config 0.1.0 (git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc)",
- "sui-simulator",
- "sui-storage",
- "sui-swarm-config",
- "sui-transaction-checks",
- "sui-types",
- "tap",
- "telemetry-subscribers",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-retry",
- "tokio-stream",
- "tracing",
- "typed-store",
- "typed-store-derive",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "sui-enum-compat-util"
 version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc#23c02802c858da6b396fa9f9acf47c72b64367bc"
@@ -10425,54 +10569,6 @@ dependencies = [
  "serde_json",
  "sui-framework",
  "sui-types",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sui-json-rpc"
-version = "0.0.0"
-source = "git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc#23c02802c858da6b396fa9f9acf47c72b64367bc"
-dependencies = [
- "anyhow",
- "arc-swap",
- "async-trait",
- "axum",
- "bcs",
- "cached",
- "eyre",
- "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
- "futures",
- "hyper",
- "itertools 0.10.5",
- "jsonrpsee",
- "linked-hash-map",
- "move-binary-format",
- "move-bytecode-utils",
- "move-core-types",
- "move-package",
- "mysten-metrics",
- "once_cell",
- "prometheus",
- "serde",
- "serde_json",
- "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc)",
- "signature 1.6.4",
- "sui-core",
- "sui-json",
- "sui-json-rpc-types",
- "sui-open-rpc",
- "sui-open-rpc-macros",
- "sui-protocol-config 0.1.0 (git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc)",
- "sui-storage",
- "sui-transaction-builder",
- "sui-types",
- "tap",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "typed-store",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -10816,40 +10912,6 @@ dependencies = [
  "sui-simulator",
  "sui-types",
  "tempfile",
- "tracing",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sui-transaction-builder"
-version = "0.0.0"
-source = "git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc#23c02802c858da6b396fa9f9acf47c72b64367bc"
-dependencies = [
- "anyhow",
- "async-trait",
- "bcs",
- "futures",
- "move-binary-format",
- "move-core-types",
- "sui-json",
- "sui-json-rpc-types",
- "sui-protocol-config 0.1.0 (git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc)",
- "sui-types",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sui-transaction-checks"
-version = "0.1.0"
-source = "git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc#23c02802c858da6b396fa9f9acf47c72b64367bc"
-dependencies = [
- "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
- "once_cell",
- "sui-config",
- "sui-execution",
- "sui-macros",
- "sui-protocol-config 0.1.0 (git+https://github.com/MystenLabs/sui?rev=23c02802c858da6b396fa9f9acf47c72b64367bc)",
- "sui-types",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

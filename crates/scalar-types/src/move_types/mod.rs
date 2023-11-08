@@ -1,13 +1,20 @@
-pub mod address;
-pub mod parser;
+/*
+ * From move-command-line-common
+ */
+// pub mod address;
+// pub mod parser;
+// pub mod types;
+// pub mod values;
+/************************* */
+
 // pub mod balance;
 // pub mod base_types;
 // pub mod bytecode;
 // pub mod gas_coin;
 pub mod resolver;
-pub mod types;
+
 // pub mod object;
-pub mod values;
+
 /*
  * 23-11-03 TaiVV
  * Import directly from move_core_types
@@ -35,3 +42,10 @@ pub use move_vm_types::loaded_data::runtime_types;
 
 // pub mod file_format;
 pub use move_binary_format::file_format;
+
+pub use move_command_line_common::address;
+pub use move_command_line_common::parser;
+pub use move_command_line_common::types;
+pub use move_command_line_common::values;
+
+pub use move_bytecode_utils::{layout, module_cache};

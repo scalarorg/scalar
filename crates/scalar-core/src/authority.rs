@@ -55,12 +55,17 @@ pub use authority_store::{AuthorityStore, ResolverWrapper, UpdateType};
 use mysten_metrics::{monitored_scope, spawn_monitored_task};
 
 use once_cell::sync::OnceCell;
+use scalar_archival::reader::ArchiveReaderBalancer;
 use scalar_config::certificate_deny_config::CertificateDenyConfig;
 use scalar_config::genesis::Genesis;
 use scalar_config::node::{
     AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
 };
 use scalar_config::transaction_deny_config::TransactionDenyConfig;
+use scalar_storage::indexes::{CoinInfo, ObjectIndexChanges};
+use scalar_storage::key_value_store::{TransactionKeyValueStore, TransactionKeyValueStoreTrait};
+use scalar_storage::key_value_store_metrics::KeyValueStoreMetrics;
+use scalar_storage::IndexStore;
 use scalar_types::authenticator_state::get_authenticator_state;
 use scalar_types::committee::{EpochId, ProtocolVersion};
 use scalar_types::crypto::{default_hash, AuthoritySignInfo, Signer};
@@ -108,19 +113,14 @@ use scalar_types::{
 };
 use scalar_types::{is_system_package, TypeTag};
 use shared_crypto::intent::{Intent, IntentScope};
-use sui_archival::reader::ArchiveReaderBalancer;
-use sui_framework::{BuiltInFramework, SystemPackage};
-use sui_json_rpc_types::{
+//use sui_framework::{BuiltInFramework, SystemPackage};
+use scalar_json_rpc_types::{
     DevInspectResults, DryRunTransactionBlockResponse, EventFilter, SuiEvent, SuiMoveValue,
     SuiObjectDataFilter, SuiTransactionBlockData, SuiTransactionBlockEffects,
     SuiTransactionBlockEvents, TransactionFilter,
 };
 use sui_macros::{fail_point, fail_point_async};
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
-use sui_storage::indexes::{CoinInfo, ObjectIndexChanges};
-use sui_storage::key_value_store::{TransactionKeyValueStore, TransactionKeyValueStoreTrait};
-use sui_storage::key_value_store_metrics::KeyValueStoreMetrics;
-use sui_storage::IndexStore;
 use typed_store::Map;
 
 use crate::authority::authority_per_epoch_store::{AuthorityPerEpochStore, CertTxGuard};
@@ -3687,132 +3687,140 @@ impl AuthorityState {
         epoch_store.clear_override_protocol_upgrade_buffer_stake()
     }
 
-    /// Get the set of system packages that are compiled in to this build, if those packages are
-    /// compatible with the current versions of those packages on-chain.
-    pub async fn get_available_system_packages(
-        &self,
-        max_binary_format_version: u32,
-        no_extraneous_module_bytes: bool,
-    ) -> Vec<ObjectRef> {
-        let mut results = vec![];
+    /*
+     * 23-11-07 TaiVV
+     * Comment out Move package
+     */
+    // /// Get the set of system packages that are compiled in to this build, if those packages are
+    // /// compatible with the current versions of those packages on-chain.
+    // pub async fn get_available_system_packages(
+    //     &self,
+    //     max_binary_format_version: u32,
+    //     no_extraneous_module_bytes: bool,
+    // ) -> Vec<ObjectRef> {
+    //     let mut results = vec![];
 
-        let system_packages = BuiltInFramework::iter_system_packages();
+    //     let system_packages = BuiltInFramework::iter_system_packages();
 
-        // Add extra framework packages during simtest
-        #[cfg(msim)]
-        let extra_packages = framework_injection::get_extra_packages(self.name);
-        #[cfg(msim)]
-        let system_packages = system_packages.map(|p| p).chain(extra_packages.iter());
+    //     // Add extra framework packages during simtest
+    //     #[cfg(msim)]
+    //     let extra_packages = framework_injection::get_extra_packages(self.name);
+    //     #[cfg(msim)]
+    //     let system_packages = system_packages.map(|p| p).chain(extra_packages.iter());
 
-        for system_package in system_packages {
-            let modules = system_package.modules().to_vec();
-            // In simtests, we could override the current built-in framework packages.
-            #[cfg(msim)]
-            let modules = framework_injection::get_override_modules(system_package.id(), self.name)
-                .unwrap_or(modules);
+    //     for system_package in system_packages {
+    //         let modules = system_package.modules().to_vec();
+    //         // In simtests, we could override the current built-in framework packages.
+    //         #[cfg(msim)]
+    //         let modules = framework_injection::get_override_modules(system_package.id(), self.name)
+    //             .unwrap_or(modules);
 
-            let Some(obj_ref) = sui_framework::compare_system_package(
-                self.database.as_ref(),
-                system_package.id(),
-                &modules,
-                system_package.dependencies().to_vec(),
-                max_binary_format_version,
-                no_extraneous_module_bytes,
-            )
-            .await
-            else {
-                return vec![];
-            };
-            results.push(obj_ref);
-        }
+    //         let Some(obj_ref) = sui_framework::compare_system_package(
+    //             self.database.as_ref(),
+    //             system_package.id(),
+    //             &modules,
+    //             system_package.dependencies().to_vec(),
+    //             max_binary_format_version,
+    //             no_extraneous_module_bytes,
+    //         )
+    //         .await
+    //         else {
+    //             return vec![];
+    //         };
+    //         results.push(obj_ref);
+    //     }
 
-        results
-    }
+    //     results
+    // }
 
-    /// Return the new versions, module bytes, and dependencies for the packages that have been
-    /// committed to for a framework upgrade, in `system_packages`.  Loads the module contents from
-    /// the binary, and performs the following checks:
-    ///
-    /// - Whether its contents matches what is on-chain already, in which case no upgrade is
-    ///   required, and its contents are omitted from the output.
-    /// - Whether the contents in the binary can form a package whose digest matches the input,
-    ///   meaning the framework will be upgraded, and this authority can satisfy that upgrade, in
-    ///   which case the contents are included in the output.
-    ///
-    /// If the current version of the framework can't be loaded, the binary does not contain the
-    /// bytes for that framework ID, or the resulting package fails the digest check, `None` is
-    /// returned indicating that this authority cannot run the upgrade that the network voted on.
-    async fn get_system_package_bytes(
-        &self,
-        system_packages: Vec<ObjectRef>,
-        move_binary_format_version: u32,
-        no_extraneous_module_bytes: bool,
-    ) -> Option<Vec<(SequenceNumber, Vec<Vec<u8>>, Vec<ObjectID>)>> {
-        let ids: Vec<_> = system_packages.iter().map(|(id, _, _)| *id).collect();
-        let objects = self.get_objects(&ids).await.expect("read cannot fail");
+    /*
+     * 23-11-07 TaiVV
+     * Comment out move package logic
+     */
+    // /// Return the new versions, module bytes, and dependencies for the packages that have been
+    // /// committed to for a framework upgrade, in `system_packages`.  Loads the module contents from
+    // /// the binary, and performs the following checks:
+    // ///
+    // /// - Whether its contents matches what is on-chain already, in which case no upgrade is
+    // ///   required, and its contents are omitted from the output.
+    // /// - Whether the contents in the binary can form a package whose digest matches the input,
+    // ///   meaning the framework will be upgraded, and this authority can satisfy that upgrade, in
+    // ///   which case the contents are included in the output.
+    // ///
+    // /// If the current version of the framework can't be loaded, the binary does not contain the
+    // /// bytes for that framework ID, or the resulting package fails the digest check, `None` is
+    // /// returned indicating that this authority cannot run the upgrade that the network voted on.
+    // async fn get_system_package_bytes(
+    //     &self,
+    //     system_packages: Vec<ObjectRef>,
+    //     move_binary_format_version: u32,
+    //     no_extraneous_module_bytes: bool,
+    // ) -> Option<Vec<(SequenceNumber, Vec<Vec<u8>>, Vec<ObjectID>)>> {
+    //     let ids: Vec<_> = system_packages.iter().map(|(id, _, _)| *id).collect();
+    //     let objects = self.get_objects(&ids).await.expect("read cannot fail");
 
-        let mut res = Vec::with_capacity(system_packages.len());
-        for (system_package_ref, object) in system_packages.into_iter().zip(objects.iter()) {
-            let prev_transaction = match object {
-                Some(cur_object) if cur_object.compute_object_reference() == system_package_ref => {
-                    // Skip this one because it doesn't need to be upgraded.
-                    info!("Framework {} does not need updating", system_package_ref.0);
-                    continue;
-                }
+    //     let mut res = Vec::with_capacity(system_packages.len());
+    //     for (system_package_ref, object) in system_packages.into_iter().zip(objects.iter()) {
+    //         let prev_transaction = match object {
+    //             Some(cur_object) if cur_object.compute_object_reference() == system_package_ref => {
+    //                 // Skip this one because it doesn't need to be upgraded.
+    //                 info!("Framework {} does not need updating", system_package_ref.0);
+    //                 continue;
+    //             }
 
-                Some(cur_object) => cur_object.previous_transaction,
-                None => TransactionDigest::genesis(),
-            };
+    //             Some(cur_object) => cur_object.previous_transaction,
+    //             None => TransactionDigest::genesis(),
+    //         };
 
-            #[cfg(msim)]
-            let SystemPackage {
-                id: _,
-                bytes,
-                dependencies,
-            } = framework_injection::get_override_system_package(&system_package_ref.0, self.name)
-                .unwrap_or_else(|| {
-                    BuiltInFramework::get_package_by_id(&system_package_ref.0).clone()
-                });
+    //         #[cfg(msim)]
+    //         let SystemPackage {
+    //             id: _,
+    //             bytes,
+    //             dependencies,
+    //         } = framework_injection::get_override_system_package(&system_package_ref.0, self.name)
+    //             .unwrap_or_else(|| {
+    //                 BuiltInFramework::get_package_by_id(&system_package_ref.0).clone()
+    //             });
 
-            #[cfg(not(msim))]
-            let SystemPackage {
-                id: _,
-                bytes,
-                dependencies,
-            } = BuiltInFramework::get_package_by_id(&system_package_ref.0).clone();
+    //         #[cfg(not(msim))]
+    //         let SystemPackage {
+    //             id: _,
+    //             bytes,
+    //             dependencies,
+    //         } = BuiltInFramework::get_package_by_id(&system_package_ref.0).clone();
 
-            let modules: Vec<_> = bytes
-                .iter()
-                .map(|m| {
-                    CompiledModule::deserialize_with_config(
-                        m,
-                        move_binary_format_version,
-                        no_extraneous_module_bytes,
-                    )
-                    .unwrap()
-                })
-                .collect();
+    //         let modules: Vec<_> = bytes
+    //             .iter()
+    //             .map(|m| {
+    //                 CompiledModule::deserialize_with_config(
+    //                     m,
+    //                     move_binary_format_version,
+    //                     no_extraneous_module_bytes,
+    //                 )
+    //                 .unwrap()
+    //             })
+    //             .collect();
 
-            let new_object = Object::new_system_package(
-                &modules,
-                system_package_ref.1,
-                dependencies.clone(),
-                prev_transaction,
-            );
+    //         let new_object = Object::new_system_package(
+    //             &modules,
+    //             system_package_ref.1,
+    //             dependencies.clone(),
+    //             prev_transaction,
+    //         );
 
-            let new_ref = new_object.compute_object_reference();
-            if new_ref != system_package_ref {
-                error!(
-                    "Framework mismatch -- binary: {new_ref:?}\n  upgrade: {system_package_ref:?}"
-                );
-                return None;
-            }
+    //         let new_ref = new_object.compute_object_reference();
+    //         if new_ref != system_package_ref {
+    //             error!(
+    //                 "Framework mismatch -- binary: {new_ref:?}\n  upgrade: {system_package_ref:?}"
+    //             );
+    //             return None;
+    //         }
 
-            res.push((system_package_ref.1, bytes, dependencies));
-        }
+    //         res.push((system_package_ref.1, bytes, dependencies));
+    //     }
 
-        Some(res)
-    }
+    //     Some(res)
+    // }
 
     fn is_protocol_version_supported(
         current_protocol_version: ProtocolVersion,

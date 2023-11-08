@@ -210,15 +210,15 @@ fn to_sui_type_tag_string(value: &TypeTag) -> Result<String, fmt::Error> {
  * Move code lien quan toi Move ra package rieng (xu ly sau)
  * Tags: SCALAR_MOVE_LANGUAGE
  */
-// impl<'de> DeserializeAs<'de, StructTag> for SuiStructTag {
-//     fn deserialize_as<D>(deserializer: D) -> Result<StructTag, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let s = String::deserialize(deserializer)?;
-//         parse_sui_struct_tag(&s).map_err(D::Error::custom)
-//     }
-// }
+impl<'de> DeserializeAs<'de, StructTag> for SuiStructTag {
+    fn deserialize_as<D>(deserializer: D) -> Result<StructTag, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        parse_sui_struct_tag(&s).map_err(D::Error::custom)
+    }
+}
 
 pub struct SuiTypeTag;
 

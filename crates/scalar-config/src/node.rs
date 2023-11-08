@@ -11,6 +11,7 @@ use narwhal_config::Parameters as ConsensusParameters;
 use once_cell::sync::OnceCell;
 use rand::rngs::OsRng;
 use scalar_keys::keypair_file::{read_authority_keypair_from_file, read_keypair_from_file};
+use scalar_storage::object_store::ObjectStoreConfig;
 use scalar_types::base_types::{ObjectID, SuiAddress};
 use scalar_types::crypto::AuthorityPublicKeyBytes;
 use scalar_types::crypto::KeypairTraits;
@@ -28,7 +29,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::usize;
 use sui_protocol_config::{Chain, SupportedProtocolVersions};
-use sui_storage::object_store::ObjectStoreConfig;
 use tracing::info;
 
 // Default max number of concurrent requests served

@@ -11,6 +11,7 @@ use either::Either;
 use fastcrypto::hash::{HashFunction, MultisetHash, Sha3_256};
 use futures::stream::FuturesUnordered;
 use move_core_types::resolver::ModuleResolver;
+use scalar_storage::mutex_table::{MutexGuard, MutexTable, RwLockGuard, RwLockTable};
 use scalar_types::accumulator::Accumulator;
 use scalar_types::digests::TransactionEventsDigest;
 use scalar_types::error::UserInputError;
@@ -24,7 +25,6 @@ use scalar_types::storage::{
 use scalar_types::sui_system_state::get_sui_system_state;
 use scalar_types::{base_types::SequenceNumber, fp_bail, fp_ensure, storage::ParentSync};
 use serde::{Deserialize, Serialize};
-use sui_storage::mutex_table::{MutexGuard, MutexTable, RwLockGuard, RwLockTable};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use tokio::time::Instant;
 use tracing::{debug, info, trace};
@@ -40,9 +40,9 @@ use crate::authority::epoch_start_configuration::{EpochFlag, EpochStartConfigura
 use super::authority_store_tables::LiveObject;
 use super::{authority_store_tables::AuthorityPerpetualTables, *};
 use mysten_common::sync::notify_read::NotifyRead;
+use scalar_storage::package_object_cache::PackageObjectCache;
 use scalar_types::effects::{TransactionEffects, TransactionEvents};
 use scalar_types::gas_coin::TOTAL_SUPPLY_MIST;
-use sui_storage::package_object_cache::PackageObjectCache;
 use typed_store::rocks::util::is_ref_count_value;
 
 const NUM_SHARDS: usize = 4096;
