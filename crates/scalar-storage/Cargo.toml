@@ -50,7 +50,7 @@ eyre.workspace = true
 lru.workspace = true
 
 move-binary-format.workspace = true
-#move-bytecode-utils.workspace = true
+move-bytecode-utils.workspace = true
 workspace-hack.workspace = true
 
 [dev-dependencies]

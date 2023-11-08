@@ -418,10 +418,10 @@ mod tests {
     use scalar_types::object::Object;
     use scalar_types::utils::create_fake_transaction;
     use scalar_types::{parse_sui_struct_tag, TypeTag};
-    use sui_storage::key_value_store::{
+    use scalar_storage::key_value_store::{
         KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStoreTrait,
     };
-    use sui_storage::key_value_store_metrics::KeyValueStoreMetrics;
+    use scalar_storage::key_value_store_metrics::KeyValueStoreMetrics;
     use typed_store::TypedStoreError;
 
     mock! {

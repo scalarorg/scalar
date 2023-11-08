@@ -1,0 +1,25 @@
+---
+compiled_package_info:
+  package_name: DeepBook
+  address_alias_instantiation:
+    deepbook: 000000000000000000000000000000000000000000000000000000000000dee9
+    std: "0000000000000000000000000000000000000000000000000000000000000001"
+    sui: "0000000000000000000000000000000000000000000000000000000000000002"
+  source_digest: 5D6721CD09B8E4A736FA4C7392EFAF5DEDC55257B1FF64FA127A920A0BD7E95C
+  build_flags:
+    dev_mode: true
+    test_mode: true
+    generate_docs: true
+    generate_abis: false
+    install_dir: "."
+    force_recompilation: false
+    lock_file: ~
+    additional_named_addresses: {}
+    fetch_deps_only: false
+    skip_fetch_latest_git_deps: false
+    default_flavor: sui
+    default_edition: ~
+    deps_as_root: false
+dependencies:
+  - MoveStdlib
+  - Sui

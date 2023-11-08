@@ -23,5 +23,5 @@ move-stdlib = { path = "../../../external-crates/move/move-execution/v0/move-std
 move-vm-runtime = { path = "../../../external-crates/move/move-execution/v0/move-vm/runtime", package = "move-vm-runtime-v0" }
 
 sui-protocol-config.workspace = true
-sui-types.workspace = true
+scalar-types.workspace = true
 workspace-hack.workspace = true

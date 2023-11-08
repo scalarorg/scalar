@@ -322,16 +322,16 @@ impl MoveObject {
      * Tags: SCALAR_MOVE_LANGUAGE
      */
 
-    // /// Get a `MoveStructLayout` for `self`.
-    // /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
-    // /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
-    // pub fn get_layout(
-    //     &self,
-    //     format: ObjectFormatOptions,
-    //     resolver: &impl GetModule,
-    // ) -> Result<MoveStructLayout, SuiError> {
-    //     Self::get_layout_from_struct_tag(self.type_().clone().into(), format, resolver)
-    // }
+    /// Get a `MoveStructLayout` for `self`.
+    /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
+    /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
+    pub fn get_layout(
+        &self,
+        format: ObjectFormatOptions,
+        resolver: &impl GetModule,
+    ) -> Result<MoveStructLayout, SuiError> {
+        Self::get_layout_from_struct_tag(self.type_().clone().into(), format, resolver)
+    }
 
     pub fn get_layout_from_struct_tag(
         struct_tag: StructTag,
@@ -364,14 +364,14 @@ impl MoveObject {
         })
     }
 
-    // /// Convert `self` to the JSON representation dictated by `layout`.
-    // pub fn to_move_struct_with_resolver(
-    //     &self,
-    //     format: ObjectFormatOptions,
-    //     resolver: &impl GetModule,
-    // ) -> Result<MoveStruct, SuiError> {
-    //     self.to_move_struct(&self.get_layout(format, resolver)?)
-    // }
+    /// Convert `self` to the JSON representation dictated by `layout`.
+    pub fn to_move_struct_with_resolver(
+        &self,
+        format: ObjectFormatOptions,
+        resolver: &impl GetModule,
+    ) -> Result<MoveStruct, SuiError> {
+        self.to_move_struct(&self.get_layout(format, resolver)?)
+    }
 
     pub fn to_rust<'de, T: Deserialize<'de>>(&'de self) -> Option<T> {
         bcs::from_bytes(self.contents()).ok()
@@ -704,24 +704,24 @@ impl Object {
      * Tạo mới MovePackage
      * Tags: SCALAR_MOVE_LANGUAGE
      */
-    // /// Create a system package which is not subject to size limits. Panics if the object ID is not
-    // /// a known system package.
-    // pub fn new_system_package(
-    //     modules: &[CompiledModule],
-    //     version: SequenceNumber,
-    //     dependencies: Vec<ObjectID>,
-    //     previous_transaction: TransactionDigest,
-    // ) -> Self {
-    //     let ret = Self::new_package_from_data(
-    //         Data::Package(MovePackage::new_system(version, modules, dependencies)),
-    //         previous_transaction,
-    //     );
+    /// Create a system package which is not subject to size limits. Panics if the object ID is not
+    /// a known system package.
+    pub fn new_system_package(
+        modules: &[CompiledModule],
+        version: SequenceNumber,
+        dependencies: Vec<ObjectID>,
+        previous_transaction: TransactionDigest,
+    ) -> Self {
+        let ret = Self::new_package_from_data(
+            Data::Package(MovePackage::new_system(version, modules, dependencies)),
+            previous_transaction,
+        );
 
-    //     #[cfg(not(msim))]
-    //     assert!(ret.is_system_package());
+        #[cfg(not(msim))]
+        assert!(ret.is_system_package());
 
-    //     ret
-    // }
+        ret
+    }
 
     pub fn new_package_from_data(data: Data, previous_transaction: TransactionDigest) -> Self {
         Object {
@@ -739,59 +739,59 @@ impl Object {
      * Tags: SCALAR_MOVE_LANGUAGE
      */
 
-    // // Note: this will panic if `modules` is empty
-    // pub fn new_from_package(package: MovePackage, previous_transaction: TransactionDigest) -> Self {
-    //     Self::new_package_from_data(Data::Package(package), previous_transaction)
-    // }
+    // Note: this will panic if `modules` is empty
+    pub fn new_from_package(package: MovePackage, previous_transaction: TransactionDigest) -> Self {
+        Self::new_package_from_data(Data::Package(package), previous_transaction)
+    }
 
-    // pub fn new_package<'p>(
-    //     modules: &[CompiledModule],
-    //     previous_transaction: TransactionDigest,
-    //     max_move_package_size: u64,
-    //     dependencies: impl IntoIterator<Item = &'p MovePackage>,
-    // ) -> Result<Self, ExecutionError> {
-    //     Ok(Self::new_package_from_data(
-    //         Data::Package(MovePackage::new_initial(
-    //             modules,
-    //             max_move_package_size,
-    //             dependencies,
-    //         )?),
-    //         previous_transaction,
-    //     ))
-    // }
+    pub fn new_package<'p>(
+        modules: &[CompiledModule],
+        previous_transaction: TransactionDigest,
+        max_move_package_size: u64,
+        dependencies: impl IntoIterator<Item = &'p MovePackage>,
+    ) -> Result<Self, ExecutionError> {
+        Ok(Self::new_package_from_data(
+            Data::Package(MovePackage::new_initial(
+                modules,
+                max_move_package_size,
+                dependencies,
+            )?),
+            previous_transaction,
+        ))
+    }
 
-    // pub fn new_upgraded_package<'p>(
-    //     previous_package: &MovePackage,
-    //     new_package_id: ObjectID,
-    //     modules: &[CompiledModule],
-    //     previous_transaction: TransactionDigest,
-    //     protocol_config: &ProtocolConfig,
-    //     dependencies: impl IntoIterator<Item = &'p MovePackage>,
-    // ) -> Result<Self, ExecutionError> {
-    //     Ok(Self::new_package_from_data(
-    //         Data::Package(previous_package.new_upgraded(
-    //             new_package_id,
-    //             modules,
-    //             protocol_config,
-    //             dependencies,
-    //         )?),
-    //         previous_transaction,
-    //     ))
-    // }
+    pub fn new_upgraded_package<'p>(
+        previous_package: &MovePackage,
+        new_package_id: ObjectID,
+        modules: &[CompiledModule],
+        previous_transaction: TransactionDigest,
+        protocol_config: &ProtocolConfig,
+        dependencies: impl IntoIterator<Item = &'p MovePackage>,
+    ) -> Result<Self, ExecutionError> {
+        Ok(Self::new_package_from_data(
+            Data::Package(previous_package.new_upgraded(
+                new_package_id,
+                modules,
+                protocol_config,
+                dependencies,
+            )?),
+            previous_transaction,
+        ))
+    }
 
-    // pub fn new_package_for_testing(
-    //     modules: &[CompiledModule],
-    //     previous_transaction: TransactionDigest,
-    //     dependencies: impl IntoIterator<Item = MovePackage>,
-    // ) -> Result<Self, ExecutionError> {
-    //     let dependencies: Vec<_> = dependencies.into_iter().collect();
-    //     Self::new_package(
-    //         modules,
-    //         previous_transaction,
-    //         ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
-    //         &dependencies,
-    //     )
-    // }
+    pub fn new_package_for_testing(
+        modules: &[CompiledModule],
+        previous_transaction: TransactionDigest,
+        dependencies: impl IntoIterator<Item = MovePackage>,
+    ) -> Result<Self, ExecutionError> {
+        let dependencies: Vec<_> = dependencies.into_iter().collect();
+        Self::new_package(
+            modules,
+            previous_transaction,
+            ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
+            &dependencies,
+        )
+    }
 
     pub fn is_immutable(&self) -> bool {
         self.owner.is_immutable()
@@ -925,19 +925,19 @@ impl Object {
      * Tags: SCALAR_MOVE_LANGUAGE
      */
 
-    // /// Get a `MoveStructLayout` for `self`.
-    // /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
-    // /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
-    // pub fn get_layout(
-    //     &self,
-    //     format: ObjectFormatOptions,
-    //     resolver: &impl GetModule,
-    // ) -> Result<Option<MoveStructLayout>, SuiError> {
-    //     match &self.data {
-    //         Data::Move(m) => Ok(Some(m.get_layout(format, resolver)?)),
-    //         Data::Package(_) => Ok(None),
-    //     }
-    // }
+    /// Get a `MoveStructLayout` for `self`.
+    /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
+    /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
+    pub fn get_layout(
+        &self,
+        format: ObjectFormatOptions,
+        resolver: &impl GetModule,
+    ) -> Result<Option<MoveStructLayout>, SuiError> {
+        match &self.data {
+            Data::Move(m) => Ok(Some(m.get_layout(format, resolver)?)),
+            Data::Package(_) => Ok(None),
+        }
+    }
 
     /// Treat the object type as a Move struct with one type parameter,
     /// like this: `S<T>`.

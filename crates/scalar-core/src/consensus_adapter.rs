@@ -46,13 +46,13 @@ use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::consensus_handler::{classify, SequencedConsensusTransactionKey};
 use crate::consensus_throughput_calculator::ConsensusThroughputProfiler;
 use crate::epoch::reconfiguration::{ReconfigState, ReconfigurationInitiator};
+use anemo::PeerId;
 use mysten_metrics::{spawn_monitored_task, GaugeGuard, GaugeGuardFutureExt};
+use narwhal_network::connectivity::ConnectionStatus;
 use scalar_types::base_types::AuthorityName;
 use scalar_types::fp_ensure;
 use scalar_types::messages_consensus::ConsensusTransaction;
 use scalar_types::messages_consensus::ConsensusTransactionKind;
-use sui_simulator::anemo::PeerId;
-use sui_simulator::narwhal_network::connectivity::ConnectionStatus;
 use tokio::time::Duration;
 use tracing::{debug, info, warn};
 
@@ -188,7 +188,7 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
 }
 
 #[async_trait::async_trait]
-impl SubmitToConsensus for TransactionsClient<sui_network::tonic::transport::Channel> {
+impl SubmitToConsensus for TransactionsClient<scalar_network::tonic::transport::Channel> {
     async fn submit_to_consensus(
         &self,
         transaction: &ConsensusTransaction,

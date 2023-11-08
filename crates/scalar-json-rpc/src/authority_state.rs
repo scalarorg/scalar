@@ -34,8 +34,8 @@ use scalar_types::sui_system_state::SuiSystemState;
 use scalar_types::transaction::{Transaction, TransactionData, TransactionKind};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use sui_storage::indexes::TotalBalance;
-use sui_storage::key_value_store::{
+use scalar_storage::indexes::TotalBalance;
+use scalar_storage::key_value_store::{
     KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStore,
     TransactionKeyValueStoreTrait,
 };
@@ -577,7 +577,7 @@ impl<S: ?Sized + StateRead> ObjectProvider for (Arc<S>, Arc<TransactionKeyValueS
         let object_read = self.0.get_past_object_read(id, *version)?;
         match object_read {
             PastObjectRead::ObjectNotExists(_) | PastObjectRead::VersionNotFound(..) => {
-                match self.1.get_object(id, version).await? {
+                match self.1.get_object(*id, *version).await? {
                     Some(object) => Ok(object),
                     None => Ok(PastObjectRead::VersionNotFound(*id, *version).into_object()?),
                 }

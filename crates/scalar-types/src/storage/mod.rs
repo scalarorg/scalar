@@ -25,7 +25,7 @@ use crate::{
     object::Object,
 };
 use itertools::Itertools;
-// use move_binary_format::CompiledModule;
+use move_binary_format::CompiledModule;
 pub use object_store_trait::ObjectStore;
 pub use read_store::ReadStore;
 use serde::{Deserialize, Serialize};
@@ -262,13 +262,13 @@ pub fn get_module<S: BackingPackageStore>(
  * Tags: SCALAR_MOVE_LANGUAGE
  */
 
-// pub fn get_module_by_id<S: BackingPackageStore>(
-//     store: S,
-//     id: &ModuleId,
-// ) -> anyhow::Result<Option<CompiledModule>, SuiError> {
-//     Ok(get_module(store, id)?
-//         .map(|bytes| CompiledModule::deserialize_with_defaults(&bytes).unwrap()))
-// }
+pub fn get_module_by_id<S: BackingPackageStore>(
+    store: S,
+    id: &ModuleId,
+) -> anyhow::Result<Option<CompiledModule>, SuiError> {
+    Ok(get_module(store, id)?
+        .map(|bytes| CompiledModule::deserialize_with_defaults(&bytes).unwrap()))
+}
 
 pub trait ParentSync {
     /// This function is only called by older protocol versions.

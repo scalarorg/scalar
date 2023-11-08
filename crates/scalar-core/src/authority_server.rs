@@ -7,6 +7,10 @@ use async_trait::async_trait;
 use mysten_metrics::histogram::Histogram as MystenHistogram;
 use mysten_metrics::spawn_monitored_task;
 use prometheus::{register_int_counter_with_registry, IntCounter, Registry};
+use scalar_network::{
+    api::{Validator, ValidatorServer},
+    tonic,
+};
 use scalar_types::effects::TransactionEffectsAPI;
 use scalar_types::effects::TransactionEvents;
 use scalar_types::messages_consensus::ConsensusTransaction;
@@ -23,10 +27,6 @@ use scalar_types::{
     messages_checkpoint::{CheckpointRequest, CheckpointResponse},
 };
 use std::{io, sync::Arc};
-use sui_network::{
-    api::{Validator, ValidatorServer},
-    tonic,
-};
 use tap::TapFallible;
 use tokio::task::JoinHandle;
 use tracing::{error_span, info, Instrument};

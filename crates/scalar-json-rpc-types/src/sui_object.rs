@@ -10,17 +10,10 @@ use std::fmt::{Display, Formatter};
 use anyhow::anyhow;
 use colored::Colorize;
 use fastcrypto::encoding::Base64;
-//use move_bytecode_utils::module_cache::GetModule;
+use move_bytecode_utils::module_cache::GetModule;
 use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::StructTag;
 use move_core_types::value::{MoveStruct, MoveStructLayout};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde::Serialize;
-use serde_json::Value;
-use serde_with::serde_as;
-use serde_with::DisplayFromStr;
-
 use scalar_types::base_types::{
     ObjectDigest, ObjectID, ObjectInfo, ObjectRef, ObjectType, SequenceNumber, SuiAddress,
     TransactionDigest,
@@ -35,9 +28,15 @@ use scalar_types::object::{Data, MoveObject, Object, ObjectFormatOptions, Object
 use scalar_types::scalar_serde::BigInt;
 use scalar_types::scalar_serde::SequenceNumber as AsSequenceNumber;
 use scalar_types::scalar_serde::SuiStructTag;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
+use serde_with::serde_as;
+use serde_with::DisplayFromStr;
 use sui_protocol_config::ProtocolConfig;
 
-use crate::Page;
+use crate::{Page, SuiMoveStruct, SuiMoveValue};
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema, Clone, PartialEq, Eq)]
 pub struct SuiObjectResponse {
@@ -98,14 +97,13 @@ impl SuiObjectResponse {
         /*
          * 23-11-07 TaiVV
          */
-        // match &self.data {
-        //     Some(SuiObjectData {
-        //         bcs: Some(SuiRawData::MoveObject(obj)),
-        //         ..
-        //     }) => Some(&obj.bcs_bytes),
-        //     _ => None,
-        // }
-        None
+        match &self.data {
+            Some(SuiObjectData {
+                bcs: Some(SuiRawData::MoveObject(obj)),
+                ..
+            }) => Some(&obj.bcs_bytes),
+            _ => None,
+        }
     }
 
     pub fn owner(&self) -> Option<Owner> {
@@ -211,12 +209,12 @@ pub struct SuiObjectData {
      * 23-11-07 TaiVV
      * Commnet out MOVE Language related
      */
-    // /// Move object content or package content, default to be None unless SuiObjectDataOptions.showContent is set to true
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub content: Option<SuiParsedData>,
-    // /// Move object content or package content in BCS, default to be None unless SuiObjectDataOptions.showBcs is set to true
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub bcs: Option<SuiRawData>,
+    /// Move object content or package content, default to be None unless SuiObjectDataOptions.showContent is set to true
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<SuiParsedData>,
+    /// Move object content or package content in BCS, default to be None unless SuiObjectDataOptions.showBcs is set to true
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bcs: Option<SuiRawData>,
 }
 
 impl SuiObjectData {
@@ -289,47 +287,47 @@ impl Display for SuiObjectData {
     }
 }
 
-// impl TryFrom<&SuiObjectData> for GasCoin {
-//     type Error = anyhow::Error;
-//     fn try_from(object: &SuiObjectData) -> Result<Self, Self::Error> {
-//         match &object
-//             .content
-//             .as_ref()
-//             .ok_or_else(|| anyhow!("Expect object content to not be empty"))?
-//         {
-//             SuiParsedData::MoveObject(o) => {
-//                 if GasCoin::type_() == o.type_ {
-//                     return GasCoin::try_from(&o.fields);
-//                 }
-//             }
-//             SuiParsedData::Package(_) => {}
-//         }
+impl TryFrom<&SuiObjectData> for GasCoin {
+    type Error = anyhow::Error;
+    fn try_from(object: &SuiObjectData) -> Result<Self, Self::Error> {
+        match &object
+            .content
+            .as_ref()
+            .ok_or_else(|| anyhow!("Expect object content to not be empty"))?
+        {
+            SuiParsedData::MoveObject(o) => {
+                if GasCoin::type_() == o.type_ {
+                    return GasCoin::try_from(&o.fields);
+                }
+            }
+            SuiParsedData::Package(_) => {}
+        }
 
-//         Err(anyhow!(
-//             "Gas object type is not a gas coin: {:?}",
-//             object.type_
-//         ))
-//     }
-// }
+        Err(anyhow!(
+            "Gas object type is not a gas coin: {:?}",
+            object.type_
+        ))
+    }
+}
 
-// impl TryFrom<&SuiMoveStruct> for GasCoin {
-//     type Error = anyhow::Error;
-//     fn try_from(move_struct: &SuiMoveStruct) -> Result<Self, Self::Error> {
-//         match move_struct {
-//             SuiMoveStruct::WithFields(fields) | SuiMoveStruct::WithTypes { type_: _, fields } => {
-//                 if let Some(SuiMoveValue::String(balance)) = fields.get("balance") {
-//                     if let Ok(balance) = balance.parse::<u64>() {
-//                         if let Some(SuiMoveValue::UID { id }) = fields.get("id") {
-//                             return Ok(GasCoin::new(*id, balance));
-//                         }
-//                     }
-//                 }
-//             }
-//             _ => {}
-//         }
-//         Err(anyhow!("Struct is not a gas coin: {move_struct:?}"))
-//     }
-// }
+impl TryFrom<&SuiMoveStruct> for GasCoin {
+    type Error = anyhow::Error;
+    fn try_from(move_struct: &SuiMoveStruct) -> Result<Self, Self::Error> {
+        match move_struct {
+            SuiMoveStruct::WithFields(fields) | SuiMoveStruct::WithTypes { type_: _, fields } => {
+                if let Some(SuiMoveValue::String(balance)) = fields.get("balance") {
+                    if let Ok(balance) = balance.parse::<u64>() {
+                        if let Some(SuiMoveValue::UID { id }) = fields.get("id") {
+                            return Ok(GasCoin::new(*id, balance));
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        Err(anyhow!("Struct is not a gas coin: {move_struct:?}"))
+    }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, Eq, PartialEq, Default)]
 #[serde(rename_all = "camelCase", rename = "ObjectDataOptions", default)]
@@ -465,8 +463,8 @@ impl TryFrom<(ObjectInfo, SuiObjectDataOptions)> for SuiObjectResponse {
                 .then_some(object_info.previous_transaction),
             storage_rebate: None,
             display: None,
-            // content: None,
-            // bcs: None,
+            content: None,
+            bcs: None,
         }))
     }
 }
@@ -508,36 +506,36 @@ impl
         /*
          * 23-11-07 TaiVV move MOVE language part
          */
-        // let bcs: Option<SuiRawData> = if show_bcs {
-        //     let data = match o.data.clone() {
-        //         Data::Move(m) => {
-        //             let layout = layout.clone().ok_or_else(|| {
-        //                 anyhow!("Layout is required to convert Move object to json")
-        //             })?;
-        //             SuiRawData::try_from_object(m, layout)?
-        //         }
-        //         Data::Package(p) => SuiRawData::try_from_package(p)
-        //             .map_err(|e| anyhow!("Error getting raw data from package: {e:#?}"))?,
-        //     };
-        //     Some(data)
-        // } else {
-        //     None
-        // };
+        let bcs: Option<SuiRawData> = if show_bcs {
+            let data = match o.data.clone() {
+                Data::Move(m) => {
+                    let layout = layout.clone().ok_or_else(|| {
+                        anyhow!("Layout is required to convert Move object to json")
+                    })?;
+                    SuiRawData::try_from_object(m, layout)?
+                }
+                Data::Package(p) => SuiRawData::try_from_package(p)
+                    .map_err(|e| anyhow!("Error getting raw data from package: {e:#?}"))?,
+            };
+            Some(data)
+        } else {
+            None
+        };
 
-        // let content: Option<SuiParsedData> = if show_content {
-        //     let data = match o.data {
-        //         Data::Move(m) => {
-        //             let layout = layout.ok_or_else(|| {
-        //                 anyhow!("Layout is required to convert Move object to json")
-        //             })?;
-        //             SuiParsedData::try_from_object(m, layout)?
-        //         }
-        //         Data::Package(p) => SuiParsedData::try_from_package(p)?,
-        //     };
-        //     Some(data)
-        // } else {
-        //     None
-        // };
+        let content: Option<SuiParsedData> = if show_content {
+            let data = match o.data {
+                Data::Move(m) => {
+                    let layout = layout.ok_or_else(|| {
+                        anyhow!("Layout is required to convert Move object to json")
+                    })?;
+                    SuiParsedData::try_from_object(m, layout)?
+                }
+                Data::Package(p) => SuiParsedData::try_from_package(p)?,
+            };
+            Some(data)
+        } else {
+            None
+        };
 
         Ok(SuiObjectData {
             object_id,
@@ -555,8 +553,8 @@ impl
             } else {
                 None
             },
-            // content,
-            // bcs,
+            content,
+            bcs,
             display: None,
         })
     }
@@ -623,47 +621,47 @@ impl SuiObjectResponse {
     }
 }
 
-// impl TryInto<Object> for SuiObjectData {
-//     type Error = anyhow::Error;
+impl TryInto<Object> for SuiObjectData {
+    type Error = anyhow::Error;
 
-//     fn try_into(self) -> Result<Object, Self::Error> {
-//         let protocol_config = ProtocolConfig::get_for_min_version();
-//         let data = match self.bcs {
-//             Some(SuiRawData::MoveObject(o)) => Data::Move(unsafe {
-//                 MoveObject::new_from_execution(
-//                     o.type_().clone().into(),
-//                     o.has_public_transfer,
-//                     o.version,
-//                     o.bcs_bytes,
-//                     &protocol_config,
-//                 )?
-//             }),
-//             Some(SuiRawData::Package(p)) => Data::Package(MovePackage::new(
-//                 p.id,
-//                 self.version,
-//                 p.module_map,
-//                 protocol_config.max_move_package_size(),
-//                 p.type_origin_table,
-//                 p.linkage_table,
-//             )?),
-//             _ => Err(anyhow!(
-//                 "BCS data is required to convert SuiObjectData to Object"
-//             ))?,
-//         };
-//         Ok(Object {
-//             data,
-//             owner: self
-//                 .owner
-//                 .ok_or_else(|| anyhow!("Owner is required to convert SuiObjectData to Object"))?,
-//             previous_transaction: self.previous_transaction.ok_or_else(|| {
-//                 anyhow!("previous_transaction is required to convert SuiObjectData to Object")
-//             })?,
-//             storage_rebate: self.storage_rebate.ok_or_else(|| {
-//                 anyhow!("storage_rebate is required to convert SuiObjectData to Object")
-//             })?,
-//         })
-//     }
-// }
+    fn try_into(self) -> Result<Object, Self::Error> {
+        let protocol_config = ProtocolConfig::get_for_min_version();
+        let data = match self.bcs {
+            Some(SuiRawData::MoveObject(o)) => Data::Move(unsafe {
+                MoveObject::new_from_execution(
+                    o.type_().clone().into(),
+                    o.has_public_transfer,
+                    o.version,
+                    o.bcs_bytes,
+                    &protocol_config,
+                )?
+            }),
+            Some(SuiRawData::Package(p)) => Data::Package(MovePackage::new(
+                p.id,
+                self.version,
+                p.module_map,
+                protocol_config.max_move_package_size(),
+                p.type_origin_table,
+                p.linkage_table,
+            )?),
+            _ => Err(anyhow!(
+                "BCS data is required to convert SuiObjectData to Object"
+            ))?,
+        };
+        Ok(Object {
+            data,
+            owner: self
+                .owner
+                .ok_or_else(|| anyhow!("Owner is required to convert SuiObjectData to Object"))?,
+            previous_transaction: self.previous_transaction.ok_or_else(|| {
+                anyhow!("previous_transaction is required to convert SuiObjectData to Object")
+            })?,
+            storage_rebate: self.storage_rebate.ok_or_else(|| {
+                anyhow!("storage_rebate is required to convert SuiObjectData to Object")
+            })?,
+        })
+    }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(rename_all = "camelCase", rename = "ObjectRef")]
@@ -705,329 +703,329 @@ impl From<ObjectRef> for SuiObjectRef {
  * 23-11-07 TaiVV
  * Move to scalar-move/src/move_json_rpc_types/sui_move_object.rs
  */
-// pub trait SuiData: Sized {
-//     type ObjectType;
-//     type PackageType;
-//     fn try_from_object(object: MoveObject, layout: MoveStructLayout)
-//         -> Result<Self, anyhow::Error>;
-//     fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error>;
-//     fn try_as_move(&self) -> Option<&Self::ObjectType>;
-//     fn try_as_package(&self) -> Option<&Self::PackageType>;
-//     fn type_(&self) -> Option<&StructTag>;
-// }
+pub trait SuiData: Sized {
+    type ObjectType;
+    type PackageType;
+    fn try_from_object(object: MoveObject, layout: MoveStructLayout)
+        -> Result<Self, anyhow::Error>;
+    fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error>;
+    fn try_as_move(&self) -> Option<&Self::ObjectType>;
+    fn try_as_package(&self) -> Option<&Self::PackageType>;
+    fn type_(&self) -> Option<&StructTag>;
+}
 
-// #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
-// #[serde(tag = "dataType", rename_all = "camelCase", rename = "RawData")]
-// pub enum SuiRawData {
-//     // Manually handle generic schema generation
-//     MoveObject(SuiRawMoveObject),
-//     Package(SuiRawMovePackage),
-// }
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
+#[serde(tag = "dataType", rename_all = "camelCase", rename = "RawData")]
+pub enum SuiRawData {
+    // Manually handle generic schema generation
+    MoveObject(SuiRawMoveObject),
+    Package(SuiRawMovePackage),
+}
 
-// impl SuiData for SuiRawData {
-//     type ObjectType = SuiRawMoveObject;
-//     type PackageType = SuiRawMovePackage;
+impl SuiData for SuiRawData {
+    type ObjectType = SuiRawMoveObject;
+    type PackageType = SuiRawMovePackage;
 
-//     fn try_from_object(object: MoveObject, _: MoveStructLayout) -> Result<Self, anyhow::Error> {
-//         Ok(Self::MoveObject(object.into()))
-//     }
+    fn try_from_object(object: MoveObject, _: MoveStructLayout) -> Result<Self, anyhow::Error> {
+        Ok(Self::MoveObject(object.into()))
+    }
 
-//     fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error> {
-//         Ok(Self::Package(package.into()))
-//     }
+    fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error> {
+        Ok(Self::Package(package.into()))
+    }
 
-//     fn try_as_move(&self) -> Option<&Self::ObjectType> {
-//         match self {
-//             Self::MoveObject(o) => Some(o),
-//             Self::Package(_) => None,
-//         }
-//     }
+    fn try_as_move(&self) -> Option<&Self::ObjectType> {
+        match self {
+            Self::MoveObject(o) => Some(o),
+            Self::Package(_) => None,
+        }
+    }
 
-//     fn try_as_package(&self) -> Option<&Self::PackageType> {
-//         match self {
-//             Self::MoveObject(_) => None,
-//             Self::Package(p) => Some(p),
-//         }
-//     }
+    fn try_as_package(&self) -> Option<&Self::PackageType> {
+        match self {
+            Self::MoveObject(_) => None,
+            Self::Package(p) => Some(p),
+        }
+    }
 
-//     fn type_(&self) -> Option<&StructTag> {
-//         match self {
-//             Self::MoveObject(o) => Some(&o.type_),
-//             Self::Package(_) => None,
-//         }
-//     }
-// }
+    fn type_(&self) -> Option<&StructTag> {
+        match self {
+            Self::MoveObject(o) => Some(&o.type_),
+            Self::Package(_) => None,
+        }
+    }
+}
 
-// #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
-// #[serde(tag = "dataType", rename_all = "camelCase", rename = "Data")]
-// pub enum SuiParsedData {
-//     // Manually handle generic schema generation
-//     MoveObject(SuiParsedMoveObject),
-//     Package(SuiMovePackage),
-// }
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
+#[serde(tag = "dataType", rename_all = "camelCase", rename = "Data")]
+pub enum SuiParsedData {
+    // Manually handle generic schema generation
+    MoveObject(SuiParsedMoveObject),
+    Package(SuiMovePackage),
+}
 
-// impl SuiData for SuiParsedData {
-//     type ObjectType = SuiParsedMoveObject;
-//     type PackageType = SuiMovePackage;
+impl SuiData for SuiParsedData {
+    type ObjectType = SuiParsedMoveObject;
+    type PackageType = SuiMovePackage;
 
-//     fn try_from_object(
-//         object: MoveObject,
-//         layout: MoveStructLayout,
-//     ) -> Result<Self, anyhow::Error> {
-//         Ok(Self::MoveObject(SuiParsedMoveObject::try_from_layout(
-//             object, layout,
-//         )?))
-//     }
+    fn try_from_object(
+        object: MoveObject,
+        layout: MoveStructLayout,
+    ) -> Result<Self, anyhow::Error> {
+        Ok(Self::MoveObject(SuiParsedMoveObject::try_from_layout(
+            object, layout,
+        )?))
+    }
 
-//     fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error> {
-//         Ok(Self::Package(SuiMovePackage {
-//             disassembled: package.disassemble()?,
-//         }))
-//     }
+    fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error> {
+        Ok(Self::Package(SuiMovePackage {
+            disassembled: package.disassemble()?,
+        }))
+    }
 
-//     fn try_as_move(&self) -> Option<&Self::ObjectType> {
-//         match self {
-//             Self::MoveObject(o) => Some(o),
-//             Self::Package(_) => None,
-//         }
-//     }
+    fn try_as_move(&self) -> Option<&Self::ObjectType> {
+        match self {
+            Self::MoveObject(o) => Some(o),
+            Self::Package(_) => None,
+        }
+    }
 
-//     fn try_as_package(&self) -> Option<&Self::PackageType> {
-//         match self {
-//             Self::MoveObject(_) => None,
-//             Self::Package(p) => Some(p),
-//         }
-//     }
+    fn try_as_package(&self) -> Option<&Self::PackageType> {
+        match self {
+            Self::MoveObject(_) => None,
+            Self::Package(p) => Some(p),
+        }
+    }
 
-//     fn type_(&self) -> Option<&StructTag> {
-//         match self {
-//             Self::MoveObject(o) => Some(&o.type_),
-//             Self::Package(_) => None,
-//         }
-//     }
-// }
+    fn type_(&self) -> Option<&StructTag> {
+        match self {
+            Self::MoveObject(o) => Some(&o.type_),
+            Self::Package(_) => None,
+        }
+    }
+}
 
-// impl Display for SuiParsedData {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-//         let mut writer = String::new();
-//         match self {
-//             SuiParsedData::MoveObject(o) => {
-//                 writeln!(writer, "{}: {}", "type".bold().bright_black(), o.type_)?;
-//                 write!(writer, "{}", &o.fields)?;
-//             }
-//             SuiParsedData::Package(p) => {
-//                 write!(
-//                     writer,
-//                     "{}: {:?}",
-//                     "Modules".bold().bright_black(),
-//                     p.disassembled.keys()
-//                 )?;
-//             }
-//         }
-//         write!(f, "{}", writer)
-//     }
-// }
+impl Display for SuiParsedData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut writer = String::new();
+        match self {
+            SuiParsedData::MoveObject(o) => {
+                writeln!(writer, "{}: {}", "type".bold().bright_black(), o.type_)?;
+                write!(writer, "{}", &o.fields)?;
+            }
+            SuiParsedData::Package(p) => {
+                write!(
+                    writer,
+                    "{}: {:?}",
+                    "Modules".bold().bright_black(),
+                    p.disassembled.keys()
+                )?;
+            }
+        }
+        write!(f, "{}", writer)
+    }
+}
 
-// impl SuiParsedData {
-//     pub fn try_from_object_read(object_read: ObjectRead) -> Result<Self, anyhow::Error> {
-//         match object_read {
-//             ObjectRead::NotExists(id) => Err(anyhow::anyhow!("Object {} does not exist", id)),
-//             ObjectRead::Exists(_object_ref, o, layout) => {
-//                 let data = match o.data {
-//                     Data::Move(m) => {
-//                         let layout = layout.ok_or_else(|| {
-//                             anyhow!("Layout is required to convert Move object to json")
-//                         })?;
-//                         SuiParsedData::try_from_object(m, layout)?
-//                     }
-//                     Data::Package(p) => SuiParsedData::try_from_package(p)?,
-//                 };
-//                 Ok(data)
-//             }
-//             ObjectRead::Deleted((object_id, version, digest)) => Err(anyhow::anyhow!(
-//                 "Object {} was deleted at version {} with digest {}",
-//                 object_id,
-//                 version,
-//                 digest
-//             )),
-//         }
-//     }
-// }
+impl SuiParsedData {
+    pub fn try_from_object_read(object_read: ObjectRead) -> Result<Self, anyhow::Error> {
+        match object_read {
+            ObjectRead::NotExists(id) => Err(anyhow::anyhow!("Object {} does not exist", id)),
+            ObjectRead::Exists(_object_ref, o, layout) => {
+                let data = match o.data {
+                    Data::Move(m) => {
+                        let layout = layout.ok_or_else(|| {
+                            anyhow!("Layout is required to convert Move object to json")
+                        })?;
+                        SuiParsedData::try_from_object(m, layout)?
+                    }
+                    Data::Package(p) => SuiParsedData::try_from_package(p)?,
+                };
+                Ok(data)
+            }
+            ObjectRead::Deleted((object_id, version, digest)) => Err(anyhow::anyhow!(
+                "Object {} was deleted at version {} with digest {}",
+                object_id,
+                version,
+                digest
+            )),
+        }
+    }
+}
 /*
  * 23-11-07 TaiVV
  * Move to scalar-move/src/move_json_rpc_types/sui_move_object.rs
  */
-// pub trait SuiMoveObject: Sized {
-//     fn try_from_layout(object: MoveObject, layout: MoveStructLayout)
-//         -> Result<Self, anyhow::Error>;
+pub trait SuiMoveObject: Sized {
+    fn try_from_layout(object: MoveObject, layout: MoveStructLayout)
+        -> Result<Self, anyhow::Error>;
 
-//     fn try_from(o: MoveObject, resolver: &impl GetModule) -> Result<Self, anyhow::Error> {
-//         let layout = o.get_layout(ObjectFormatOptions::default(), resolver)?;
-//         Self::try_from_layout(o, layout)
-//     }
+    fn try_from(o: MoveObject, resolver: &impl GetModule) -> Result<Self, anyhow::Error> {
+        let layout = o.get_layout(ObjectFormatOptions::default(), resolver)?;
+        Self::try_from_layout(o, layout)
+    }
 
-//     fn type_(&self) -> &StructTag;
-// }
+    fn type_(&self) -> &StructTag;
+}
 
-// #[serde_as]
-// #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
-// #[serde(rename = "MoveObject", rename_all = "camelCase")]
-// pub struct SuiParsedMoveObject {
-//     #[serde(rename = "type")]
-//     #[serde_as(as = "SuiStructTag")]
-//     #[schemars(with = "String")]
-//     pub type_: StructTag,
-//     pub has_public_transfer: bool,
-//     pub fields: SuiMoveStruct,
-// }
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
+#[serde(rename = "MoveObject", rename_all = "camelCase")]
+pub struct SuiParsedMoveObject {
+    #[serde(rename = "type")]
+    #[serde_as(as = "SuiStructTag")]
+    #[schemars(with = "String")]
+    pub type_: StructTag,
+    pub has_public_transfer: bool,
+    pub fields: SuiMoveStruct,
+}
 
-// impl SuiMoveObject for SuiParsedMoveObject {
-//     fn try_from_layout(
-//         object: MoveObject,
-//         layout: MoveStructLayout,
-//     ) -> Result<Self, anyhow::Error> {
-//         let move_struct = object.to_move_struct(&layout)?.into();
+impl SuiMoveObject for SuiParsedMoveObject {
+    fn try_from_layout(
+        object: MoveObject,
+        layout: MoveStructLayout,
+    ) -> Result<Self, anyhow::Error> {
+        let move_struct = object.to_move_struct(&layout)?.into();
 
-//         Ok(
-//             if let SuiMoveStruct::WithTypes { type_, fields } = move_struct {
-//                 SuiParsedMoveObject {
-//                     type_,
-//                     has_public_transfer: object.has_public_transfer(),
-//                     fields: SuiMoveStruct::WithFields(fields),
-//                 }
-//             } else {
-//                 SuiParsedMoveObject {
-//                     type_: object.type_().clone().into(),
-//                     has_public_transfer: object.has_public_transfer(),
-//                     fields: move_struct,
-//                 }
-//             },
-//         )
-//     }
+        Ok(
+            if let SuiMoveStruct::WithTypes { type_, fields } = move_struct {
+                SuiParsedMoveObject {
+                    type_,
+                    has_public_transfer: object.has_public_transfer(),
+                    fields: SuiMoveStruct::WithFields(fields),
+                }
+            } else {
+                SuiParsedMoveObject {
+                    type_: object.type_().clone().into(),
+                    has_public_transfer: object.has_public_transfer(),
+                    fields: move_struct,
+                }
+            },
+        )
+    }
 
-//     fn type_(&self) -> &StructTag {
-//         &self.type_
-//     }
-// }
+    fn type_(&self) -> &StructTag {
+        &self.type_
+    }
+}
 
-// impl SuiParsedMoveObject {
-//     pub fn try_from_object_read(object_read: ObjectRead) -> Result<Self, anyhow::Error> {
-//         let parsed_data = SuiParsedData::try_from_object_read(object_read)?;
-//         match parsed_data {
-//             SuiParsedData::MoveObject(o) => Ok(o),
-//             SuiParsedData::Package(_) => Err(anyhow::anyhow!("Object is not a Move object")),
-//         }
-//     }
+impl SuiParsedMoveObject {
+    pub fn try_from_object_read(object_read: ObjectRead) -> Result<Self, anyhow::Error> {
+        let parsed_data = SuiParsedData::try_from_object_read(object_read)?;
+        match parsed_data {
+            SuiParsedData::MoveObject(o) => Ok(o),
+            SuiParsedData::Package(_) => Err(anyhow::anyhow!("Object is not a Move object")),
+        }
+    }
 
-//     pub fn read_dynamic_field_value(&self, field_name: &str) -> Option<SuiMoveValue> {
-//         match &self.fields {
-//             SuiMoveStruct::WithFields(fields) => fields.get(field_name).cloned(),
-//             SuiMoveStruct::WithTypes { fields, .. } => fields.get(field_name).cloned(),
-//             _ => None,
-//         }
-//     }
-// }
+    pub fn read_dynamic_field_value(&self, field_name: &str) -> Option<SuiMoveValue> {
+        match &self.fields {
+            SuiMoveStruct::WithFields(fields) => fields.get(field_name).cloned(),
+            SuiMoveStruct::WithTypes { fields, .. } => fields.get(field_name).cloned(),
+            _ => None,
+        }
+    }
+}
 
-// pub fn type_and_fields_from_move_struct(
-//     type_: &StructTag,
-//     move_struct: MoveStruct,
-// ) -> (StructTag, SuiMoveStruct) {
-//     match move_struct.into() {
-//         SuiMoveStruct::WithTypes { type_, fields } => (type_, SuiMoveStruct::WithFields(fields)),
-//         fields => (type_.clone(), fields),
-//     }
-// }
+pub fn type_and_fields_from_move_struct(
+    type_: &StructTag,
+    move_struct: MoveStruct,
+) -> (StructTag, SuiMoveStruct) {
+    match move_struct.into() {
+        SuiMoveStruct::WithTypes { type_, fields } => (type_, SuiMoveStruct::WithFields(fields)),
+        fields => (type_.clone(), fields),
+    }
+}
 
-// #[serde_as]
-// #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
-// #[serde(rename = "RawMoveObject", rename_all = "camelCase")]
-// pub struct SuiRawMoveObject {
-//     #[schemars(with = "String")]
-//     #[serde(rename = "type")]
-//     #[serde_as(as = "SuiStructTag")]
-//     pub type_: StructTag,
-//     pub has_public_transfer: bool,
-//     pub version: SequenceNumber,
-//     #[serde_as(as = "Base64")]
-//     #[schemars(with = "Base64")]
-//     pub bcs_bytes: Vec<u8>,
-// }
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
+#[serde(rename = "RawMoveObject", rename_all = "camelCase")]
+pub struct SuiRawMoveObject {
+    #[schemars(with = "String")]
+    #[serde(rename = "type")]
+    #[serde_as(as = "SuiStructTag")]
+    pub type_: StructTag,
+    pub has_public_transfer: bool,
+    pub version: SequenceNumber,
+    #[serde_as(as = "Base64")]
+    #[schemars(with = "Base64")]
+    pub bcs_bytes: Vec<u8>,
+}
 
-// impl From<MoveObject> for SuiRawMoveObject {
-//     fn from(o: MoveObject) -> Self {
-//         Self {
-//             type_: o.type_().clone().into(),
-//             has_public_transfer: o.has_public_transfer(),
-//             version: o.version(),
-//             bcs_bytes: o.into_contents(),
-//         }
-//     }
-// }
+impl From<MoveObject> for SuiRawMoveObject {
+    fn from(o: MoveObject) -> Self {
+        Self {
+            type_: o.type_().clone().into(),
+            has_public_transfer: o.has_public_transfer(),
+            version: o.version(),
+            bcs_bytes: o.into_contents(),
+        }
+    }
+}
 
-// impl SuiMoveObject for SuiRawMoveObject {
-//     fn try_from_layout(
-//         object: MoveObject,
-//         _layout: MoveStructLayout,
-//     ) -> Result<Self, anyhow::Error> {
-//         Ok(Self {
-//             type_: object.type_().clone().into(),
-//             has_public_transfer: object.has_public_transfer(),
-//             version: object.version(),
-//             bcs_bytes: object.into_contents(),
-//         })
-//     }
+impl SuiMoveObject for SuiRawMoveObject {
+    fn try_from_layout(
+        object: MoveObject,
+        _layout: MoveStructLayout,
+    ) -> Result<Self, anyhow::Error> {
+        Ok(Self {
+            type_: object.type_().clone().into(),
+            has_public_transfer: object.has_public_transfer(),
+            version: object.version(),
+            bcs_bytes: object.into_contents(),
+        })
+    }
 
-//     fn type_(&self) -> &StructTag {
-//         &self.type_
-//     }
-// }
+    fn type_(&self) -> &StructTag {
+        &self.type_
+    }
+}
 
-// impl SuiRawMoveObject {
-//     pub fn deserialize<'a, T: Deserialize<'a>>(&'a self) -> Result<T, anyhow::Error> {
-//         Ok(bcs::from_bytes(self.bcs_bytes.as_slice())?)
-//     }
-// }
+impl SuiRawMoveObject {
+    pub fn deserialize<'a, T: Deserialize<'a>>(&'a self) -> Result<T, anyhow::Error> {
+        Ok(bcs::from_bytes(self.bcs_bytes.as_slice())?)
+    }
+}
 
-// #[serde_as]
-// #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
-// #[serde(rename = "RawMovePackage", rename_all = "camelCase")]
-// pub struct SuiRawMovePackage {
-//     pub id: ObjectID,
-//     pub version: SequenceNumber,
-//     #[schemars(with = "BTreeMap<String, Base64>")]
-//     #[serde_as(as = "BTreeMap<_, Base64>")]
-//     pub module_map: BTreeMap<String, Vec<u8>>,
-//     pub type_origin_table: Vec<TypeOrigin>,
-//     pub linkage_table: BTreeMap<ObjectID, UpgradeInfo>,
-// }
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Eq, PartialEq)]
+#[serde(rename = "RawMovePackage", rename_all = "camelCase")]
+pub struct SuiRawMovePackage {
+    pub id: ObjectID,
+    pub version: SequenceNumber,
+    #[schemars(with = "BTreeMap<String, Base64>")]
+    #[serde_as(as = "BTreeMap<_, Base64>")]
+    pub module_map: BTreeMap<String, Vec<u8>>,
+    pub type_origin_table: Vec<TypeOrigin>,
+    pub linkage_table: BTreeMap<ObjectID, UpgradeInfo>,
+}
 
-// impl From<MovePackage> for SuiRawMovePackage {
-//     fn from(p: MovePackage) -> Self {
-//         Self {
-//             id: p.id(),
-//             version: p.version(),
-//             module_map: p.serialized_module_map().clone(),
-//             type_origin_table: p.type_origin_table().clone(),
-//             linkage_table: p.linkage_table().clone(),
-//         }
-//     }
-// }
+impl From<MovePackage> for SuiRawMovePackage {
+    fn from(p: MovePackage) -> Self {
+        Self {
+            id: p.id(),
+            version: p.version(),
+            module_map: p.serialized_module_map().clone(),
+            type_origin_table: p.type_origin_table().clone(),
+            linkage_table: p.linkage_table().clone(),
+        }
+    }
+}
 
-// impl SuiRawMovePackage {
-//     pub fn to_move_package(
-//         &self,
-//         max_move_package_size: u64,
-//     ) -> Result<MovePackage, ExecutionError> {
-//         MovePackage::new(
-//             self.id,
-//             self.version,
-//             self.module_map.clone(),
-//             max_move_package_size,
-//             self.type_origin_table.clone(),
-//             self.linkage_table.clone(),
-//         )
-//     }
-// }
+impl SuiRawMovePackage {
+    pub fn to_move_package(
+        &self,
+        max_move_package_size: u64,
+    ) -> Result<MovePackage, ExecutionError> {
+        MovePackage::new(
+            self.id,
+            self.version,
+            self.module_map.clone(),
+            max_move_package_size,
+            self.type_origin_table.clone(),
+            self.linkage_table.clone(),
+        )
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema, Clone, PartialEq, Eq)]
 #[serde(tag = "status", content = "details", rename = "ObjectRead")]

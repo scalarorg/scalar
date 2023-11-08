@@ -93,6 +93,10 @@ use scalar_json_rpc::read_api::ReadApi;
 use scalar_json_rpc::transaction_builder_api::TransactionBuilderApi;
 use scalar_json_rpc::transaction_execution_api::TransactionExecutionApi;
 use scalar_json_rpc::JsonRpcServerBuilder;
+use scalar_network::api::ValidatorServer;
+use scalar_network::discovery;
+use scalar_network::discovery::TrustedPeerChangeEvent;
+use scalar_network::state_sync;
 use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
 use scalar_storage::{
     http_key_value_store::HttpKVStore,
@@ -111,14 +115,10 @@ use scalar_types::quorum_driver_types::QuorumDriverEffectsQueueResult;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use scalar_types::sui_system_state::SuiSystemStateTrait;
-use sui_kvstore::writer::setup_key_value_store_uploader;
+use scalar_kvstore::writer::setup_key_value_store_uploader;
 use sui_macros::fail_point_async;
-use sui_network::api::ValidatorServer;
-use sui_network::discovery;
-use sui_network::discovery::TrustedPeerChangeEvent;
-use sui_network::state_sync;
 use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
-use sui_snapshot::uploader::StateSnapshotUploader;
+use scalar_snapshot::uploader::StateSnapshotUploader;
 use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
@@ -1743,11 +1743,15 @@ pub fn build_http_server(
     };
 
     router = router.merge(json_rpc_router);
-
-    if config.enable_experimental_rest_api {
-        let rest_router = sui_rest_api::rest_router(state);
-        router = router.nest("/rest", rest_router);
-    }
+    /*
+     * 23-11-08 TaiVV
+     * Comment out experimental rest api
+     * Tags SCALAR_REST_API
+     */
+    // if config.enable_experimental_rest_api {
+    //     let rest_router = sui_rest_api::rest_router(state);
+    //     router = router.nest("/rest", rest_router);
+    // }
 
     let server = axum::Server::bind(&config.json_rpc_address).serve(router.into_make_service());
 

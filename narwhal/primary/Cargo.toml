@@ -27,7 +27,13 @@ prost.workspace = true
 rand = { workspace = true, features = ["small_rng"] }
 serde.workspace = true
 thiserror.workspace = true
-tokio = { workspace = true, features = ["sync", "rt", "macros", "time", "test-util"] }
+tokio = { workspace = true, features = [
+    "sync",
+    "rt",
+    "macros",
+    "time",
+    "test-util",
+] }
 tokio-stream = { version = "0.1.14" }
 tonic.workspace = true
 tower.workspace = true

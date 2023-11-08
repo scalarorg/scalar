@@ -13,6 +13,7 @@ use move_core_types::ident_str;
 use prometheus::Registry;
 use scalar_config::genesis::Genesis;
 use scalar_config::local_ip_utils;
+use scalar_framework::BuiltInFramework;
 use scalar_genesis_builder::validator_info::ValidatorInfo;
 use scalar_types::base_types::{random_object_ref, ObjectID};
 use scalar_types::crypto::{
@@ -41,7 +42,6 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-// use sui_framework::BuiltInFramework;
 use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
 use sui_protocol_config::ProtocolConfig;
 use tokio::time::timeout;

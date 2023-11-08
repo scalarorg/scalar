@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use sui_protocol_config::SupportedProtocolVersions;
-use sui_telemetry::send_telemetry_event;
+use scalar_telemetry::send_telemetry_event;
 use tokio::time::sleep;
 use tracing::{error, info};
 
