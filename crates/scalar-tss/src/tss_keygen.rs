@@ -305,8 +305,7 @@ impl TssKeyGenerator {
         rx_keygen: UnboundedReceiver<MessageIn>,
     ) -> Result<KeygenResult, tonic::Status> {
         let my_uid = PeerId(self.authority.network_key().0.to_bytes()).to_string();
-        // info!("{:?} Execute keygen flow {:?}", my_uid, keygen_init);
-        info!("{:?} Execute keygen flow", my_uid);
+        info!("{:?} Execute keygen flow {:?}", my_uid, keygen_init);
         let port = 50010 + self.authority.id().0;
         match create_tofnd_client(port).await {
             Err(_e) => Err(tonic::Status::unavailable("Cannot create tofnd client")),
@@ -457,11 +456,11 @@ impl TssKeyGenerator {
         for peer in peers {
             let network = self.network.clone();
             let message = tss_message.clone();
-            // info!(
-            //     "Deliver keygen message from {:?} to peer {:?}",
-            //     from,
-            //     peer.to_string()
-            // );
+            info!(
+                "Deliver keygen message from to peer {:?}",
+                // from,
+                peer.to_string()
+            );
             let f = move |peer| {
                 let request = TssAnemoKeygenRequest {
                     message: message.to_owned(),
@@ -471,7 +470,7 @@ impl TssKeyGenerator {
                     let result = TssPeerClient::new(peer).keygen(request).await;
                     match result.as_ref() {
                         Ok(_r) => {
-                            //info!("TssPeerClient keygen result {:?}", r);
+                            info!("TssPeerClient keygen result {:?}", _r);
                         }
                         Err(e) => {
                             info!("TssPeerClient keygen error {:?}", e);
@@ -520,11 +519,11 @@ impl TssKeyGenerator {
         for peer in peers {
             let network = self.network.clone();
             let message = gg20_message.clone();
-            // info!(
-            //     "Deliver keygen message from {:?} to peer {:?}",
-            //     from,
-            //     peer.to_string()
-            // );
+            info!(
+                "Deliver keygen message from peer {:?}",
+                // from,
+                peer.to_string()
+            );
             let f = move |peer| {
                 let request = TssAnemoKeygenRequest {
                     message: message.to_owned(),
@@ -534,7 +533,7 @@ impl TssKeyGenerator {
                     let result = TssPeerClient::new(peer).keygen(request).await;
                     match result.as_ref() {
                         Ok(_r) => {
-                            //info!("Gg0PeerClient keygen result {:?}", r);
+                            info!("Gg0PeerClient keygen result {:?}", _r);
                         }
                         Err(e) => {
                             error!("Gg0PeerClient keygen error {:?}", e);
