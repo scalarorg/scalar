@@ -5,8 +5,10 @@ use fastcrypto::error::FastCryptoError;
 use hyper::header::InvalidHeaderValue;
 use itertools::Itertools;
 use jsonrpsee::core::Error as RpcError;
-use jsonrpsee::types::error::{CallError, INTERNAL_ERROR_CODE};
-use jsonrpsee::types::ErrorObject;
+use jsonrpsee::types::error::{
+    CALL_EXECUTION_FAILED_CODE, INTERNAL_ERROR_CODE, INVALID_PARAMS_CODE,
+};
+use jsonrpsee::types::{ErrorObject, ErrorObjectOwned};
 use scalar_types::error::{SuiError, SuiObjectResponseError, UserInputError};
 use scalar_types::quorum_driver_types::QuorumDriverError;
 use std::collections::BTreeMap;
@@ -81,40 +83,69 @@ impl From<SuiError> for Error {
         }
     }
 }
-
+/*
+ * 23-11-09 TaiVV
+ * For update jsonrpsee to version 0.20.3
+ * Replace CallError::InvalidParams(e.into())
+ * By ErrorObjectOwned::owned(INVALID_PARAMS_CODE, e.into(), None)
+ */
 impl From<Error> for RpcError {
     /// `InvalidParams`/`INVALID_PARAMS_CODE` for client errors.
     fn from(e: Error) -> RpcError {
         match e {
-            Error::UserInputError(_) => RpcError::Call(CallError::InvalidParams(e.into())),
-            Error::UnsupportedFeature(_) => RpcError::Call(CallError::InvalidParams(e.into())),
+            Error::UserInputError(_) => RpcError::Call(ErrorObjectOwned::owned(
+                INVALID_PARAMS_CODE,
+                e.into(),
+                None::<()>,
+            )),
+            Error::UnsupportedFeature(_) => RpcError::Call(ErrorObjectOwned::owned(
+                INVALID_PARAMS_CODE,
+                e.into(),
+                None::<()>,
+            )),
             Error::SuiObjectResponseError(err) => match err {
                 SuiObjectResponseError::NotExists { .. }
                 | SuiObjectResponseError::DynamicFieldNotFound { .. }
                 | SuiObjectResponseError::Deleted { .. }
-                | SuiObjectResponseError::DisplayError { .. } => {
-                    RpcError::Call(CallError::InvalidParams(err.into()))
-                }
-                _ => RpcError::Call(CallError::Failed(err.into())),
+                | SuiObjectResponseError::DisplayError { .. } => RpcError::Call(
+                    ErrorObjectOwned::owned(INVALID_PARAMS_CODE, e.into(), None::<()>),
+                ),
+                _ => RpcError::Call(ErrorObjectOwned::owned(
+                    CALL_EXECUTION_FAILED_CODE,
+                    err.to_string(),
+                    None::<()>,
+                )),
             },
-            Error::SuiRpcInputError(err) => RpcError::Call(CallError::InvalidParams(err.into())),
+            Error::SuiRpcInputError(err) => RpcError::Call(ErrorObjectOwned::owned(
+                INVALID_PARAMS_CODE,
+                err.to_string(),
+                None::<()>,
+            )),
             Error::SuiError(sui_error) => match sui_error {
                 SuiError::TransactionNotFound { .. }
                 | SuiError::TransactionsNotFound { .. }
-                | SuiError::TransactionEventsNotFound { .. } => {
-                    RpcError::Call(CallError::InvalidParams(sui_error.into()))
-                }
-                _ => RpcError::Call(CallError::Failed(sui_error.into())),
+                | SuiError::TransactionEventsNotFound { .. } => RpcError::Call(
+                    ErrorObjectOwned::owned(INVALID_PARAMS_CODE, sui_error.to_string(), None::<()>),
+                ),
+                _ => RpcError::Call(ErrorObjectOwned::owned(
+                    CALL_EXECUTION_FAILED_CODE,
+                    sui_error.to_string(),
+                    None::<()>,
+                )),
             },
             Error::StateReadError(err) => match err {
-                StateReadError::Client(_) => RpcError::Call(CallError::InvalidParams(err.into())),
+                StateReadError::Client(_) => RpcError::Call(ErrorObjectOwned::owned(
+                    INVALID_PARAMS_CODE,
+                    err.to_string(),
+                    None::<()>,
+                )),
                 _ => {
                     let error_object = ErrorObject::owned(
                         jsonrpsee::types::error::INTERNAL_ERROR_CODE,
                         err.to_string(),
                         None::<()>,
                     );
-                    RpcError::Call(CallError::Custom(error_object))
+                    RpcError::Call(error_object)
                 }
             },
             Error::QuorumDriverError(err) => {
@@ -133,7 +164,7 @@ impl From<Error> for RpcError {
                             error_message,
                             None::<()>,
                         );
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                     QuorumDriverError::TxAlreadyFinalizedWithDifferentUserSignatures => {
                         let error_object = ErrorObject::owned(
@@ -141,13 +172,13 @@ impl From<Error> for RpcError {
                             "The transaction is already finalized but with different user signatures",
                             None::<()>,
                         );
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                     QuorumDriverError::TimeoutBeforeFinality
                     | QuorumDriverError::FailedWithTransientErrorAfterMaximumAttempts { .. } => {
                         let error_object =
                             ErrorObject::owned(TRANSIENT_ERROR_CODE, err.to_string(), None::<()>);
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                     QuorumDriverError::ObjectsDoubleUsed {
                         conflicting_txes,
@@ -175,7 +206,7 @@ impl From<Error> for RpcError {
                             error_message,
                             Some(new_map),
                         );
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                     QuorumDriverError::NonRecoverableTransactionError { errors } => {
                         let new_errors: Vec<String> = errors
@@ -219,7 +250,7 @@ impl From<Error> for RpcError {
                             error_msg,
                             None::<()>,
                         );
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                     QuorumDriverError::QuorumDriverInternalError(_) => {
                         let error_object = ErrorObject::owned(
@@ -227,16 +258,20 @@ impl From<Error> for RpcError {
                             "Internal error occurred while executing transaction.",
                             None::<()>,
                         );
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                     QuorumDriverError::SystemOverload { .. } => {
                         let error_object =
                             ErrorObject::owned(TRANSIENT_ERROR_CODE, err.to_string(), None::<()>);
-                        RpcError::Call(CallError::Custom(error_object))
+                        RpcError::Call(error_object)
                     }
                 }
             }
-            _ => RpcError::Call(CallError::Failed(e.into())),
+            _ => RpcError::Call(ErrorObjectOwned::owned(
+                CALL_EXECUTION_FAILED_CODE,
+                e.into(),
+                None::<()>,
+            )),
         }
     }
 }
@@ -282,7 +317,12 @@ pub enum SuiRpcInputError {
 
 impl From<SuiRpcInputError> for RpcError {
     fn from(e: SuiRpcInputError) -> Self {
-        RpcError::Call(CallError::InvalidParams(e.into()))
+        RpcError::Call(ErrorObjectOwned::owned(
+            INVALID_PARAMS_CODE,
+            e.into(),
+            None::<()>,
+        ))
+        //RpcError::Call(CallError::InvalidParams(e.into()))
     }
 }
 

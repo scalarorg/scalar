@@ -25,6 +25,20 @@ pub enum ConsensusEngineError {
     Common(#[from] RethError),
 }
 
+// box the pipeline error as it is a large enum.
+impl From<PipelineError> for ConsensusEngineError {
+    fn from(e: PipelineError) -> Self {
+        Self::Pipeline(Box::new(e))
+    }
+}
+
+// for convenience in the beacon engine
+impl From<reth_interfaces::db::DatabaseError> for ConsensusEngineError {
+    fn from(e: reth_interfaces::db::DatabaseError) -> Self {
+        Self::Common(e.into())
+    }
+}
+
 /// Represents error cases for an applied forkchoice update.
 ///
 /// This represents all possible error cases, that must be returned as JSON RCP errors back to the
@@ -40,6 +54,17 @@ pub enum ConsensusForkChoiceUpdateError {
     /// Thrown when the engine task is unavailable/stopped.
     #[error("beacon consensus engine task stopped")]
     EngineUnavailable,
+}
+
+impl From<RethError> for ConsensusForkChoiceUpdateError {
+    fn from(e: RethError) -> Self {
+        Self::Internal(Box::new(e))
+    }
+}
+impl From<reth_interfaces::db::DatabaseError> for ConsensusForkChoiceUpdateError {
+    fn from(e: reth_interfaces::db::DatabaseError) -> Self {
+        Self::Internal(Box::new(e.into()))
+    }
 }
 
 /// Represents all error cases when handling a new payload.

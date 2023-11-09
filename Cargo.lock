@@ -11169,6 +11169,7 @@ dependencies = [
  "reth-provider",
  "reth-revm-inspectors",
  "revm",
+ "scalar-consensus-adapter-common",
  "tracing",
 ]
 
@@ -11226,6 +11227,7 @@ dependencies = [
  "reth-transaction-pool",
  "revm",
  "revm-primitives",
+ "scalar-consensus-adapter-common",
  "schnellru",
  "secp256k1 0.27.0",
  "serde",
@@ -11315,7 +11317,7 @@ dependencies = [
  "reth-rpc-types",
  "reth-rpc-types-compat",
  "reth-tasks",
- "scalar-consensus",
+ "scalar-consensus-adapter",
  "serde",
  "thiserror",
  "tokio",
@@ -12226,7 +12228,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "scalar-consensus"
+name = "scalar-consensus-adapter"
 version = "1.5.0"
 dependencies = [
  "assert_matches",
@@ -12249,11 +12251,24 @@ dependencies = [
  "reth-tasks",
  "reth-tokio-util",
  "reth-tracing",
+ "scalar-consensus-adapter-common",
  "schnellru",
  "thiserror",
  "tokio",
  "tokio-stream",
  "tracing",
+]
+
+[[package]]
+name = "scalar-consensus-adapter-common"
+version = "1.5.0"
+dependencies = [
+ "assert_matches",
+ "cfg-if",
+ "mockall",
+ "reth-interfaces",
+ "reth-primitives",
+ "reth-provider",
 ]
 
 [[package]]

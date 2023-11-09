@@ -14,7 +14,7 @@ reth-primitives.workspace = true
 reth-interfaces.workspace = true
 reth-provider.workspace = true
 reth-revm-inspectors = { path = "./revm-inspectors" }
-#reth-consensus-common = { path = "../consensus/common" }
+scalar-consensus-adapter-common.workspace = true
 
 # revm
 revm.workspace = true

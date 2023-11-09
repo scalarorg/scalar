@@ -1,10 +1,10 @@
-use reth_consensus_common::calc;
 use reth_interfaces::executor::{BlockExecutionError, BlockValidationError};
 use reth_primitives::{
     constants::SYSTEM_ADDRESS, revm::env::fill_tx_env_with_beacon_root_contract_call, Address,
     ChainSpec, Header, Withdrawal, B256, U256,
 };
 use revm::{Database, DatabaseCommit, EVM};
+use scalar_consensus_adapter_common::calc;
 use std::collections::HashMap;
 
 /// Collect all balance changes at the end of the block.
@@ -68,7 +68,7 @@ where
     DB::Error: std::fmt::Display,
 {
     if !chain_spec.is_cancun_active_at_timestamp(block_timestamp) {
-        return Ok(())
+        return Ok(());
     }
 
     let parent_beacon_block_root =
@@ -78,12 +78,14 @@ where
     // be 0x0 and no system transaction may occur as per EIP-4788
     if block_number == 0 {
         if parent_beacon_block_root != B256::ZERO {
-            return Err(BlockValidationError::CancunGenesisParentBeaconBlockRootNotZero {
-                parent_beacon_block_root,
-            }
-            .into())
+            return Err(
+                BlockValidationError::CancunGenesisParentBeaconBlockRootNotZero {
+                    parent_beacon_block_root,
+                }
+                .into(),
+            );
         }
-        return Ok(())
+        return Ok(());
     }
 
     // get previous env
@@ -100,7 +102,7 @@ where
                 parent_beacon_block_root: Box::new(parent_beacon_block_root),
                 message: e.to_string(),
             }
-            .into())
+            .into());
         }
     };
 

@@ -4,7 +4,7 @@ use jsonrpsee_types::error::{
 //use reth_beacon_consensus::{BeaconForkChoiceUpdateError, BeaconOnNewPayloadError};
 use reth_payload_builder::error::PayloadBuilderError;
 use reth_primitives::{B256, U256};
-use scalar_consensus::{ConsensusForkChoiceUpdateError, ConsensusForkChoiceUpdateError};
+use scalar_consensus_adapter::{ConsensusForkChoiceUpdateError, ConsensusOnNewPayloadError};
 use thiserror::Error;
 
 /// The Engine API result type

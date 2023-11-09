@@ -195,8 +195,7 @@ async fn process_request<L: Logger>(
 
     logger.on_result(
         name,
-        response.success,
-        response.error_code,
+        response.success_or_error,
         request_start,
         TransportProtocol::Http,
     );
@@ -414,8 +413,7 @@ pub mod ws {
         if let Some(response) = &response {
             logger.on_result(
                 name,
-                response.success,
-                response.error_code,
+                response.success_or_error,
                 request_start,
                 TransportProtocol::WebSocket,
             );

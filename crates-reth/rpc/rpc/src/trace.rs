@@ -9,7 +9,6 @@ use crate::{
 };
 use async_trait::async_trait;
 use jsonrpsee::core::RpcResult as Result;
-use reth_consensus_common::calc::{base_block_reward, block_reward};
 use reth_primitives::{
     revm::env::tx_env_with_recovered, BlockId, BlockNumberOrTag, Bytes, SealedHeader, B256, U256,
 };
@@ -26,6 +25,7 @@ use reth_rpc_types::{
 };
 use revm::{db::CacheDB, primitives::Env};
 use revm_primitives::db::DatabaseCommit;
+use scalar_consensus_adapter_common::calc::{base_block_reward, block_reward};
 use std::{collections::HashSet, sync::Arc};
 use tokio::sync::{AcquireError, OwnedSemaphorePermit};
 
@@ -46,7 +46,11 @@ impl<Provider, Eth> TraceApi<Provider, Eth> {
 
     /// Create a new instance of the [TraceApi]
     pub fn new(provider: Provider, eth_api: Eth, blocking_task_guard: BlockingTaskGuard) -> Self {
-        let inner = Arc::new(TraceApiInner { provider, eth_api, blocking_task_guard });
+        let inner = Arc::new(TraceApiInner {
+            provider,
+            eth_api,
+            blocking_task_guard,
+        });
         Self { inner }
     }
 
@@ -67,7 +71,9 @@ where
 {
     /// Executes the given call and returns a number of possible traces for it.
     pub async fn trace_call(&self, trace_request: TraceCallRequest) -> EthResult<TraceResults> {
-        let at = trace_request.block_id.unwrap_or(BlockId::Number(BlockNumberOrTag::Latest));
+        let at = trace_request
+            .block_id
+            .unwrap_or(BlockId::Number(BlockNumberOrTag::Latest));
         let config = tracing_config(&trace_request.trace_types);
         let overrides =
             EvmOverrides::new(trace_request.state_overrides, trace_request.block_overrides);
@@ -76,11 +82,9 @@ where
             .eth_api
             .spawn_with_call_at(trace_request.call, at, overrides, move |db, env| {
                 let (res, _, db) = inspect_and_return_db(db, env, &mut inspector)?;
-                let trace_res = inspector.into_parity_builder().into_trace_results_with_state(
-                    &res,
-                    &trace_request.trace_types,
-                    &db,
-                )?;
+                let trace_res = inspector
+                    .into_parity_builder()
+                    .into_trace_results_with_state(&res, &trace_request.trace_types, &db)?;
                 Ok(trace_res)
             })
             .await
@@ -108,11 +112,9 @@ where
         self.inner
             .eth_api
             .spawn_trace_at_with_state(env, config, at, move |inspector, res, db| {
-                Ok(inspector.into_parity_builder().into_trace_results_with_state(
-                    &res,
-                    &trace_types,
-                    &db,
-                )?)
+                Ok(inspector
+                    .into_parity_builder()
+                    .into_trace_results_with_state(&res, &trace_types, &db)?)
             })
             .await
     }
@@ -152,11 +154,9 @@ where
                     let mut inspector = TracingInspector::new(config);
                     let (res, _) = inspect(&mut db, env, &mut inspector)?;
 
-                    let trace_res = inspector.into_parity_builder().into_trace_results_with_state(
-                        &res,
-                        &trace_types,
-                        &db,
-                    )?;
+                    let trace_res = inspector
+                        .into_parity_builder()
+                        .into_trace_results_with_state(&res, &trace_types, &db)?;
 
                     results.push(trace_res);
 
@@ -184,11 +184,9 @@ where
         self.inner
             .eth_api
             .spawn_trace_transaction_in_block(hash, config, move |_, inspector, res, db| {
-                let trace_res = inspector.into_parity_builder().into_trace_results_with_state(
-                    &res,
-                    &trace_types,
-                    &db,
-                )?;
+                let trace_res = inspector
+                    .into_parity_builder()
+                    .into_trace_results_with_state(&res, &trace_types, &db)?;
                 Ok(trace_res)
             })
             .await
@@ -209,7 +207,7 @@ where
     ) -> EthResult<Option<LocalizedTransactionTrace>> {
         if indices.len() != 1 {
             // The OG impl failed if it gets more than a single index
-            return Ok(None)
+            return Ok(None);
         }
         self.trace_get_index(hash, indices[0]).await
     }
@@ -240,7 +238,13 @@ where
         filter: TraceFilter,
     ) -> EthResult<Vec<LocalizedTransactionTrace>> {
         let matcher = filter.matcher();
-        let TraceFilter { from_block, to_block, after: _after, count: _count, .. } = filter;
+        let TraceFilter {
+            from_block,
+            to_block,
+            after: _after,
+            count: _count,
+            ..
+        } = filter;
         let start = from_block.unwrap_or(0);
         let end = if let Some(to_block) = to_block {
             to_block
@@ -253,7 +257,7 @@ where
         if distance > 100 {
             return Err(EthApiError::InvalidParams(
                 "Block range too large; currently limited to 100 blocks".to_string(),
-            ))
+            ));
         }
 
         // fetch all blocks in that range
@@ -289,7 +293,7 @@ where
                     if let Some(idx) = tx_info.index {
                         if !indices.contains(&idx) {
                             // only record traces for relevant transactions
-                            return Ok(None)
+                            return Ok(None);
                         }
                     }
                     let traces = inspector
@@ -306,7 +310,12 @@ where
         let all_traces = block_traces
             .into_iter()
             .flatten()
-            .flat_map(|traces| traces.into_iter().flatten().flat_map(|traces| traces.into_iter()))
+            .flat_map(|traces| {
+                traces
+                    .into_iter()
+                    .flatten()
+                    .flat_map(|traces| traces.into_iter())
+            })
             .collect();
 
         Ok(all_traces)
@@ -380,8 +389,8 @@ where
                                 author: block.header.beneficiary,
                                 reward_type: RewardType::Uncle,
                                 value: U256::from(
-                                    block_reward(base_block_reward, block.ommers.len()) -
-                                        base_block_reward,
+                                    block_reward(base_block_reward, block.ommers.len())
+                                        - base_block_reward,
                                 ),
                             },
                         ));
@@ -405,8 +414,9 @@ where
                 block_id,
                 tracing_config(&trace_types),
                 move |tx_info, inspector, res, state, db| {
-                    let mut full_trace =
-                        inspector.into_parity_builder().into_trace_results(&res, &trace_types);
+                    let mut full_trace = inspector
+                        .into_parity_builder()
+                        .into_trace_results(&res, &trace_types);
 
                     // If statediffs were requested, populate them with the account balance and
                     // nonce from pre-state
@@ -443,8 +453,13 @@ where
         block_overrides: Option<Box<BlockOverrides>>,
     ) -> Result<TraceResults> {
         let _permit = self.acquire_trace_permit().await;
-        let request =
-            TraceCallRequest { call, trace_types, block_id, state_overrides, block_overrides };
+        let request = TraceCallRequest {
+            call,
+            trace_types,
+            block_id,
+            state_overrides,
+            block_overrides,
+        };
         Ok(TraceApi::trace_call(self, request).await?)
     }
 
@@ -536,7 +551,9 @@ impl<Provider, Eth> std::fmt::Debug for TraceApi<Provider, Eth> {
 }
 impl<Provider, Eth> Clone for TraceApi<Provider, Eth> {
     fn clone(&self) -> Self {
-        Self { inner: Arc::clone(&self.inner) }
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
     }
 }
 

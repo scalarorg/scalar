@@ -40,7 +40,8 @@ members = [
   #    "narwhal/types",
   #    "narwhal/worker",
   "scalar-execution",
-  "crates/scalar-consensus",
+  "crates/scalar-consensus-adapter",
+  "crates/scalar-consensus-adapter/common",
   # Reth packages
   "crates-reth/config",
   "crates-reth/blockchain-tree",
@@ -130,11 +131,14 @@ itertools = "0.11"
 #   "http-client",
 #   "jsonrpsee-core",
 # ] } #Sui
-
+# rpc
 jsonrpsee = { version = "0.20" }
+jsonrpsee-core = { version = "0.20" }
+jsonrpsee-types = { version = "0.20" }
+
 once_cell = "1.18.0"
 parking_lot = "0.12"
-proc-macro2 = "1.0"              #Reth
+proc-macro2 = "1.0"  #Reth
 #proc-macro2 = "1.0.47" #Sui
 proptest = "1.1.0"
 proptest-derive = "0.4" #Reth
@@ -403,7 +407,8 @@ scalar-network = { path = "crates/scalar-network" }
 scalar-kvstore = { path = "crates/scalar-kvstore" }
 scalar-snapshot = { path = "crates/scalar-snapshot" }
 scalar-telemetry = { path = "crates/scalar-telemetry" }
-scalar-consensus = { path = "crates/scalar-consensus" }
+scalar-consensus-adapter = { path = "crates/scalar-consensus-adapter" }
+scalar-consensus-adapter-common = { path = "crates/scalar-consensus-adapter/common" }
 #scalar-move = { path = "crates/scalar-move" }
 #scalar-transaction = { path = "crates/scalar-transaction" }
 scalar-tss = { path = "crates/scalar-tss" }
@@ -537,10 +542,6 @@ boa_engine = "0.17"
 boa_gc = "0.17"
 
 futures-util = "0.3.25"
-
-# rpc
-jsonrpsee-core = { version = "0.20" }
-jsonrpsee-types = { version = "0.20" }
 
 metrics = "0.21.1"     # Needed for `metrics-macro` to resolve the crate using `::metrics` notation
 pin-project = "1.0.12"
