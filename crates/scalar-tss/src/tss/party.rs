@@ -28,8 +28,8 @@ use crate::types::{
 use narwhal_types::ConditionalBroadcastReceiver;
 
 // use crate::encrypted_sled::PasswordMethod;
+use super::keygen::TssKeyGenerator;
 use crate::service::Gg20Service;
-use crate::tss_keygen::TssKeyGenerator;
 
 #[derive(Clone)]
 pub struct TssParty {
@@ -41,7 +41,7 @@ pub struct TssParty {
     tss_signer: TssSigner,
     tx_keygen: UnboundedSender<MessageIn>,
     tx_sign: UnboundedSender<MessageIn>,
-    tx_tss_sign_result: UnboundedSender<(SignInit, SignResult)>,
+    tx_sign_result: UnboundedSender<(SignInit, SignResult)>,
 }
 impl TssParty {
     pub fn new(
@@ -53,7 +53,7 @@ impl TssParty {
         tss_signer: TssSigner,
         tx_keygen: UnboundedSender<MessageIn>,
         tx_sign: UnboundedSender<MessageIn>,
-        tx_tss_sign_result: UnboundedSender<(SignInit, SignResult)>,
+        tx_sign_result: UnboundedSender<(SignInit, SignResult)>,
     ) -> Self {
         Self {
             authority,
@@ -64,7 +64,7 @@ impl TssParty {
             tss_signer,
             tx_keygen,
             tx_sign,
-            tx_tss_sign_result,
+            tx_sign_result,
         }
     }
 
@@ -269,11 +269,11 @@ impl TssParty {
     }
 }
 impl TssParty {
-    pub fn run_v2(
+    pub fn run(
         &self,
         rx_keygen: UnboundedReceiver<MessageIn>,
         _rx_sign: UnboundedReceiver<MessageIn>,
-        _rx_message_out: UnboundedReceiver<MessageOut>,
+        // _rx_message_out: UnboundedReceiver<MessageOut>,
         mut rx_sign_init: UnboundedReceiver<SignInit>,
         mut rx_shutdown: ConditionalBroadcastReceiver,
     ) -> Vec<JoinHandle<()>> {
@@ -309,7 +309,7 @@ impl TssParty {
             // }
         });
         handles.push(handle);
-        let tx_sign_result = self.tx_tss_sign_result.clone();
+        let tx_sign_result = self.tx_sign_result.clone();
         let tss_keygen = self.tss_keygen.clone();
         let tss_signer = self.tss_signer.clone();
         let handle = tokio::spawn(async move {
@@ -321,9 +321,8 @@ impl TssParty {
                     warn!("Node is shuting down");
                     shuting_down = true;
                 },
-                keygen_result = tss_keygen.keygen_execute_v2(keygen_init, &mut rx_message_out) => match keygen_result {
+                keygen_result = tss_keygen.keygen_execute(keygen_init, &mut rx_message_out) => match keygen_result {
                     Ok(_res) => {
-                        // info!("Keygen result {:?}", &res);
                         // info!("Keygen result {:?}", &res);
                         info!("Keygen result");
                         //Todo: Send keygen result to Evm Relayer to update external public key
@@ -371,53 +370,5 @@ impl TssParty {
         });
         handles.push(handle);
         handles
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    #[must_use]
-    pub fn spawn_v2(
-        authority: Authority,
-        committee: Committee,
-        network: Network,
-        tss_store: TssStore,
-        tx_keygen: UnboundedSender<MessageIn>,
-        rx_keygen: UnboundedReceiver<MessageIn>,
-        tx_sign: UnboundedSender<MessageIn>,
-        rx_sign: UnboundedReceiver<MessageIn>,
-        rx_message_out: UnboundedReceiver<MessageOut>,
-        rx_tss_sign_init: UnboundedReceiver<SignInit>,
-        tx_tss_sign_result: UnboundedSender<(SignInit, SignResult)>,
-        rx_shutdown: ConditionalBroadcastReceiver,
-    ) -> Vec<JoinHandle<()>> {
-        let tss_keygen = TssKeyGenerator::new(
-            authority.clone(),
-            committee.clone(),
-            network.clone(),
-            tx_keygen.clone(),
-        );
-        let tss_signer = TssSigner::new(
-            authority.clone(),
-            committee.clone(),
-            network.clone(),
-            tx_sign.clone(),
-        );
-        let tss_party = TssParty::new(
-            authority.clone(),
-            committee.clone(),
-            network.clone(),
-            tss_store,
-            tss_keygen,
-            tss_signer,
-            tx_keygen,
-            tx_sign,
-            tx_tss_sign_result,
-        );
-        tss_party.run_v2(
-            rx_keygen,
-            rx_sign,
-            rx_message_out,
-            rx_tss_sign_init,
-            rx_shutdown,
-        )
     }
 }

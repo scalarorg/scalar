@@ -57,6 +57,7 @@ ethers = { version = "2.0", features = ["abigen", "ipc", "rustls", "ws"]}
 # enable logging for tests
 tracing-test = {version = "0.2", default-features = false}
 testdir = { version = "0.6", default-features = false }
+tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 
 [dev-dependencies]
 [target.'cfg(not(target_env = "msvc"))'.build-dependencies]

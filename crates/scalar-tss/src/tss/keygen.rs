@@ -250,11 +250,11 @@ impl TssKeyGenerator {
         for peer in peers {
             let network = self.network.clone();
             let message = gg20_message.clone();
-            // info!(
-            //     "Deliver keygen message from {:?} to peer {:?}",
-            //     from,
-            //     peer.to_string()
-            // );
+            info!(
+                "Deliver keygen message from to peer {:?}",
+                // from,
+                peer.to_string()
+            );
             let f = move |peer| {
                 let request = TssAnemoKeygenRequest {
                     message: message.to_owned(),
