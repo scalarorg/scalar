@@ -4,11 +4,9 @@
 use anyhow::bail;
 use async_trait::async_trait;
 use futures::Stream;
-use jsonrpsee::{
-    core::{error::SubscriptionClosed, RpcResult},
-    types::SubscriptionResult,
-    RpcModule, SubscriptionSink,
-};
+use jsonrpsee::{core::RpcResult, PendingSubscriptionSink, RpcModule, SubscriptionSink};
+//use jsonrpsee::core::error::SubscriptionClosed;
+use jsonrpsee::core::error::GenericTransportError;
 use move_bytecode_utils::layout::TypeLayoutBuilder;
 use move_core_types::language_storage::TypeTag;
 use mysten_metrics::spawn_monitored_task;
@@ -32,7 +30,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use sui_open_rpc::Module;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 use crate::{
     api::{
@@ -46,7 +44,7 @@ use crate::{
 };
 
 pub fn spawn_subscription<S, T>(
-    mut sink: SubscriptionSink,
+    pending_sink: PendingSubscriptionSink,
     rx: S,
     permit: Option<OwnedSemaphorePermit>,
 ) where
@@ -55,23 +53,34 @@ pub fn spawn_subscription<S, T>(
 {
     spawn_monitored_task!(async move {
         let _permit = permit;
-        // match sink.pipe_from_stream(rx).await {
-        //     SubscriptionClosed::Success => {
-        //         debug!("Subscription completed.");
-        //         sink.close(SubscriptionClosed::Success);
-        //     }
-        //     SubscriptionClosed::RemotePeerAborted => {
-        //         debug!("Subscription aborted by remote peer.");
-        //         sink.close(SubscriptionClosed::RemotePeerAborted);
-        //         /*
-        //          * 23-11-10 Upgrade to jsonrpsee 0.20.3
-        //          */
-        //     }
-        //     SubscriptionClosed::Failed(err) => {
-        //         debug!("Subscription failed: {err:?}");
-        //         sink.close(err);
-        //     }
-        // };
+        match pending_sink.accept().await {
+            Ok(sink) => {}
+            Err(err) => {
+                error!("{:?}", err);
+            }
+        }
+        /*
+         * 23-11-10 TaiVV
+         * Upgrade jsonrpsee 0.20.3
+         * Todo: Finalize this snippet
+         */
+        match sink.pipe_from_stream(rx).await {
+            SubscriptionClosed::Success => {
+                debug!("Subscription completed.");
+                sink.close(SubscriptionClosed::Success);
+            }
+            SubscriptionClosed::RemotePeerAborted => {
+                debug!("Subscription aborted by remote peer.");
+                sink.close(SubscriptionClosed::RemotePeerAborted);
+                /*
+                 * 23-11-10 Upgrade to jsonrpsee 0.20.3
+                 */
+            }
+            SubscriptionClosed::Failed(err) => {
+                debug!("Subscription failed: {err:?}");
+                sink.close(err);
+            }
+        };
     });
 }
 const DEFAULT_MAX_SUBSCRIPTIONS: usize = 100;
@@ -283,33 +292,34 @@ impl<R: ReadApiServer> IndexerApiServer for IndexerApi<R> {
         })
     }
 
+    /*
+     * 23-11-10 TaiVV
+     * Upgrade to jsonrpsee 0.20.3
+     * Todo investigate spawn_subscription function
+     */
     #[instrument(skip(self))]
-    fn subscribe_event(&self, sink: SubscriptionSink, filter: EventFilter) -> SubscriptionResult {
-        let permit = self.acquire_subscribe_permit()?;
-        spawn_subscription(
-            sink,
-            self.state
-                .get_subscription_handler()
-                .subscribe_events(filter),
-            Some(permit),
-        );
-        Ok(())
+    fn subscribe_event(&self, sink: PendingSubscriptionSink, filter: EventFilter) {
+        if let Ok(permit) = self.acquire_subscribe_permit() {
+            spawn_subscription(
+                sink,
+                self.state
+                    .get_subscription_handler()
+                    .subscribe_events(filter),
+                Some(permit),
+            );
+        }
     }
 
-    fn subscribe_transaction(
-        &self,
-        sink: SubscriptionSink,
-        filter: TransactionFilter,
-    ) -> SubscriptionResult {
-        let permit = self.acquire_subscribe_permit()?;
-        spawn_subscription(
-            sink,
-            self.state
-                .get_subscription_handler()
-                .subscribe_transactions(filter),
-            Some(permit),
-        );
-        Ok(())
+    fn subscribe_transaction(&self, sink: PendingSubscriptionSink, filter: TransactionFilter) {
+        if let Ok(permit) = self.acquire_subscribe_permit() {
+            spawn_subscription(
+                sink,
+                self.state
+                    .get_subscription_handler()
+                    .subscribe_transactions(filter),
+                Some(permit),
+            );
+        }
     }
 
     #[instrument(skip(self))]
@@ -362,6 +372,7 @@ impl<R: ReadApiServer> IndexerApiServer for IndexerApi<R> {
                 self.read_api
                     .get_object(id, Some(SuiObjectDataOptions::full_content()))
                     .await
+                    .map_err(Error::from)
             } else {
                 Ok(SuiObjectResponse::new_with_error(
                     SuiObjectResponseError::DynamicFieldNotFound { parent_object_id },

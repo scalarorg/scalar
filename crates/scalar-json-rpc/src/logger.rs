@@ -7,7 +7,6 @@ macro_rules! with_tracing {
         use jsonrpsee::core::{Error as RpcError, RpcResult};
         use jsonrpsee::types::error::INVALID_PARAMS_CODE;
         use jsonrpsee::types::{ErrorObject, ErrorObjectOwned};
-        use std::fmt::format;
         use tracing::{error, info, Instrument, Span};
         //use jsonrpsee::types::error::{CallError};
         use anyhow::anyhow;
@@ -28,13 +27,7 @@ macro_rules! with_tracing {
                 //     error!(error=?anyhow_error);
                 // }
                 // rpc_error
-                // match rpc_error {
-                //     RpcError::Call(err) => err,
-                //     _ => {
-                //         ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", e), None::<()>)
-                //     }
-                // }
-                if !matches!(rpc_error, RpcError::Call(err)) {
+                if !matches!(rpc_error, RpcError::Call(_)) {
                     error!(error=?anyhow_error);
                 }
                 ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", rpc_error), None::<()>)
