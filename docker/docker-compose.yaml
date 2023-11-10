@@ -23,6 +23,7 @@ services:
     # populate your local ./fullnode/config/ directory with fullnode.yaml and genesis.blob for the network you want to use.
     volumes:
       - ../:/scalar
+      - ../../reth:/reth
 
   runner:
     build:

@@ -6,6 +6,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use fastcrypto::encoding::Base64;
 use jsonrpsee::core::RpcResult;
+use jsonrpsee::types::error::{CALL_EXECUTION_FAILED_CODE, PARSE_ERROR_CODE};
+use jsonrpsee::types::ErrorObjectOwned;
 use jsonrpsee::RpcModule;
 use move_core_types::language_storage::StructTag;
 
@@ -16,11 +18,11 @@ use scalar_json_rpc_types::{
     SuiObjectDataOptions, SuiObjectResponse, SuiTransactionBlockBuilderMode, SuiTypeTag,
     TransactionBlockBytes,
 };
+use scalar_transaction_builder::{DataReader, TransactionBuilder};
 use scalar_types::base_types::ObjectInfo;
 use scalar_types::base_types::{ObjectID, SuiAddress};
 use scalar_types::scalar_serde::BigInt;
 use sui_open_rpc::Module;
-use scalar_transaction_builder::{DataReader, TransactionBuilder};
 
 use crate::api::TransactionBuilderServer;
 use crate::authority_state::StateRead;
@@ -92,8 +94,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         let data = self
             .0
             .transfer_object(signer, object_id, gas, *gas_budget, recipient)
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn transfer_sui(
@@ -113,8 +119,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
                 recipient,
                 amount.map(|a| *a),
             )
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn pay(
@@ -136,8 +146,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
                 gas,
                 *gas_budget,
             )
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn pay_sui(
@@ -157,8 +171,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
                 amounts.into_iter().map(|a| *a).collect(),
                 *gas_budget,
             )
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn pay_all_sui(
@@ -171,8 +189,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         let data = self
             .0
             .pay_all_sui(signer, input_coins, recipient, *gas_budget)
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn publish(
@@ -185,13 +207,21 @@ impl TransactionBuilderServer for TransactionBuilderApi {
     ) -> RpcResult<TransactionBlockBytes> {
         let compiled_modules = compiled_modules
             .into_iter()
-            .map(|data| data.to_vec().map_err(|e| anyhow::anyhow!(e)))
+            .map(|data| {
+                data.to_vec().map_err(|e| {
+                    ErrorObjectOwned::owned(PARSE_ERROR_CODE, format!("{:?}", e), None::<()>)
+                })
+            })
             .collect::<Result<Vec<_>, _>>()?;
         let data = self
             .0
             .publish(sender, compiled_modules, dependencies, gas, *gas_budget)
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn split_coin(
@@ -206,8 +236,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         let data = self
             .0
             .split_coin(signer, coin_object_id, split_amounts, gas, *gas_budget)
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn split_coin_equal(
@@ -221,8 +255,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         let data = self
             .0
             .split_coin_equal(signer, coin_object_id, *split_count, gas, *gas_budget)
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn merge_coin(
@@ -236,8 +274,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         let data = self
             .0
             .merge_coins(signer, primary_coin, coin_to_merge, gas, *gas_budget)
-            .await?;
-        Ok(TransactionBlockBytes::from_data(data)?)
+            .await
+            .map_err(|err| {
+                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+            })?;
+        TransactionBlockBytes::from_data(data)
+            .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn move_call(
@@ -252,7 +294,7 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         gas_budget: BigInt<u64>,
         _txn_builder_mode: Option<SuiTransactionBlockBuilderMode>,
     ) -> RpcResult<TransactionBlockBytes> {
-        Ok(TransactionBlockBytes::from_data(
+        TransactionBlockBytes::from_data(
             self.0
                 .move_call(
                     signer,
@@ -264,8 +306,12 @@ impl TransactionBuilderServer for TransactionBuilderApi {
                     gas,
                     *gas_budget,
                 )
-                .await?,
-        )?)
+                .await
+                .map_err(|err| {
+                    ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+                })?,
+        )
+        .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn batch_transaction(
@@ -276,11 +322,18 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         gas_budget: BigInt<u64>,
         _txn_builder_mode: Option<SuiTransactionBlockBuilderMode>,
     ) -> RpcResult<TransactionBlockBytes> {
-        Ok(TransactionBlockBytes::from_data(
+        TransactionBlockBytes::from_data(
             self.0
                 .batch_transaction(signer, params, gas, *gas_budget)
-                .await?,
-        )?)
+                .await
+                .map_err(|err| {
+                    ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+                })
+                .map_err(|err| {
+                    ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+                })?,
+        )
+        .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn request_add_stake(
@@ -293,11 +346,15 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         gas_budget: BigInt<u64>,
     ) -> RpcResult<TransactionBlockBytes> {
         let amount = amount.map(|a| *a);
-        Ok(TransactionBlockBytes::from_data(
+        TransactionBlockBytes::from_data(
             self.0
                 .request_add_stake(signer, coins, amount, validator, gas, *gas_budget)
-                .await?,
-        )?)
+                .await
+                .map_err(|err| {
+                    ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+                })?,
+        )
+        .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 
     async fn request_withdraw_stake(
@@ -307,11 +364,15 @@ impl TransactionBuilderServer for TransactionBuilderApi {
         gas: Option<ObjectID>,
         gas_budget: BigInt<u64>,
     ) -> RpcResult<TransactionBlockBytes> {
-        Ok(TransactionBlockBytes::from_data(
+        TransactionBlockBytes::from_data(
             self.0
                 .request_withdraw_stake(signer, staked_sui, gas, *gas_budget)
-                .await?,
-        )?)
+                .await
+                .map_err(|err| {
+                    ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, err.to_string(), None::<()>)
+                })?,
+        )
+        .map_err(|err| ErrorObjectOwned::owned(PARSE_ERROR_CODE, err.to_string(), None::<()>))
     }
 }
 

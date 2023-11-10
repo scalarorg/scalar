@@ -164,7 +164,9 @@ impl JsonRpcServerBuilder {
 
         let rpc_docs = self.rpc_doc.clone();
         let mut module = self.module.clone();
-        module.register_method("rpc.discover", move |_, _| Ok(rpc_docs.clone()))?;
+        module.register_method("rpc.discover", move |_, _| {
+            Ok::<Project, Error>(rpc_docs.clone())
+        })?;
         let methods_names = module.method_names().collect::<Vec<_>>();
 
         let metrics_logger = MetricsLogger::new(&self.registry, &methods_names);

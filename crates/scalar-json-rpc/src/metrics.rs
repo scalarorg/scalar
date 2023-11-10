@@ -7,7 +7,9 @@ use std::net::SocketAddr;
 
 use crate::error::TRANSIENT_ERROR_CODE;
 use crate::{CLIENT_SDK_TYPE_HEADER, CLIENT_TARGET_API_VERSION_HEADER};
-use jsonrpsee::server::logger::{HttpRequest, Logger, MethodKind, TransportProtocol};
+use jsonrpsee::server::logger::{
+    HttpRequest, Logger, MethodKind, SuccessOrError, TransportProtocol,
+};
 use jsonrpsee::types::Params;
 use prometheus::{
     register_histogram_vec_with_registry, register_int_counter_vec_with_registry,
@@ -209,12 +211,10 @@ impl Logger for MetricsLogger {
             .with_label_values(&[method_name])
             .inc();
     }
-
     fn on_result(
         &self,
         method_name: &str,
-        _success: bool,
-        error_code: Option<i32>,
+        success_or_error: SuccessOrError,
         started_at: Self::Instant,
         _transport: TransportProtocol,
     ) {
@@ -229,7 +229,7 @@ impl Logger for MetricsLogger {
             .with_label_values(&[method_name])
             .observe(req_latency_secs);
 
-        if let Some(code) = error_code {
+        if let SuccessOrError::Failed(code) = success_or_error {
             if code == jsonrpsee::types::error::CALL_EXECUTION_FAILED_CODE
                 || code == jsonrpsee::types::error::INTERNAL_ERROR_CODE
             {

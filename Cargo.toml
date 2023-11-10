@@ -40,18 +40,152 @@ members = [
   #    "narwhal/types",
   #    "narwhal/worker",
   "scalar-execution",
+  "crates/scalar-consensus-adapter",
+  "crates/scalar-consensus-adapter/common",
+  # Reth packages
+  "crates-reth/config",
+  "crates-reth/blockchain-tree",
+  "crates-reth/interfaces",
+  "crates-reth/payload/builder",
+  "crates-reth/metrics",
+  "crates-reth/metrics/metrics-derive",
+  "crates-reth/net/common",
+  "crates-reth/net/ecies",
+  "crates-reth/net/eth-wire",
+  "crates-reth/net/discv4",
+  "crates-reth/net/dns",
+  "crates-reth/net/nat",
+  "crates-reth/net/network-api",
+  "crates-reth/net/network",
+  "crates-reth/net/downloaders",
+  "crates-reth/payload/basic",
+  "crates-reth/primitives",
+  #"crates-reth/prune",
+  "crates-reth/revm",
+  "crates-reth/revm/revm-inspectors",
+  "crates-reth/rpc/ipc",
+  "crates-reth/rpc/rpc",
+  "crates-reth/rpc/rpc-api",
+  "crates-reth/rpc/rpc-builder",
+  "crates-reth/rpc/rpc-engine-api",
+  "crates-reth/rpc/rpc-types",
+  "crates-reth/rpc/rpc-testing-util",
+  "crates-reth/snapshot",
+  "crates-reth/stages",
+  "crates-reth/storage/codecs",
+  "crates-reth/storage/db",
+  "crates-reth/storage/libmdbx-rs",
+  "crates-reth/storage/libmdbx-rs/mdbx-sys",
+  "crates-reth/storage/provider",
+  "crates-reth/storage/nippy-jar",
+  "crates-reth/tracing",
+  "crates-reth/tasks",
+  "crates-reth/transaction-pool",
+  "crates-reth/trie",
+  "crates-reth/testing/ef-tests",
+  "crates-reth/rpc/rpc-types-compat",
+  "crates-reth/tokio-util",
+  #"examples",
+  #"examples/additional-rpc-namespace-in-cli",
+  #"examples/cli-extension-event-hooks",
+  #"examples/rpc-db",
+  #"examples/manual-p2p",
+  #"examples/beacon-api-sse",
+  #"examples/trace-transaction-cli",
 ]
 
 [workspace.package]
 # This version string will be inherited by sui-core, sui-faucet, sui-node, sui-tools, sui-sdk, and sui crates.
 version = "1.5.0"
+edition = "2021"
+rust-version = "1.70"                              # Remember to update clippy.toml and README.md
+license = "MIT OR Apache-2.0"
+homepage = "https://scalar.org/"
+repository = "https://github.com/scalarorg/scalar"
 
 # Dependencies that should be kept in sync through the whole workspace
 [workspace.dependencies]
+
+# Common use in both Reth and Sui
+arbitrary = { version = "1.1.7", features = [
+  "derive",
+  "derive_arbitrary",
+] } #misc-testing
+
+async-trait = "0.1.68" #Reth
+# async-trait = "0.1.61" #Sui
+bytes = "1.5"
+#clap = "4" #Reth
+clap = { version = "4.3.2", features = ["derive"] } #Sui
+eyre = "0.6.8"
+# futures = "0.3.25" #Reth
+# futures = "0.3.26" #Sui
+futures = "0.3.25"
+itertools = "0.11"
+
+# jsonrpsee = { version = "0.20" } #Reth
+# jsonrpsee = { git = "https://github.com/wlmyng/jsonrpsee.git", rev = "b1b300784795f6a64d0fcdf8f03081a9bc38bde8", features = [
+#   "server",
+#   "macros",
+#   "ws-client",
+#   "http-client",
+#   "jsonrpsee-core",
+# ] } #Sui
+# rpc
+jsonrpsee = { version = "0.20" }
+jsonrpsee-core = { version = "0.20" }
+jsonrpsee-types = { version = "0.20" }
+
+once_cell = "1.18.0"
+parking_lot = "0.12"
+proc-macro2 = "1.0"  #Reth
+#proc-macro2 = "1.0.47" #Sui
+proptest = "1.1.0"
+proptest-derive = "0.4" #Reth
+#proptest-derive = "0.3.0" #Sui
+#quote = "1.0.23"
+quote = "1.0"
+rand = "0.8.5"
+rayon = "1.7"  #Reth
+#rayon = "1.5.3" #Sui
+#serde = { version = "1.0", default-features = false } #Reth
+#serde = { version = "1.0.144", features = ["derive", "rc"] } #sui
+serde = { version = "1.0.144", default-features = false, features = [
+  "derive",
+  "rc",
+] }
+serde_json = { version = "1.0.95", features = [
+  "preserve_order",
+  "arbitrary_precision",
+] }
+#strum = "0.25" #Reth
+strum = { version = "0.25", features = ["derive"] } #Sui
+# syn = "2.0" #Reth
+# syn = { version = "1.0.104", features = ["full", "derive", "extra-traits",] } #Sui
+syn = { version = "2.0" }
+tempfile = { version = "3", default-features = false }  #misc-testing
+thiserror = { version = "1", default-features = false }
+# tokio = { version = "1.21", default-features = false } #Reth
+# tokio = { version = "1", features = ["full", "test-util", "tracing"] } #Sui
+tokio = { version = "1.21", default-features = false, features = [
+  "full",
+  "test-util",
+  "tracing",
+] }
+# tokio-stream = "0.1.11" #Reth
+# tokio-stream = { version = "0.1", features = ["net", "sync"] }         #Sui
+tokio-stream = "0.1.11"
+tokio-util = { version = "0.7", features = ["codec", "compat", "io"] }
+#tracing = "0.1.0" #Reth
+tracing = "0.1.37"         #sui
+tracing-appender = "0.2.2"
+
+
+# For sui only
 anyhow = "1.0.71"
 arc-swap = { version = "1.5.1", features = ["serde"] }
 async-recursion = "1.0.4"
-async-trait = "0.1.61"
+
 aws-config = "0.56"
 aws-sdk-ec2 = { version = "0.29" }
 aws-sdk-dynamodb = "0.29.0"
@@ -84,12 +218,10 @@ bcs = { version = "0.1", default-features = false }
 bincode = "1.3.3"
 bip32 = "0.4.0"
 byteorder = "1.4.3"
-bytes = "1.4.0"
 cached = "0.43.0"
 camino = "1.1.1"
 cfg-if = "1.0.0"
 chrono = { version = "0.4.26", features = ["clock", "serde"] }
-clap = { version = "4.3.2", features = ["derive"] }
 colored = "2.0.0"
 const-str = "0.5.3"
 criterion = { version = "0.5.0", features = [
@@ -108,10 +240,9 @@ ed25519-consensus = { version = "2.0.1", features = ["serde"] }
 either = "1.8.0"
 enum_dispatch = "^0.3"
 expect-test = "1.4.0"
-eyre = "0.6.8"
 fdlimit = "0.2.1"
 fs_extra = "1.3.0"
-futures = "0.3.25"
+
 futures-core = "0.3.21"
 git-version = "0.3.5"
 governor = "0.6.0"
@@ -126,16 +257,9 @@ indicatif = "0.17.2"
 im = "15"
 indexmap = { version = "1.9.2", features = ["serde"] }
 
-itertools = "0.11.0"
 insta = { version = "1.21.1", features = ["redactions", "yaml", "json"] }
 integer-encoding = "3.0.1"
-jsonrpsee = { git = "https://github.com/wlmyng/jsonrpsee.git", rev = "b1b300784795f6a64d0fcdf8f03081a9bc38bde8", features = [
-  "server",
-  "macros",
-  "ws-client",
-  "http-client",
-  "jsonrpsee-core",
-] }
+
 json_to_table = { git = "https://github.com/zhiburt/tabled/", rev = "e449317a1c02eb6b29e409ad6617e5d9eb7b3bd4" }
 linked-hash-map = "0.5.6"
 lru = "0.12"
@@ -145,8 +269,6 @@ match_opt = "0.1.2"
 num_cpus = "1.15.0"
 num_enum = "0.6.1"
 object_store = { version = "0.7", features = ["aws", "gcp", "azure"] }
-once_cell = "1.18.0"
-parking_lot = "0.12.1"
 pprof = { version = "0.11.0", features = [
   "cpp",
   "frame-pointer",
@@ -154,22 +276,19 @@ pprof = { version = "0.11.0", features = [
   "flamegraph",
 ] }
 pretty_assertions = "1.3.0"
-proc-macro2 = "1.0.47"
+
 prometheus = "0.13.3"
 prometheus-http-query = { version = "0.6.6", default_features = false, features = [
   "rustls-tls",
 ] }
-proptest = "1.1.0"
-proptest-derive = "0.3.0"
+
 prost = "0.12.1"
 prost-build = "0.12.1"
 #protobuf = {version="2.28", features=["with-bytes"]}
 protobuf = { version = "3.3.0", features = ["with-bytes"] }
 protobuf-src = "1.1.0"
 quinn-proto = "^0.10.0"
-quote = "1.0.23"
-rand = "0.8.5"
-rayon = "1.5.3"
+
 regex = "1.7.1"
 
 reqwest = { version = "0.11.18", default_features = false, features = [
@@ -189,13 +308,10 @@ rustversion = "1.0.9"
 
 schemars = { version = "0.8.10", features = ["either"] }
 scopeguard = "1.1"
-serde = { version = "1.0.144", features = ["derive", "rc"] }
+
 serde-name = "0.2.1"
 serde-reflection = "0.3.6"
-serde_json = { version = "1.0.95", features = [
-  "preserve_order",
-  "arbitrary_precision",
-] }
+
 serde_repr = "0.1"
 serde_test = "1.0.147"
 serde_with = { version = "2.1.0", features = ["hex"] }
@@ -205,27 +321,23 @@ slip10_ed25519 = "0.1.3"
 snap = "1.1.0"
 static_assertions = "1.1.0"
 structopt = "0.3.26"
-strum = { version = "0.24", features = ["derive"] }
+
 strum_macros = "0.24.3"
-syn = { version = "1.0.104", features = ["full", "derive", "extra-traits"] }
 
 tap = "1.0.1"
-tempfile = { version = "3", default-features = false }
 test-fuzz = "3.0.4"
-thiserror = { version = "1", default-features = false }
 thiserror-impl = { version = "1", default-features = false }
 tiny-bip39 = { version = "1" }
 tinytemplate = { version = "1", default-features = false }
 tinyvec = { version = "1", features = ["alloc"] }
 tinyvec_macros = { version = "0.1", default-features = false }
-tokio = { version = "1", features = ["full", "test-util", "tracing"] }
+
 tokio-io-timeout = { version = "1", default-features = false }
 tokio-macros = { version = "2", default-features = false }
 tokio-retry = { version = "0.3", default-features = false }
 tokio-rustls = "0.24"
-tokio-stream = { version = "0.1", features = ["net", "sync"] }
 tokio-tungstenite = { version = "0.20" }
-tokio-util = { version = "0.7", features = ["codec", "compat", "io"] }
+
 
 tonic = { version = "0.10", features = ["transport", "tls"] }
 tonic-build = { version = "0.10", features = ["prost", "transport"] }
@@ -246,8 +358,6 @@ tower-http = { version = "0.3.4", features = [
 ] }
 # tower-http = { version="0.4", features = ["trace"] }
 tower-layer = "0.3.2"
-tracing = "0.1.37"
-tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.15", default-features = false, features = [
   "std",
   "smallvec",
@@ -297,6 +407,8 @@ scalar-network = { path = "crates/scalar-network" }
 scalar-kvstore = { path = "crates/scalar-kvstore" }
 scalar-snapshot = { path = "crates/scalar-snapshot" }
 scalar-telemetry = { path = "crates/scalar-telemetry" }
+scalar-consensus-adapter = { path = "crates/scalar-consensus-adapter" }
+scalar-consensus-adapter-common = { path = "crates/scalar-consensus-adapter/common" }
 #scalar-move = { path = "crates/scalar-move" }
 #scalar-transaction = { path = "crates/scalar-transaction" }
 scalar-tss = { path = "crates/scalar-tss" }
@@ -359,7 +471,7 @@ uint = "0.9.4"
 num = "0.4.0"
 num-bigint = "0.4.0"
 primitive-types = { version = "0.10.1", features = ["impl-serde"] }
-arbitrary = { version = "1.1.7", features = ["derive", "derive_arbitrary"] }
+
 
 move-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-proc-macros" }
 move-vm-profiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-vm-profiler" }
@@ -375,3 +487,78 @@ move-disassembler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802
 move-bytecode-source-map = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-source-map" }
 move-coverage = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-coverage" }
 move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-compiler" }
+
+# 23-11-08 TaiVV
+# For Reth itegration
+# Copy from Reth repository = "https://github.com/paradigmxyz/reth"
+# revision 5daaa7fe27fea8680d817a9d6eac35d1236a3355 
+
+# For Reth only
+reth-primitives = { path = "./crates-reth/primitives" }
+reth-interfaces = { path = "./crates-reth/interfaces" }
+reth-provider = { path = "./crates-reth/storage/provider" }
+reth-db = { path = "./crates-reth/storage/db" }
+reth-rpc-types = { path = "./crates-reth/rpc/rpc-types" }
+reth-rpc-builder = { path = "./crates-reth/rpc/rpc-builder" }
+reth-blockchain-tree = { path = "./crates-reth/blockchain-tree" }
+reth-metrics = { path = "./crates-reth/metrics" }
+reth-revm = { path = "./crates-reth/revm" }
+reth-payload-builder = { path = "./crates-reth/payload/builder" }
+reth-transaction-pool = { path = "./crates-reth/transaction-pool" }
+reth-tasks = { path = "./crates-reth/tasks" }
+reth-network = { path = "./crates-reth/net/network" }
+reth-network-api = { path = "./crates-reth/net/network-api" }
+reth-rpc-types-compat = { path = "./crates-reth/rpc/rpc-types-compat" }
+reth-discv4 = { path = "./crates-reth/net/discv4" }
+reth-eth-wire = { path = "./crates-reth/net/eth-wire" }
+reth-ecies = { path = "./crates-reth/net/ecies" }
+reth-tracing = { path = "./crates-reth/tracing" }
+reth-tokio-util = { path = "crates-reth/tokio-util" }
+#For consensus
+reth-snapshot = { path = "./crates-reth/snapshot" }
+reth-stages = { path = "./crates-reth/stages" }
+reth-downloaders = { path = "./crates-reth/net/downloaders" }
+# revm
+revm = { git = "https://github.com/bluealloy/revm", rev = "1609e07c68048909ad1682c98cf2b9baa76310b5" }
+revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "1609e07c68048909ad1682c98cf2b9baa76310b5" }
+
+# eth
+alloy-primitives = "0.4"
+alloy-dyn-abi = "0.4"
+alloy-sol-types = "0.4"
+alloy-rlp = "0.3"
+ethers-core = { version = "2.0", default-features = false }
+ethers-providers = { version = "2.0", default-features = false }
+ethers-signers = { version = "2.0", default-features = false }
+ethers-middleware = { version = "2.0", default-features = false }
+discv5 = { git = "https://github.com/sigp/discv5", rev = "f289bbd4c57d499bb1bdb393af3c249600a1c662" }
+igd = { git = "https://github.com/stevefan1999-personal/rust-igd", rev = "c2d1f83eb1612a462962453cb0703bc93258b173" }
+
+aquamarine = "0.3"
+# misc
+bitflags = "2.4"
+# js
+boa_engine = "0.17"
+boa_gc = "0.17"
+
+futures-util = "0.3.25"
+
+metrics = "0.21.1"     # Needed for `metrics-macro` to resolve the crate using `::metrics` notation
+pin-project = "1.0.12"
+
+# crypto
+secp256k1 = { version = "0.27.0", default-features = false, features = [
+  "global-context",
+  "rand-std",
+  "recovery",
+] }
+enr = { version = "0.9", default-features = false, features = ["k256"] }
+# for eip-4844
+c-kzg = "0.4.0"
+
+# config
+confy = "0.5"
+toml = "0.8"
+
+assert_matches = "1.5.0"
+serial_test = "2"

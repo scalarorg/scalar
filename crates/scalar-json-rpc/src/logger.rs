@@ -4,11 +4,13 @@
 #[macro_export]
 macro_rules! with_tracing {
     ($time_spent_threshold:expr, $future:expr) => {{
-        use tracing::{info, error, Instrument, Span};
-        use jsonrpsee::core::{RpcResult, Error as RpcError};
-        use jsonrpsee::types::error::{CallError};
-        use $crate::error::RpcInterimResult;
+        use jsonrpsee::core::{Error as RpcError, RpcResult};
+        use jsonrpsee::types::error::INVALID_PARAMS_CODE;
+        use jsonrpsee::types::ErrorObjectOwned;
+        use tracing::{error, info, Instrument, Span};
+        //use jsonrpsee::types::error::{CallError};
         use anyhow::anyhow;
+        use $crate::error::RpcInterimResult;
 
         async move {
             let start = std::time::Instant::now();
@@ -18,10 +20,17 @@ macro_rules! with_tracing {
                 let anyhow_error = anyhow!("{:?}", e);
 
                 let rpc_error: RpcError = e.into();
-                if !matches!(rpc_error, RpcError::Call(CallError::InvalidParams(_))) {
+                /*
+                 * 23-11-09 TaiVV upgrade to v 0.20.3 with reth
+                 */
+                // if !matches!(rpc_error, RpcError::Call(CallError::InvalidParams(_))) {
+                //     error!(error=?anyhow_error);
+                // }
+                // rpc_error
+                if !matches!(rpc_error, RpcError::Call(_)) {
                     error!(error=?anyhow_error);
                 }
-                rpc_error
+                ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", rpc_error), None::<()>)
             });
 
             if elapsed > $time_spent_threshold {
