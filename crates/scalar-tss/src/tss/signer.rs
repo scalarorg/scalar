@@ -118,12 +118,12 @@ impl TssSigner {
         let mut msg_count = 1;
         // the first outbound message is keygen init info
 
-        // info!("Send tss sign request to gRPC server");
-        // self.tx_sign
-        //     .send(MessageIn {
-        //         data: Some(message_in::Data::SignInit(sign_init.clone())),
-        //     })
-        //     .expect("SignInit should be sent successfully");
+        info!("Send tss sign request to gRPC server");
+        self.tx_sign
+            .send(MessageIn {
+                data: Some(message_in::Data::SignInit(sign_init.clone())),
+            })
+            .expect("SignInit should be sent successfully");
 
         let my_uid = self.uid.clone();
         let result = loop {
