@@ -6,7 +6,7 @@ macro_rules! with_tracing {
     ($time_spent_threshold:expr, $future:expr) => {{
         use jsonrpsee::core::{Error as RpcError, RpcResult};
         use jsonrpsee::types::error::INVALID_PARAMS_CODE;
-        use jsonrpsee::types::{ErrorObject, ErrorObjectOwned};
+        use jsonrpsee::types::ErrorObjectOwned;
         use tracing::{error, info, Instrument, Span};
         //use jsonrpsee::types::error::{CallError};
         use anyhow::anyhow;

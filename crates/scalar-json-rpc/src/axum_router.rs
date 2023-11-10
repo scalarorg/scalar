@@ -386,7 +386,7 @@ pub mod ws {
                             id_provider,
                             subscription_permit: cn,
                         };
-                        callback(id.clone(), params, sink.clone(), conn_state).await;
+                        let _ = callback(id.clone(), params, sink.clone(), conn_state).await;
                         None
                     } else {
                         Some(MethodResponse::error(

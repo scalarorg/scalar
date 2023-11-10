@@ -3,10 +3,11 @@
 
 use anyhow::bail;
 use async_trait::async_trait;
-use futures::Stream;
-use jsonrpsee::{core::RpcResult, PendingSubscriptionSink, RpcModule, SubscriptionSink};
+use futures::{Stream, StreamExt};
+use jsonrpsee::{
+    core::RpcResult, PendingSubscriptionSink, RpcModule, SubscriptionMessage, TrySendError,
+};
 //use jsonrpsee::core::error::SubscriptionClosed;
-use jsonrpsee::core::error::GenericTransportError;
 use move_bytecode_utils::layout::TypeLayoutBuilder;
 use move_core_types::language_storage::TypeTag;
 use mysten_metrics::spawn_monitored_task;
@@ -42,10 +43,13 @@ use crate::{
     name_service::{Domain, NameRecord, NameServiceConfig},
     with_tracing, SuiRpcModule,
 };
-
+/*
+ * 23-11-10 TaiVV
+ * Upgrade to jsonrpsee 0.20.3
+ */
 pub fn spawn_subscription<S, T>(
-    pending_sink: PendingSubscriptionSink,
-    rx: S,
+    pending: PendingSubscriptionSink,
+    mut rx: S,
     permit: Option<OwnedSemaphorePermit>,
 ) where
     S: Stream<Item = T> + Unpin + Send + 'static,
@@ -53,36 +57,56 @@ pub fn spawn_subscription<S, T>(
 {
     spawn_monitored_task!(async move {
         let _permit = permit;
-        match pending_sink.accept().await {
-            Ok(sink) => {}
-            Err(err) => {
-                error!("{:?}", err);
+        if let Ok(mut sink) = pending.accept().await {
+            loop {
+                tokio::select! {
+                    _ = sink.closed() => break,// Err(anyhow::anyhow!("Subscription was closed")),
+                    maybe_item = rx.next() => {
+                        let item = match maybe_item {
+                            Some(item) => item,
+                            None => break,// Err(anyhow::anyhow!("Subscription was closed")),
+                        };
+                        if let Ok(msg) = SubscriptionMessage::from_json(&item) {
+                            match sink.try_send(msg) {
+                                Ok(_) => (),
+                                Err(TrySendError::Closed(_)) =>
+                                    break,// Err(anyhow::anyhow!("Subscription was closed")),
+                                // channel is full, let's be naive an just drop the message.
+                                Err(TrySendError::Full(_)) => (),
+                            }
+                        }
+                    }
+                }
             }
         }
-        /*
-         * 23-11-10 TaiVV
-         * Upgrade jsonrpsee 0.20.3
-         * Todo: Finalize this snippet
-         */
-        match sink.pipe_from_stream(rx).await {
-            SubscriptionClosed::Success => {
-                debug!("Subscription completed.");
-                sink.close(SubscriptionClosed::Success);
-            }
-            SubscriptionClosed::RemotePeerAborted => {
-                debug!("Subscription aborted by remote peer.");
-                sink.close(SubscriptionClosed::RemotePeerAborted);
-                /*
-                 * 23-11-10 Upgrade to jsonrpsee 0.20.3
-                 */
-            }
-            SubscriptionClosed::Failed(err) => {
-                debug!("Subscription failed: {err:?}");
-                sink.close(err);
-            }
-        };
     });
 }
+// pub fn spawn_subscription<S, T>(
+//     mut sink: SubscriptionSink,
+//     rx: S,
+//     permit: Option<OwnedSemaphorePermit>,
+// ) where
+//     S: Stream<Item = T> + Unpin + Send + 'static,
+//     T: Serialize,
+// {
+//     spawn_monitored_task!(async move {
+//         let _permit = permit;
+//         match sink.pipe_from_stream(rx).await {
+//             SubscriptionClosed::Success => {
+//                 debug!("Subscription completed.");
+//                 sink.close(SubscriptionClosed::Success);
+//             }
+//             SubscriptionClosed::RemotePeerAborted => {
+//                 debug!("Subscription aborted by remote peer.");
+//                 sink.close(SubscriptionClosed::RemotePeerAborted);
+//             }
+//             SubscriptionClosed::Failed(err) => {
+//                 debug!("Subscription failed: {err:?}");
+//                 sink.close(err);
+//             }
+//         };
+//     });
+// }
 const DEFAULT_MAX_SUBSCRIPTIONS: usize = 100;
 
 pub struct IndexerApi<R> {
