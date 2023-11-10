@@ -10,6 +10,7 @@ use cached::proc_macro::cached;
 use cached::SizedCache;
 use itertools::Itertools;
 use jsonrpsee::core::RpcResult;
+use jsonrpsee::types::ErrorObjectOwned;
 use jsonrpsee::RpcModule;
 use tracing::{info, instrument};
 
@@ -263,7 +264,7 @@ impl GovernanceReadApiServer for GovernanceReadApi {
 
         let exchange_rate_table = exchange_rates(&self.state, system_state_summary.epoch)
             .await
-            .map_err(Error::from)?;
+            .map_err(|err| ErrorObjectOwned::owned(code, message, data))?;
 
         let apys = calculate_apys(
             system_state_summary.stake_subsidy_start_epoch,

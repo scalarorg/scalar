@@ -12,9 +12,6 @@ use jsonrpsee::{
 use move_bytecode_utils::layout::TypeLayoutBuilder;
 use move_core_types::language_storage::TypeTag;
 use mysten_metrics::spawn_monitored_task;
-use serde::Serialize;
-use std::str::FromStr;
-use std::sync::Arc;
 use scalar_core::authority::AuthorityState;
 use scalar_json::SuiJsonValue;
 use scalar_json_rpc_types::{
@@ -22,7 +19,6 @@ use scalar_json_rpc_types::{
     SuiObjectResponse, SuiObjectResponseQuery, SuiTransactionBlockResponse,
     SuiTransactionBlockResponseQuery, TransactionBlocksPage, TransactionFilter,
 };
-use sui_open_rpc::Module;
 use scalar_storage::key_value_store::TransactionKeyValueStore;
 use scalar_types::{
     base_types::{ObjectID, SuiAddress},
@@ -31,6 +27,10 @@ use scalar_types::{
     error::SuiObjectResponseError,
     event::EventID,
 };
+use serde::Serialize;
+use std::str::FromStr;
+use std::sync::Arc;
+use sui_open_rpc::Module;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use tracing::{debug, instrument, warn};
 
@@ -55,20 +55,23 @@ pub fn spawn_subscription<S, T>(
 {
     spawn_monitored_task!(async move {
         let _permit = permit;
-        match sink.pipe_from_stream(rx).await {
-            SubscriptionClosed::Success => {
-                debug!("Subscription completed.");
-                sink.close(SubscriptionClosed::Success);
-            }
-            SubscriptionClosed::RemotePeerAborted => {
-                debug!("Subscription aborted by remote peer.");
-                sink.close(SubscriptionClosed::RemotePeerAborted);
-            }
-            SubscriptionClosed::Failed(err) => {
-                debug!("Subscription failed: {err:?}");
-                sink.close(err);
-            }
-        };
+        // match sink.pipe_from_stream(rx).await {
+        //     SubscriptionClosed::Success => {
+        //         debug!("Subscription completed.");
+        //         sink.close(SubscriptionClosed::Success);
+        //     }
+        //     SubscriptionClosed::RemotePeerAborted => {
+        //         debug!("Subscription aborted by remote peer.");
+        //         sink.close(SubscriptionClosed::RemotePeerAborted);
+        //         /*
+        //          * 23-11-10 Upgrade to jsonrpsee 0.20.3
+        //          */
+        //     }
+        //     SubscriptionClosed::Failed(err) => {
+        //         debug!("Subscription failed: {err:?}");
+        //         sink.close(err);
+        //     }
+        // };
     });
 }
 const DEFAULT_MAX_SUBSCRIPTIONS: usize = 100;
@@ -359,7 +362,6 @@ impl<R: ReadApiServer> IndexerApiServer for IndexerApi<R> {
                 self.read_api
                     .get_object(id, Some(SuiObjectDataOptions::full_content()))
                     .await
-                    .map_err(Error::from)
             } else {
                 Ok(SuiObjectResponse::new_with_error(
                     SuiObjectResponseError::DynamicFieldNotFound { parent_object_id },
