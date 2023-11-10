@@ -13,6 +13,7 @@ use k256::EncodedPoint;
 use k256::ProjectivePoint;
 use narwhal_config::{Authority, Committee};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
 // use types::TssAnemoKeygenRequest;
@@ -272,8 +273,8 @@ impl TssParty {
     pub fn run(
         &self,
         rx_keygen: UnboundedReceiver<MessageIn>,
-        _rx_sign: UnboundedReceiver<MessageIn>,
-        // _rx_message_out: UnboundedReceiver<MessageOut>,
+        tx_keygen_result: watch::Sender<Option<()>>,
+        mut rx_sign: UnboundedReceiver<MessageIn>,
         mut rx_sign_init: UnboundedReceiver<SignInit>,
         mut rx_shutdown: ConditionalBroadcastReceiver,
     ) -> Vec<JoinHandle<()>> {
@@ -282,32 +283,39 @@ impl TssParty {
 
         let keygen_init = self.tss_keygen.create_keygen_init();
         let uid = self.get_uid();
-        // let tofnd_path = format!("/tss/.tofnd{}", self.authority.id().0);
-        // info!("Init kvManager in dir {}", &tofnd_path);
+
         let mut handles = Vec::new();
         let gg20_keygen_init = keygen_init.clone();
         let tss_store = self.tss_store.clone();
+
+        let tx_message_out_keygen = tx_message_out.clone();
         let handle = tokio::spawn(async move {
-            //Start gg20 service with kv_manager
-            // let config: Config = Config {
-            //     //tofnd_path: tofnd_path.into(),
-            //     password_method: PasswordMethod::NoPassword,
-            //     safe_keygen: true,
-            // };
             let gg20_service = Gg20Service::new(tss_store, true);
             let _ = gg20_service.init_mnemonic().await;
             let _ = gg20_service
-                .keygen_init(gg20_keygen_init, rx_keygen, tx_message_out)
+                .keygen_init(gg20_keygen_init, rx_keygen, tx_message_out_keygen)
                 .await;
-            // match Gg20Service::new(config).await {
-            //     Ok(gg20_service) => {
-            //         let _ = gg20_service
-            //             .keygen_init(gg20_keygen_init, rx_keygen, tx_message_out)
-            //             .await;
-            //     }
-            //     Err(e) => panic!("{:?}", e),
-            // }
         });
+
+        handles.push(handle);
+
+        let tss_store = self.tss_store.clone();
+        // let span = span!(Level::INFO, "Sign");
+        let gg20_service = Gg20Service::new(tss_store, true);
+        let tx_message_out_sign = tx_message_out.clone();
+
+        let handle = tokio::spawn(async move {
+            loop {
+                if let Some(message) = rx_sign.recv().await {
+                    gg20_service
+                        .sign_init(message, rx_sign, tx_message_out_sign)
+                        .await
+                        .expect("Sign should be initiated");
+                    break;
+                }
+            }
+        });
+
         handles.push(handle);
         let tx_sign_result = self.tx_sign_result.clone();
         let tss_keygen = self.tss_keygen.clone();
@@ -315,7 +323,7 @@ impl TssParty {
         let handle = tokio::spawn(async move {
             info!("Init TssParty node, starting keygen process");
             let mut shuting_down = false;
-            //let mut keygened = false;
+
             tokio::select! {
                 _ = rx_shutdown.receiver.recv() => {
                     warn!("Node is shuting down");
@@ -326,7 +334,6 @@ impl TssParty {
                         // info!("Keygen result {:?}", &res);
                         info!("Keygen result");
                         //Todo: Send keygen result to Evm Relayer to update external public key
-                        // keygened = true;
                     },
                     Err(e) => {
                         error!("Keygen Error {:?}", e);
@@ -334,31 +341,37 @@ impl TssParty {
                     },
                 }
             }
+
             info!(
                 "Finished keygen process, loop for handling sign messsage. Shuting_down {}",
                 shuting_down
             );
+
+            tx_keygen_result
+                .send(Some(()))
+                .expect("Keygen result should be sent successfully");
+
             if !shuting_down {
                 loop {
+                    info!("Inside da loop from {}", uid);
                     tokio::select! {
                         _ = rx_shutdown.receiver.recv() => {
                             warn!("Node is shuting down");
-                            shuting_down = true;
+                            // shuting_down = true;
                             break;
                         },
                         Some(sign_init) = rx_sign_init.recv() => {
-                            // info!("Received sign init {:?}", &sign_init);
-                            info!("Received sign init");
+                            info!("Received sign init {:?} from {}", &sign_init, uid);
                             match tss_signer.sign_execute_v2(&mut rx_message_out, &sign_init).await {
                                 Ok(sign_result) => {
-                                    // info!("Sign result {:?}", &sign_result);
-                                    info!("Sign result");
+                                    info!("Sign result {:?}", &sign_result);
                                     let _ = tx_sign_result.send((sign_init, sign_result));
                                 },
                                 Err(e) => {
                                     error!("Sign error {:?}", e);
                                 },
                             }
+                            info!("Finished sign process from {}", uid);
                         }
                     }
                 }

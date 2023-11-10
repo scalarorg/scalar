@@ -1,7 +1,10 @@
 use anemo::Network;
 use narwhal_config::{Authority, Committee};
 use narwhal_types::ConditionalBroadcastReceiver;
-use tokio::{sync::mpsc, task::JoinHandle};
+use tokio::{
+    sync::{mpsc, watch},
+    task::JoinHandle,
+};
 
 use crate::{
     message_out::SignResult,
@@ -16,10 +19,13 @@ use super::{keygen::TssKeyGenerator, party::TssParty, signer::TssSigner};
 pub struct PartyConfig {
     tx_keygen: mpsc::UnboundedSender<MessageIn>,
     rx_keygen: mpsc::UnboundedReceiver<MessageIn>,
+    tx_keygen_result: watch::Sender<Option<()>>,
+    pub rx_keygen_result: watch::Receiver<Option<()>>,
     tx_sign: mpsc::UnboundedSender<MessageIn>,
     rx_sign: mpsc::UnboundedReceiver<MessageIn>,
     rx_sign_init: mpsc::UnboundedReceiver<SignInit>,
     tx_sign_result: mpsc::UnboundedSender<(SignInit, SignResult)>,
+    pub tx_sign_init: mpsc::UnboundedSender<SignInit>,
 }
 
 pub struct PartyBuilder {
@@ -42,12 +48,15 @@ impl PartyBuilder {
     ) -> (
         InternalPartyBuilder,
         TssPeerServer<impl TssPeer>,
-        mpsc::UnboundedSender<SignInit>,
         mpsc::UnboundedReceiver<(SignInit, SignResult)>,
     ) {
         // Channel for communication between Tss spawn and Anemo Tss service
         let (tx_keygen, rx_keygen) = mpsc::unbounded_channel();
         let (tx_sign, rx_sign) = mpsc::unbounded_channel();
+
+        // Expose keygen result
+        let (tx_keygen_result, rx_keygen_result) = watch::channel(None);
+
         // Send sign init from Scalar Event handler to Tss spawn
         let (tx_sign_init, rx_sign_init) = mpsc::unbounded_channel();
         // Send sign result from tss spawn to Scalar handler
@@ -59,7 +68,10 @@ impl PartyBuilder {
             rx_sign_init,
             tx_keygen: tx_keygen.clone(),
             tx_sign: tx_sign.clone(),
+            tx_keygen_result,
+            rx_keygen_result,
             tx_sign_result,
+            tx_sign_init,
         };
 
         (
@@ -70,7 +82,6 @@ impl PartyBuilder {
                 config,
             },
             TssPeerServer::new(TssPeerService::new(tx_keygen, tx_sign)),
-            tx_sign_init,
             rx_sign_result,
         )
     }
@@ -84,6 +95,10 @@ pub struct InternalPartyBuilder {
 }
 
 impl InternalPartyBuilder {
+    pub fn get_config(&self) -> &PartyConfig {
+        &self.config
+    }
+
     pub fn build(&self, network: Network) -> TssParty {
         let InternalPartyBuilder {
             authority,
@@ -136,9 +151,16 @@ impl InternalPartyBuilder {
             rx_keygen,
             rx_sign,
             rx_sign_init,
+            tx_keygen_result,
             ..
         } = self.config;
 
-        party.run(rx_keygen, rx_sign, rx_sign_init, rx_shutdown)
+        party.run(
+            rx_keygen,
+            tx_keygen_result,
+            rx_sign,
+            rx_sign_init,
+            rx_shutdown,
+        )
     }
 }
