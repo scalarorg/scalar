@@ -72,6 +72,48 @@ impl Gg20Service {
         Ok((sign_init, party_info))
     }
 
+    pub(super) async fn process_sign_init(
+        &self,
+        message: MessageIn,
+        out_stream: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
+        sign_span: Span,
+    ) -> TofndResult<(SignInitSanitized, PartyInfo)> {
+        let data = message
+            .data
+            .ok_or_else(|| anyhow!("sign: missing `data` field in client message"))?;
+        let sign_init = match data {
+            message_in::Data::SignInit(k) => k,
+            _ => return Err(anyhow!("Expected sign init message")),
+        };
+        debug!("Hanle sign init key uid {:?}", &sign_init.key_uid);
+        // try to get party info related to session id
+        let party_info: PartyInfo = match self.get_party_info(&sign_init.key_uid).await {
+            Ok(value) => value,
+            Err(err) => {
+                Self::send_kv_store_failure(out_stream)?;
+                let err = anyhow!("Unable to find session-id {} in kv store. Issuing share recovery and exit sign {:?}", sign_init.key_uid, err);
+                return Err(err);
+            }
+        };
+        // let party_info: PartyInfo = match self.kv_manager.kv().get(&sign_init.key_uid).await {
+        //     Ok(value) => value.try_into()?,
+        //     Err(err) => {
+        //         // if no such session id exists, send a message to client that indicates that recovery is needed and stop sign
+        //         Self::send_kv_store_failure(out_stream)?;
+        //         let err = anyhow!("Unable to find session-id {} in kv store. Issuing share recovery and exit sign {:?}", sign_init.key_uid, err);
+        //         return Err(err);
+        //     }
+        // };
+        debug!("try to sanitize arguments");
+        // try to sanitize arguments
+        let sign_init = Self::sign_sanitize_args(sign_init, &party_info.tofnd.party_uids)?;
+
+        // log SignInitSanitized state
+        party_info.log_info(&sign_init.new_sig_uid, sign_span);
+        debug!("finish sign init");
+        Ok((sign_init, party_info))
+    }
+
     /// send "need recover" message to client
     fn send_kv_store_failure(
         out_stream: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,

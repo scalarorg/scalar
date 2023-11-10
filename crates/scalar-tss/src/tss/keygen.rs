@@ -1,4 +1,4 @@
-use crate::send;
+use super::send;
 use crate::types::{
     message_in,
     message_out::{self, KeygenResult},
@@ -171,17 +171,22 @@ impl TssKeyGenerator {
         let _ = self.tx_keygen.send(msg_in);
         //info!("Broadcast message {:?} from {:?}", msg, from);
         let mut handlers = Vec::new();
-        let peers = self
-            .committee
-            .authorities()
-            .filter(|auth| auth.id().0 != self.authority.id().0)
-            .map(|auth| auth.network_key().clone())
-            .collect::<Vec<NetworkPublicKey>>();
+
+        // let peers = self
+        //     .committee
+        //     .authorities()
+        //     .filter(|auth| auth.id().0 != self.authority.id().0)
+        //     .map(|auth| auth.network_key().clone())
+        //     .collect::<Vec<NetworkPublicKey>>();
+
+        let peers = self.network.peers();
+
         let tss_message = TssAnemoDeliveryMessage {
             from_party_uid: self.uid.clone(),
             is_broadcast: msg.is_broadcast,
             payload: msg.payload.clone(),
         };
+
         //Send to other peers vis anemo network
         for peer in peers {
             let network = self.network.clone();
@@ -234,12 +239,16 @@ impl TssKeyGenerator {
         info!("Send received message to the local gg20 Service via channel");
         let _ = self.tx_keygen.send(msg_in);
         let mut handlers = Vec::new();
-        let peers = self
-            .committee
-            .authorities()
-            .filter(|auth| auth.id().0 != self.authority.id().0)
-            .map(|auth| auth.network_key().clone())
-            .collect::<Vec<NetworkPublicKey>>();
+
+        // let peers = self
+        //     .committee
+        //     .authorities()
+        //     .filter(|auth| auth.id().0 != self.authority.id().0)
+        //     .map(|auth| auth.network_key().clone())
+        //     .collect::<Vec<NetworkPublicKey>>();
+
+        let peers = self.network.peers();
+
         let gg20_message = TssAnemoDeliveryMessage {
             from_party_uid: self.uid.clone(),
             is_broadcast: msg.is_broadcast,
