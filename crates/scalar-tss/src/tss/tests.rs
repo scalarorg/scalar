@@ -107,7 +107,7 @@ async fn emulate_keygen_and_sign_for_four_parties() -> Result<()> {
             tx_sign_init
                 .send(SignInit {
                     new_sig_uid: uuid::Uuid::new_v4().to_string(),
-                    key_uid: "tss_session".into(),
+                    key_uid: format!("tss_session{}", committee.epoch()),
                     party_uids: party_uids.clone(),
                     message_to_sign: message_to_sign.clone(),
                 })
