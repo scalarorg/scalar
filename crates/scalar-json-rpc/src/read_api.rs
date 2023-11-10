@@ -842,8 +842,8 @@ impl ReadApiServer for ReadApi {
                     .multi_get_transaction_blocks_internal(digests, opts)
                     .await
             })
-            .await
-            .map_err(Error::from)?
+            .await?
+            //.map_err(Error::from)?
         })
     }
 

@@ -5,10 +5,8 @@
 macro_rules! with_tracing {
     ($time_spent_threshold:expr, $future:expr) => {{
         use jsonrpsee::core::{Error as RpcError, RpcResult};
-        use jsonrpsee::types::error::{
-            CALL_EXECUTION_FAILED_CODE, INTERNAL_ERROR_CODE, INVALID_PARAMS_CODE,
-        };
-        use jsonrpsee::types::{ErrorObject, ErrorObjectOwned};
+        use jsonrpsee::types::error::INVALID_PARAMS_CODE;
+        use jsonrpsee::types::ErrorObjectOwned;
         use tracing::{error, info, Instrument, Span};
         //use jsonrpsee::types::error::{CallError};
         use anyhow::anyhow;
@@ -29,18 +27,10 @@ macro_rules! with_tracing {
                 //     error!(error=?anyhow_error);
                 // }
                 // rpc_error
-                match rpc_error {
-                    RpcError::Call(err) => err,
-                    _ => {
-                        ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", e), None::<()>)
-                    }
+                if !matches!(rpc_error, RpcError::Call(_)) {
+                    error!(error=?anyhow_error);
                 }
-                // if !matches!(rpc_error, RpcError::Call(err)) {
-                //     //error!(error=?anyhow_error);
-                //     err
-                // } else {
-                //     ErrorObjectOwned::owned(INVALID_PARAMS_CODE, e.into(), None::<()>)
-                // }
+                ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", rpc_error), None::<()>)
             });
 
             if elapsed > $time_spent_threshold {
