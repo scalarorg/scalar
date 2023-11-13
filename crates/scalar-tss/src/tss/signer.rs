@@ -1,4 +1,4 @@
-use crate::send;
+use super::send;
 use crate::types::{
     message_in,
     message_out::{self, SignResult},
@@ -60,12 +60,15 @@ impl TssSigner {
 
         //info!("Broadcast message {:?} from {:?}", msg, from);
         let mut handlers = Vec::new();
-        let peers = self
-            .committee
-            .authorities()
-            .filter(|auth| auth.id().0 != self.authority.id().0)
-            .map(|auth| auth.network_key().clone())
-            .collect::<Vec<NetworkPublicKey>>();
+
+        let peers = self.network.peers();
+
+        // let peers = self
+        //     .committee
+        //     .authorities()
+        //     .filter(|auth| auth.id().0 != self.authority.id().0)
+        //     .map(|auth| auth.network_key().clone())
+        //     .collect::<Vec<NetworkPublicKey>>();
         let tss_message = TssAnemoDeliveryMessage {
             from_party_uid: self.uid.clone(),
             is_broadcast: msg.is_broadcast,
@@ -87,9 +90,8 @@ impl TssSigner {
                 async move {
                     let result = TssPeerClient::new(peer).sign(request).await;
                     match result.as_ref() {
-                        Ok(_r) => {
-                            // info!("TssPeerClient sign result {:?}", r);
-                            info!("TssPeerClient sign result");
+                        Ok(r) => {
+                            info!("TssPeerClient sign result {:?}", r);
                         }
                         Err(e) => {
                             info!("TssPeerClient sign error {:?}", e);
@@ -102,8 +104,8 @@ impl TssSigner {
             let handle = send(network, peer, f);
             handlers.push(handle);
         }
-        let _results = join_all(handlers).await;
-        //info!("All sign result {:?}", results);
+        let results = join_all(handlers).await;
+        info!("All sign result {:?}", results);
         // handlers
     }
 
@@ -124,6 +126,8 @@ impl TssSigner {
                 data: Some(message_in::Data::SignInit(sign_init.clone())),
             })
             .expect("SignInit should be sent successfully");
+
+        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
 
         let my_uid = self.uid.clone();
         let result = loop {

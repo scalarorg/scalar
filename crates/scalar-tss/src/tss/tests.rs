@@ -2,6 +2,7 @@ use super::builder::{InternalPartyBuilder, PartyBuilder};
 use crate::{storage::TssStore, SignInit};
 use anemo::{types::Address, Config, PeerId};
 use anyhow::Result;
+use futures::channel::mpsc;
 use narwhal_config::{Authority, Committee};
 use tracing::info;
 
@@ -22,14 +23,14 @@ async fn emulate_keygen_and_sign_for_four_parties() -> Result<()> {
 
     let fixture = CommitteeFixture::builder().randomize_ports(true).build();
     let committee = fixture.committee();
-    let mut authorities = fixture.authorities();
+    // let mut authorities = fixture.authorities();
 
     // Spawn parties and collect their channels.
     let mut tss_channels = Vec::new();
     let mut parties = Vec::new();
-    for _ in 0..PARTY_COUNT {
-        let authority = authorities.next().unwrap().authority().clone();
-        let party = init_party(committee.clone(), authority);
+    for authority in committee.authorities() {
+        // let authority = authorities.next().unwrap().authority().clone();
+        let party = init_party(committee.clone(), authority.clone());
         let rx_keygen_result = WatchStream::new(party.0.get_config().rx_keygen_result.clone());
         let tx_sign_init = party.0.get_config().tx_sign_init.clone();
         tss_channels.push((rx_keygen_result, tx_sign_init));
@@ -98,15 +99,17 @@ async fn emulate_keygen_and_sign_for_four_parties() -> Result<()> {
             .collect::<Vec<String>>()
             .clone();
         // Send a 32 byte message to the sign init channel.
-        let message_to_sign = [0u8; 32].to_vec();
+        let message_to_sign = [1u8; 32].to_vec();
 
         info!("Message to sign has length {}", message_to_sign.len());
+
+        let new_sig_uid = uuid::Uuid::new_v4().to_string();
 
         // Send sign init to all parties.
         for (_, tx_sign_init) in &tss_channels {
             tx_sign_init
                 .send(SignInit {
-                    new_sig_uid: uuid::Uuid::new_v4().to_string(),
+                    new_sig_uid: new_sig_uid.clone(),
                     key_uid: format!("tss_session{}", committee.epoch()),
                     party_uids: party_uids.clone(),
                     message_to_sign: message_to_sign.clone(),

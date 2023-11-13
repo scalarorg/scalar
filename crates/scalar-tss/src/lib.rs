@@ -2,7 +2,6 @@ pub mod encrypted_sled;
 pub mod gg20;
 pub mod kv_manager;
 pub mod mnemonic;
-mod tests;
 // mod multisig;
 pub mod helper;
 pub mod proto;

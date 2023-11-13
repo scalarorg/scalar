@@ -27,7 +27,7 @@ use tokio::sync::{mpsc, oneshot};
 use tonic::Status;
 
 // logging
-use tracing::{debug, span, Level, Span};
+use tracing::{debug, info, span, Level, Span};
 
 // error handling
 use anyhow::anyhow;
@@ -43,11 +43,12 @@ impl Gg20Service {
     // conveniently when spawning theads.
     pub async fn sign_init(
         &self,
-        sign_init: MessageIn,
+        // sign_init: SignInit,
         mut rx_message_in: mpsc::UnboundedReceiver<MessageIn>,
         mut tx_message_out: mpsc::UnboundedSender<Result<MessageOut, Status>>,
     ) -> anyhow::Result<()> {
         let sign_span = span!(Level::INFO, "Sign");
+        info!("Start sign protocol");
         // 1. Receive SignInit, open message, sanitize arguments -> init mod
         // 2. Spawn N sign threads to execute the protocol in parallel; one of each of our shares -> execute mod
         // 3. Spawn 1 router thread to route messages from client to the respective sign thread -> routing mod
@@ -56,7 +57,7 @@ impl Gg20Service {
         // 1.
         // get SignInit message from stream and sanitize arguments
         let (sign_init, party_info) = self
-            .process_sign_init(sign_init, &mut tx_message_out, sign_span.clone())
+            .process_sign_init(&mut rx_message_in, &mut tx_message_out, sign_span.clone())
             .await?;
 
         debug!("find my share count to allocate channel vectors");
