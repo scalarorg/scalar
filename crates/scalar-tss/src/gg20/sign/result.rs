@@ -36,6 +36,7 @@ impl Gg20Service {
         // sanity check: check if all shares produced the same signature
         let first_sign_output = &sign_outputs[0];
         // skip() first element of sign outputs to avoid extra loop
+
         for (i, sign_output) in sign_outputs.iter().enumerate().skip(1) {
             if sign_output != first_sign_output {
                 let mut error_msg = format!(

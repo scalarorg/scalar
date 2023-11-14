@@ -32,7 +32,7 @@ pub struct KeygenInitSanitized {
 impl KeygenInitSanitized {
     // get the share count of `my_index`th party
     pub(super) fn my_shares_count(&self) -> usize {
-        self.party_share_counts[self.my_index] as usize
+        self.party_share_counts[self.my_index]
     }
 
     // log KeygenInitSanitized state

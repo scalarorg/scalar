@@ -1,16 +1,18 @@
 use super::send;
-use crate::types::{
-    message_in,
-    message_out::{self, SignResult},
-    tss_peer_client::TssPeerClient,
-    MessageIn, MessageOut, SignInit, TrafficIn, TssAnemoDeliveryMessage, TssAnemoSignRequest,
+use crate::{
+    types::{
+        message_in,
+        message_out::{self, SignResult},
+        tss_peer_client::TssPeerClient,
+        MessageIn, MessageOut, SignInit, TssAnemoDeliveryMessage, TssAnemoSignRequest,
+    },
+    TrafficIn,
 };
 use anemo::Network;
 use anemo::PeerId;
-use crypto::NetworkPublicKey;
 use futures::future::join_all;
 use narwhal_config::{Authority, Committee};
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tonic::Status;
 use tracing::{info, warn};
 #[derive(Clone)]
@@ -19,7 +21,7 @@ pub struct TssSigner {
     pub authority: Authority,
     pub committee: Committee,
     pub network: Network,
-    pub tx_sign: UnboundedSender<MessageIn>,
+    pub tx_sign: mpsc::UnboundedSender<MessageIn>,
 }
 
 impl TssSigner {
@@ -27,7 +29,7 @@ impl TssSigner {
         authority: Authority,
         committee: Committee,
         network: Network,
-        tx_sign: UnboundedSender<MessageIn>,
+        tx_sign: mpsc::UnboundedSender<MessageIn>,
     ) -> Self {
         let uid = PeerId(authority.network_key().0.to_bytes()).to_string();
         Self {
@@ -48,15 +50,15 @@ impl TssSigner {
             }
         };
 
-        // let msg_in = MessageIn {
-        //     data: Some(message_in::Data::Traffic(TrafficIn {
-        //         from_party_uid: self.uid.clone(),
-        //         is_broadcast: msg.is_broadcast,
-        //         payload: msg.payload.clone(),
-        //     })),
-        // };
-        // //Send to own tofnd gGpc Server
-        // let _ = self.tx_sign.send(msg_in);
+        let msg_in = MessageIn {
+            data: Some(message_in::Data::Traffic(TrafficIn {
+                from_party_uid: self.uid.clone(),
+                is_broadcast: msg.is_broadcast,
+                payload: msg.payload.clone(),
+            })),
+        };
+        //Send to own tofnd gGpc Server
+        let _ = self.tx_sign.send(msg_in);
 
         //info!("Broadcast message {:?} from {:?}", msg, from);
         let mut handlers = Vec::new();
@@ -104,8 +106,8 @@ impl TssSigner {
             let handle = send(network, peer, f);
             handlers.push(handle);
         }
-        let results = join_all(handlers).await;
-        info!("All sign result {:?}", results);
+        join_all(handlers).await;
+        info!("All sign result received");
         // handlers
     }
 
@@ -118,16 +120,17 @@ impl TssSigner {
         let all_share_count = sign_init.party_uids.len();
         #[allow(unused_variables)]
         let mut msg_count = 1;
-        // the first outbound message is keygen init info
 
-        info!("Send tss sign request to gRPC server");
+        // the first outbound message is keygen init info
+        info!("Send tss sign request");
         self.tx_sign
             .send(MessageIn {
                 data: Some(message_in::Data::SignInit(sign_init.clone())),
             })
             .expect("SignInit should be sent successfully");
 
-        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+        // Sleep for 2 second to wait for all signers to be ready
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
         let my_uid = self.uid.clone();
         let result = loop {

@@ -13,8 +13,6 @@ members = [
     "crates/workspace-hack",
     "crates/scalar-network",
 
-    "examples/scalar-tofnd",
-
     # "narwhal/config",
     # "narwhal/consensus",
     # "narwhal/crypto",

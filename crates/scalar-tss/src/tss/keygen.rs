@@ -140,7 +140,8 @@ impl TssKeyGenerator {
             }
         };
         info!("party [{}] keygen execution complete", my_uid);
-        return result;
+
+        result
     }
 
     pub async fn deliver_keygen(&self, msg: &MessageOut) {

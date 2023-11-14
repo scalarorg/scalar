@@ -17,11 +17,11 @@
 use crate::{
     gg20::broadcast::broadcast_messages_channel,
     types::{MessageIn, MessageOut},
-    SignInit,
 };
 
 use super::{broadcast::broadcast_messages, service::Gg20Service, ProtocolCommunication};
 
+use futures_util::future::join_all;
 // tonic cruft
 use tokio::sync::{mpsc, oneshot};
 use tonic::Status;
@@ -43,7 +43,6 @@ impl Gg20Service {
     // conveniently when spawning theads.
     pub async fn sign_init(
         &self,
-        // sign_init: SignInit,
         mut rx_message_in: mpsc::UnboundedReceiver<MessageIn>,
         mut tx_message_out: mpsc::UnboundedSender<Result<MessageOut, Status>>,
     ) -> anyhow::Result<()> {
@@ -75,6 +74,7 @@ impl Gg20Service {
         let mut sign_senders = Vec::with_capacity(my_share_count);
         let mut aggregator_receivers = Vec::with_capacity(my_share_count);
 
+        let mut handles = vec![];
         for my_tofnd_subindex in 0..my_share_count {
             // channels for communication between router (sender) and protocol threads (receivers)
             let (sign_sender, sign_receiver) = mpsc::unbounded_channel();
@@ -96,20 +96,27 @@ impl Gg20Service {
             let execute_span = span!(parent: &sign_span, Level::INFO, "execute", state);
 
             // spawn sign threads
-            tokio::spawn(async move {
+            let handle = tokio::spawn(async move {
                 // get result of sign
                 let signature = gg20.execute_sign(chans, &ctx, execute_span.clone()).await;
+
                 // send result to aggregator
-                let _ = aggregator_sender.send(signature);
+                aggregator_sender
+                    .send(signature)
+                    .expect("Signature should be sent")
             });
+
+            handles.push(handle);
         }
         debug!("spin up broadcaster thread and return immediately");
         // 3.
         // spin up broadcaster thread and return immediately
         let span = sign_span.clone();
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             broadcast_messages_channel(&mut rx_message_in, sign_senders, span).await;
         });
+
+        handles.push(handle);
         debug!("wait for all sign threads to end, get responses, and return signature");
         // 4.
         // wait for all sign threads to end, get responses, and return signature
@@ -119,6 +126,8 @@ impl Gg20Service {
             &sign_init.participant_uids,
         )
         .await?;
+
+        join_all(handles).await;
 
         Ok(())
     }
@@ -183,6 +192,7 @@ impl Gg20Service {
             tokio::spawn(async move {
                 // get result of sign
                 let signature = gg20.execute_sign(chans, &ctx, execute_span.clone()).await;
+
                 // send result to aggregator
                 let _ = aggregator_sender.send(signature);
             });

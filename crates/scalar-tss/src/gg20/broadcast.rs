@@ -182,70 +182,70 @@ fn open_message(msg: Option<Result<MessageIn, Status>>, span: Span) -> RoutingSt
     RoutingStatus::Continue { traffic }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    struct TestCase {
-        message_in: MessageIn,
-        expected_result: RoutingStatus,
-    }
+//     struct TestCase {
+//         message_in: MessageIn,
+//         expected_result: RoutingStatus,
+//     }
 
-    impl TestCase {
-        fn new(message_in: MessageIn, expected_result: RoutingStatus) -> Self {
-            TestCase {
-                message_in,
-                expected_result,
-            }
-        }
-    }
+//     impl TestCase {
+//         fn new(message_in: MessageIn, expected_result: RoutingStatus) -> Self {
+//             TestCase {
+//                 message_in,
+//                 expected_result,
+//             }
+//         }
+//     }
 
-    fn new_msg_in(msg_in: message_in::Data) -> MessageIn {
-        MessageIn { data: Some(msg_in) }
-    }
+//     fn new_msg_in(msg_in: message_in::Data) -> MessageIn {
+//         MessageIn { data: Some(msg_in) }
+//     }
 
-    /*
-     * 2023-11-06 HuongND
-     * Temporary comment out this test case because of the error:
-     * KeygenInit and SignInit chua duoc implement Debug trait
-     * Tag: KeygenInit, SignInit
-     */
+/*
+ * 2023-11-06 HuongND
+ * Temporary comment out this test case because of the error:
+ * KeygenInit and SignInit chua duoc implement Debug trait
+ * Tag: KeygenInit, SignInit
+ */
 
-    // #[test]
-    // fn test_validate_message() {
-    //     let test_cases = vec![
-    //         TestCase::new(
-    //             new_msg_in(message_in::Data::Abort(true)),
-    //             RoutingStatus::Stop,
-    //         ),
-    //         TestCase::new(
-    //             new_msg_in(message_in::Data::KeygenInit(KeygenInit::default())),
-    //             RoutingStatus::Skip,
-    //         ),
-    //         TestCase::new(
-    //             new_msg_in(message_in::Data::SignInit(SignInit::default())),
-    //             RoutingStatus::Skip,
-    //         ),
-    //         TestCase::new(
-    //             new_msg_in(message_in::Data::Traffic(TrafficIn::default())),
-    //             RoutingStatus::Continue {
-    //                 traffic: TrafficIn::default(),
-    //             },
-    //         ),
-    //         TestCase::new(MessageIn { data: None }, RoutingStatus::Skip),
-    //     ];
+// #[test]
+// fn test_validate_message() {
+//     let test_cases = vec![
+//         TestCase::new(
+//             new_msg_in(message_in::Data::Abort(true)),
+//             RoutingStatus::Stop,
+//         ),
+//         TestCase::new(
+//             new_msg_in(message_in::Data::KeygenInit(KeygenInit::default())),
+//             RoutingStatus::Skip,
+//         ),
+//         TestCase::new(
+//             new_msg_in(message_in::Data::SignInit(SignInit::default())),
+//             RoutingStatus::Skip,
+//         ),
+//         TestCase::new(
+//             new_msg_in(message_in::Data::Traffic(TrafficIn::default())),
+//             RoutingStatus::Continue {
+//                 traffic: TrafficIn::default(),
+//             },
+//         ),
+//         TestCase::new(MessageIn { data: None }, RoutingStatus::Skip),
+//     ];
 
-    //     let span = span!(Level::INFO, "test-span");
+//     let span = span!(Level::INFO, "test-span");
 
-    //     for test_case in test_cases {
-    //         let result = open_message(Some(Ok(test_case.message_in)), span.clone());
-    //         assert_eq!(result, test_case.expected_result);
-    //     }
+//     for test_case in test_cases {
+//         let result = open_message(Some(Ok(test_case.message_in)), span.clone());
+//         assert_eq!(result, test_case.expected_result);
+//     }
 
-    //     let result = open_message(Some(Err(tonic::Status::ok("test status"))), span.clone());
-    //     assert_eq!(result, RoutingStatus::Stop);
+//     let result = open_message(Some(Err(tonic::Status::ok("test status"))), span.clone());
+//     assert_eq!(result, RoutingStatus::Stop);
 
-    //     let result = open_message(None, span);
-    //     assert_eq!(result, RoutingStatus::Stop);
-    // }
-}
+//     let result = open_message(None, span);
+//     assert_eq!(result, RoutingStatus::Stop);
+// }
+// }
