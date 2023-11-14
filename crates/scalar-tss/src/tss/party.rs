@@ -1,31 +1,14 @@
 use super::signer::TssSigner;
-use crate::send;
 use crate::storage::TssStore;
-use crate::types::message_out::keygen_result::KeygenResultData;
 use anemo::{Network, PeerId};
 use anyhow::anyhow;
-use crypto::NetworkPublicKey;
-use futures::future::join_all;
-use k256::ecdsa::hazmat::VerifyPrimitive;
-use k256::elliptic_curve::sec1::FromEncodedPoint;
-use k256::elliptic_curve::ScalarPrimitive;
-use k256::EncodedPoint;
-use k256::ProjectivePoint;
 use narwhal_config::{Authority, Committee};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
 // use types::TssAnemoKeygenRequest;
-use crate::types::{
-    message_in,
-    message_out::sign_result::SignResultData,
-    message_out::SignResult,
-    message_out::{self},
-    tss_peer_client::TssPeerClient,
-    MessageIn, MessageOut, SignInit, TrafficIn, TssAnemoDeliveryMessage, TssAnemoKeygenRequest,
-    TssAnemoSignRequest,
-};
+use crate::types::{message_out::SignResult, MessageIn, SignInit};
 use narwhal_types::ConditionalBroadcastReceiver;
 
 // use crate::encrypted_sled::PasswordMethod;
@@ -72,209 +55,13 @@ impl TssParty {
     pub fn get_uid(&self) -> String {
         PeerId(self.authority.network_key().0.to_bytes()).to_string()
     }
-
-    pub fn get_parties(&self) -> Vec<String> {
-        let party_uids = self
-            .committee
-            .authorities()
-            .map(|authority| PeerId(authority.network_key().0.to_bytes()).to_string())
-            .collect::<Vec<String>>();
-        party_uids
-    }
-
-    pub async fn deliver_keygen(&self, msg: &MessageOut, from: &str) {
-        let msg = msg.data.as_ref().expect("missing data");
-        let msg = match msg {
-            message_out::Data::Traffic(t) => t,
-            _ => {
-                panic!("msg must be traffic out");
-            }
-        };
-        let msg_in = MessageIn {
-            data: Some(message_in::Data::Traffic(TrafficIn {
-                from_party_uid: from.to_string(),
-                is_broadcast: msg.is_broadcast,
-                payload: msg.payload.clone(),
-            })),
-        };
-        //Send to own tofnd gGpc Server
-        let _ = self.tx_keygen.send(msg_in);
-        //info!("Broadcast message {:?} from {:?}", msg, from);
-        let mut handlers = Vec::new();
-        let peers = self
-            .committee
-            .authorities()
-            .filter(|auth| auth.id().0 != self.authority.id().0)
-            .map(|auth| auth.network_key().clone())
-            .collect::<Vec<NetworkPublicKey>>();
-        let tss_message = TssAnemoDeliveryMessage {
-            from_party_uid: from.to_string(),
-            is_broadcast: msg.is_broadcast,
-            payload: msg.payload.clone(),
-        };
-        //Send to other peers vis anemo network
-        for peer in peers {
-            let network = self.network.clone();
-            let message = tss_message.clone();
-            // info!(
-            //     "Deliver keygen message from {:?} to peer {:?}",
-            //     from,
-            //     peer.to_string()
-            // );
-            let f = move |peer| {
-                let request = TssAnemoKeygenRequest {
-                    message: message.to_owned(),
-                };
-                async move {
-                    let result = TssPeerClient::new(peer).keygen(request).await;
-                    match result.as_ref() {
-                        Ok(r) => {
-                            info!("TssPeerClient keygen result {:?}", r);
-                        }
-                        Err(e) => {
-                            info!("TssPeerClient keygen error {:?}", e);
-                        }
-                    }
-                    result
-                }
-            };
-
-            let handle = send(network, peer, f);
-            handlers.push(handle);
-        }
-        let _results = join_all(handlers).await;
-        //info!("All keygen result {:?}", results);
-        //handlers
-    }
-
-    pub async fn deliver_sign(&self, msg: &MessageOut, from: &str) {
-        let msg = msg.data.as_ref().expect("missing data");
-        let msg = match msg {
-            message_out::Data::Traffic(t) => t,
-            _ => {
-                panic!("msg must be traffic out");
-            }
-        };
-        let msg_in = MessageIn {
-            data: Some(message_in::Data::Traffic(TrafficIn {
-                from_party_uid: from.to_string(),
-                is_broadcast: msg.is_broadcast,
-                payload: msg.payload.clone(),
-            })),
-        };
-        //Send to own tofnd gGpc Server
-        let _ = self.tx_sign.send(msg_in);
-        //info!("Broadcast message {:?} from {:?}", msg, from);
-        let mut handlers = Vec::new();
-        let peers = self
-            .committee
-            .authorities()
-            .filter(|auth| auth.id().0 != self.authority.id().0)
-            .map(|auth| auth.network_key().clone())
-            .collect::<Vec<NetworkPublicKey>>();
-        let tss_message = TssAnemoDeliveryMessage {
-            from_party_uid: from.to_string(),
-            is_broadcast: msg.is_broadcast,
-            payload: msg.payload.clone(),
-        };
-        //Send to other peers vis anemo network
-        for peer in peers {
-            let network = self.network.clone();
-            let message = tss_message.clone();
-            info!(
-                "Deliver sign message from {:?} to peer {:?}",
-                from,
-                peer.to_string()
-            );
-            let f = move |peer| {
-                let request = TssAnemoSignRequest {
-                    message: message.to_owned(),
-                };
-                async move {
-                    let result = TssPeerClient::new(peer).sign(request).await;
-                    match result.as_ref() {
-                        Ok(r) => {
-                            info!("TssPeerClient sign result {:?}", r);
-                        }
-                        Err(e) => {
-                            info!("TssPeerClient sign error {:?}", e);
-                        }
-                    }
-                    result
-                }
-            };
-
-            let handle = send(network, peer, f);
-            handlers.push(handle);
-        }
-        let _results = join_all(handlers).await;
-        //info!("All sign result {:?}", results);
-        //handlers
-    }
-
-    pub async fn set_keygen(&mut self, key_data: KeygenResultData) {
-        // info!("Keygen result {:?}", &key_data);
-        info!("Keygen result");
-        match key_data {
-            KeygenResultData::Data(_data) => {
-                //self.tss_store.write().await.set_key(data);
-            }
-            KeygenResultData::Criminals(_c) => {
-                // warn!("Crimials {:?}", c);
-                warn!("Crimials");
-            }
-        }
-    }
-    pub async fn verify_sign_result(
-        &mut self,
-        _message_digest: Vec<u8>,
-        sign_data: SignResultData,
-    ) {
-        // info!("Sign result data {:?}", &sign_data);
-        info!("Sign result data");
-        match sign_data {
-            SignResultData::Signature(sig) => {
-                info!("Vefifying signature {:?}", sig.as_slice());
-                // let pub_key = self.tss_store.read().await.get_key();
-                // match pub_key {
-                //     Some(key) => {
-                //         info!("pub key {:?}", &key.pub_key);
-                //         let verify_result = self.verify(
-                //             key.pub_key.as_slice(),
-                //             message_digest.as_slice(),
-                //             sig.as_slice(),
-                //         );
-                //         info!("Verify result {:?}", verify_result);
-                //     }
-                //     None => warn!("Missing pubkey"),
-                // }
-            }
-            SignResultData::Criminals(_c) => {
-                // warn!("Crimials {:?}", c);
-                warn!("Crimials");
-            }
-        }
-    }
-    fn verify(&self, pub_key: &[u8], message: &[u8], signature: &[u8]) -> anyhow::Result<bool> {
-        let signature = k256::ecdsa::Signature::from_der(signature)
-            .map_err(|_| anyhow!("Invalid signature"))?;
-        let scalar = ScalarPrimitive::from_slice(message)?;
-        let _hashed_msg = k256::Scalar::from(scalar);
-        let prj_point =
-            ProjectivePoint::from_encoded_point(&EncodedPoint::from_bytes(pub_key)?).unwrap();
-        let res = prj_point
-            .to_affine()
-            .verify_prehashed(message.into(), &signature)
-            .is_ok();
-        Ok(res)
-    }
 }
 impl TssParty {
     pub fn run(
         &self,
         rx_keygen: UnboundedReceiver<MessageIn>,
         tx_keygen_result: watch::Sender<Option<()>>,
-        mut rx_sign: UnboundedReceiver<MessageIn>,
+        rx_sign: UnboundedReceiver<MessageIn>,
         mut rx_sign_init: UnboundedReceiver<SignInit>,
         mut rx_shutdown: ConditionalBroadcastReceiver,
     ) -> Vec<JoinHandle<()>> {
@@ -300,26 +87,22 @@ impl TssParty {
         handles.push(handle);
 
         let tss_store = self.tss_store.clone();
-        // let span = span!(Level::INFO, "Sign");
-        let gg20_service = Gg20Service::new(tss_store, true);
         let tx_message_out_sign = tx_message_out.clone();
+        let gg20_service = Gg20Service::new(tss_store, true);
 
         let handle = tokio::spawn(async move {
-            loop {
-                if let Some(message) = rx_sign.recv().await {
-                    gg20_service
-                        .sign_init(message, rx_sign, tx_message_out_sign)
-                        .await
-                        .expect("Sign should be initiated");
-                    break;
-                }
-            }
+            gg20_service
+                .sign_init(rx_sign, tx_message_out_sign.clone())
+                .await
+                .expect("Sign should be initiated")
         });
 
         handles.push(handle);
+
         let tx_sign_result = self.tx_sign_result.clone();
         let tss_keygen = self.tss_keygen.clone();
         let tss_signer = self.tss_signer.clone();
+
         let handle = tokio::spawn(async move {
             info!("Init TssParty node, starting keygen process");
             let mut shuting_down = false;
@@ -330,9 +113,8 @@ impl TssParty {
                     shuting_down = true;
                 },
                 keygen_result = tss_keygen.keygen_execute(keygen_init, &mut rx_message_out) => match keygen_result {
-                    Ok(_res) => {
-                        // info!("Keygen result {:?}", &res);
-                        info!("Keygen result");
+                    Ok(res) => {
+                        info!("Keygen result {:?}", &res)
                         //Todo: Send keygen result to Evm Relayer to update external public key
                     },
                     Err(e) => {

@@ -7,7 +7,6 @@ use crate::types::{
 };
 use anemo::Network;
 use anemo::PeerId;
-use crypto::NetworkPublicKey;
 use futures::future::join_all;
 use narwhal_config::{Authority, Committee};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};

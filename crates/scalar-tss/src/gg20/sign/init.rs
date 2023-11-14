@@ -74,13 +74,20 @@ impl Gg20Service {
 
     pub(super) async fn process_sign_init(
         &self,
-        message: MessageIn,
+        rx_message_in: &mut mpsc::UnboundedReceiver<MessageIn>,
         out_stream: &mut mpsc::UnboundedSender<Result<MessageOut, Status>>,
         sign_span: Span,
     ) -> TofndResult<(SignInitSanitized, PartyInfo)> {
-        let data = message
+        let data = rx_message_in
+            .recv()
+            .await
+            .ok_or_else(|| anyhow!("sign: sign stream closed by client without sending a message"))?
             .data
             .ok_or_else(|| anyhow!("sign: missing `data` field in client message"))?;
+        // let data = sign_init
+        //     .data
+        //     .ok_or_else(|| anyhow!("sign: missing `data` field in client message"))?;
+
         let sign_init = match data {
             message_in::Data::SignInit(k) => k,
             _ => return Err(anyhow!("Expected sign init message")),
