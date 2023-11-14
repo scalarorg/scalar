@@ -80,6 +80,7 @@ fn handle_outgoing<F, K, P, const MAX_MSG_IN_LEN: usize>(
         // send message to gRPC client
         sender.send(Ok(MessageOut::new_bcast(bcast)))?
     }
+    debug!("send out bcast");
     // send outgoing p2ps
     if let Some(p2ps_out) = round.p2ps_out() {
         let mut p2p_msg_count = 1;

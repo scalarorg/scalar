@@ -65,7 +65,7 @@ impl EventVerify {
         let signature = signature_service
             .request_signature(digest.clone().into())
             .await;
-        signatures.insert(author.clone(), signature);
+        signatures.insert(author, signature);
         Self {
             digest,
             author,
@@ -75,10 +75,10 @@ impl EventVerify {
         }
     }
     pub fn digest(&self) -> EventDigest {
-        EventDigest(self.digest.0.clone())
+        EventDigest(self.digest.0)
     }
     pub fn add_signature(&mut self, authority: &AuthorityIdentifier, signature: Signature) {
-        self.signatures.insert(authority.clone(), signature);
+        self.signatures.insert(*authority, signature);
     }
     pub fn get_signature(&self, authority: &AuthorityIdentifier) -> Option<&Signature> {
         self.signatures.get(authority)

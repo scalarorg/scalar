@@ -1,32 +1,11 @@
-use std::net::Ipv4Addr;
-
 use anemo::PeerId;
 use narwhal_network::RetryConfig;
-use tonic::transport::Channel;
-use tracing::info;
-
-use crate::Gg20Client;
-
 pub mod builder;
 pub mod keygen;
 pub mod party;
+pub mod service;
 pub mod signer;
 pub mod tests;
-
-pub async fn create_tofnd_client(
-    port: u16,
-) -> Result<Gg20Client<Channel>, tonic::transport::Error> {
-    let tss_host = std::env::var("TSS_HOST").unwrap_or_else(|_| Ipv4Addr::LOCALHOST.to_string());
-    let tss_port = std::env::var("TSS_PORT")
-        .ok()
-        .and_then(|p| p.parse::<u16>().ok())
-        .unwrap_or_else(|| port);
-    //+ authority.id().0;
-    let tss_addr = format!("http://{}:{}", tss_host, tss_port);
-    info!("TSS address {}", &tss_addr);
-    let tofnd_client = Gg20Client::connect(tss_addr.clone()).await;
-    tofnd_client
-}
 
 pub fn send<F, R, Fut>(
     network: anemo::Network,

@@ -183,7 +183,7 @@ fn sort_uids_and_shares(
         .clone();
 
     // create a vec of (uid, share_count) and sort it
-    let mut pairs: Vec<(String, usize)> = uids.into_iter().zip(share_counts.into_iter()).collect();
+    let mut pairs: Vec<(String, usize)> = uids.into_iter().zip(share_counts).collect();
     pairs.sort();
 
     // unzip vec and search for duplicates in uids

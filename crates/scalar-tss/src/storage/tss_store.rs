@@ -65,10 +65,12 @@ impl TssStore {
     }
     pub async fn reserve_key(&self, key: &String) -> Result<String, TypedStoreError> {
         let dbmap = self.store.write().await;
-        match dbmap.get(&key) {
+        match dbmap.get(key) {
             Ok(res) => {
                 if res.is_none() {
-                    dbmap.insert(key, &Vec::default());
+                    dbmap
+                        .insert(key, &Vec::default())
+                        .expect("Should insert key to db");
                 }
                 Ok(key.clone())
             }

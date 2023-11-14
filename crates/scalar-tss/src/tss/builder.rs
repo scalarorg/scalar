@@ -7,25 +7,26 @@ use tokio::{
 };
 
 use crate::{
-    message_out::SignResult,
+    message_out::{KeygenResult, SignResult},
     storage::TssStore,
     tss_peer_server::{TssPeer, TssPeerServer},
-    MessageIn, SignInit, TssPeerService,
+    MessageIn, SignInit,
 };
 
-use super::{keygen::TssKeyGenerator, party::TssParty, signer::TssSigner};
+use super::{keygen::TssKeyGenerator, party::TssParty, service::TssPeerService, signer::TssSigner};
 
 // TODO: Update the builder when keygen, signer and party are refactored
 pub struct PartyConfig {
     tx_keygen: mpsc::UnboundedSender<MessageIn>,
     rx_keygen: mpsc::UnboundedReceiver<MessageIn>,
-    tx_keygen_result: watch::Sender<Option<()>>,
-    pub rx_keygen_result: watch::Receiver<Option<()>>,
+    tx_keygen_result: watch::Sender<Option<KeygenResult>>,
+    pub rx_keygen_result: watch::Receiver<Option<KeygenResult>>,
+    pub tx_sign_init: mpsc::UnboundedSender<SignInit>,
+    rx_sign_init: mpsc::UnboundedReceiver<SignInit>,
     tx_sign: mpsc::UnboundedSender<MessageIn>,
     rx_sign: mpsc::UnboundedReceiver<MessageIn>,
-    rx_sign_init: mpsc::UnboundedReceiver<SignInit>,
-    tx_sign_result: mpsc::UnboundedSender<(SignInit, SignResult)>,
-    pub tx_sign_init: mpsc::UnboundedSender<SignInit>,
+    tx_sign_result: watch::Sender<Option<SignResult>>,
+    pub rx_sign_result: watch::Receiver<Option<SignResult>>,
 }
 
 pub struct PartyBuilder {
@@ -43,13 +44,7 @@ impl PartyBuilder {
         }
     }
 
-    pub fn build(
-        self,
-    ) -> (
-        InternalPartyBuilder,
-        TssPeerServer<impl TssPeer>,
-        mpsc::UnboundedReceiver<(SignInit, SignResult)>,
-    ) {
+    pub fn build(self) -> (UnstartedParty, TssPeerServer<impl TssPeer>) {
         // Channel for communication between Tss spawn and Anemo Tss service
         let (tx_keygen, rx_keygen) = mpsc::unbounded_channel();
         let (tx_sign, rx_sign) = mpsc::unbounded_channel();
@@ -59,48 +54,49 @@ impl PartyBuilder {
 
         // Send sign init from Scalar Event handler to Tss spawn
         let (tx_sign_init, rx_sign_init) = mpsc::unbounded_channel();
+
         // Send sign result from tss spawn to Scalar handler
-        let (tx_sign_result, rx_sign_result) = mpsc::unbounded_channel();
+        let (tx_sign_result, rx_sign_result) = watch::channel(None);
 
         let config = PartyConfig {
             rx_keygen,
             rx_sign,
-            rx_sign_init,
             tx_keygen: tx_keygen.clone(),
             tx_sign: tx_sign.clone(),
             tx_keygen_result,
             rx_keygen_result,
-            tx_sign_result,
             tx_sign_init,
+            rx_sign_init,
+            tx_sign_result,
+            rx_sign_result,
         };
 
         (
-            InternalPartyBuilder {
+            UnstartedParty {
                 authority: self.authority,
                 committee: self.committee,
                 tss_store: self.tss_store,
                 config,
             },
             TssPeerServer::new(TssPeerService::new(tx_keygen, tx_sign)),
-            rx_sign_result,
         )
     }
 }
 
-pub struct InternalPartyBuilder {
+pub struct UnstartedParty {
     authority: Authority,
     committee: Committee,
     tss_store: TssStore,
     config: PartyConfig,
 }
 
-impl InternalPartyBuilder {
+impl UnstartedParty {
     pub fn get_config(&self) -> &PartyConfig {
         &self.config
     }
 
     pub fn build(&self, network: Network) -> TssParty {
-        let InternalPartyBuilder {
+        let UnstartedParty {
             authority,
             committee,
             tss_store,
@@ -108,10 +104,7 @@ impl InternalPartyBuilder {
         } = self;
 
         let PartyConfig {
-            tx_keygen,
-            tx_sign,
-            tx_sign_result,
-            ..
+            tx_keygen, tx_sign, ..
         } = &config;
 
         let tss_keygen = TssKeyGenerator::new(
@@ -128,17 +121,7 @@ impl InternalPartyBuilder {
             tx_sign.clone(),
         );
 
-        TssParty::new(
-            authority.clone(),
-            committee.clone(),
-            network.clone(),
-            tss_store.clone(),
-            tss_keygen,
-            tss_signer,
-            tx_keygen.clone(),
-            tx_sign.clone(),
-            tx_sign_result.clone(),
-        )
+        TssParty::new(authority.clone(), tss_store.clone(), tss_keygen, tss_signer)
     }
 
     pub fn start(
@@ -149,9 +132,10 @@ impl InternalPartyBuilder {
         let party = self.build(network);
         let PartyConfig {
             rx_keygen,
-            rx_sign,
-            rx_sign_init,
             tx_keygen_result,
+            rx_sign_init,
+            rx_sign,
+            tx_sign_result,
             ..
         } = self.config;
 
@@ -159,6 +143,7 @@ impl InternalPartyBuilder {
             rx_keygen,
             tx_keygen_result,
             rx_sign,
+            tx_sign_result,
             rx_sign_init,
             rx_shutdown,
         )

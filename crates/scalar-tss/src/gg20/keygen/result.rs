@@ -37,7 +37,9 @@ impl Gg20Service {
         let keygen_outputs = match Self::aggregate_keygen_outputs(aggregator_receivers).await {
             Ok(keygen_outputs) => keygen_outputs,
             Err(err) => {
-                self.unreserve_key(&key_uid_reservation).await;
+                self.unreserve_key(&key_uid_reservation)
+                    .await
+                    .expect("Should unreserve key");
                 return Err(anyhow!(
                     "Error at Keygen output aggregation. Unreserving key {}",
                     err

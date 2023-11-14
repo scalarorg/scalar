@@ -202,12 +202,16 @@ impl KvStore {
         }
 
         // try to insert the new key with default value
-        self.tss_store.write(&key, &DEFAULT_RESERVE).map_err(|err| {
-            KvError::PutErr(InnerKvError::LogicalErr(format!(
-                "insert key <{}> with default value failed {:?}.",
-                key, &err
-            )))
-        });
+        self.tss_store
+            .write(key, &DEFAULT_RESERVE)
+            .map_err(|err| {
+                KvError::PutErr(InnerKvError::LogicalErr(format!(
+                    "insert key <{}> with default value failed {:?}.",
+                    key, &err
+                )))
+            })
+            .await
+            .expect("Should insert key");
 
         // return key reservation
         Ok(key.to_owned())
