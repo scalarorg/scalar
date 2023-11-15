@@ -40,6 +40,9 @@ impl KvStore {
             safe_keygen,
         }
     }
+    pub fn tss_store(&self) -> &TssStore {
+        &self.tss_store
+    }
     pub fn is_safe_keygen(&self) -> bool {
         self.safe_keygen
     }
@@ -235,7 +238,7 @@ where
     }
     async fn put(&self, key: &KeyReservation, value: &V) -> KvResult<()> {
         let bytes: Vec<u8> =
-            serialize(value).map_err(|_| KvError::PutErr(InnerKvError::SerializationErr))?;
+            serialize(&value).map_err(|_| KvError::PutErr(InnerKvError::SerializationErr))?;
         self.tss_store.write(key, &bytes).await.map_err(|err| {
             KvError::PutErr(InnerKvError::LogicalErr(format!("Write error {:?}", err)))
         })

@@ -1,8 +1,10 @@
 use anemo::PeerId;
 use narwhal_network::RetryConfig;
 pub mod builder;
+pub mod key_presence;
 pub mod keygen;
 pub mod party;
+pub mod recover;
 pub mod service;
 pub mod signer;
 pub mod tests;

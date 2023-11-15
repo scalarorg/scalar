@@ -22,7 +22,7 @@ mod broadcast;
 mod key_presence;
 mod keygen;
 mod protocol;
-// mod recover;
+mod recover;
 pub mod service;
 mod sign;
 pub mod types;

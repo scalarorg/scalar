@@ -3,6 +3,8 @@
 //! The recovery info is decrypted by party's mnemonic seed and saved in the KvStore.
 
 use super::{keygen::types::KeygenInitSanitized, service::Gg20Service, types::PartyInfo};
+// use crate::kv_manager::kv_store::KvStore;
+// use crate::kv_manager::store::Store;
 use tofn::{
     collections::TypedUsize,
     gg20::keygen::{
@@ -16,16 +18,11 @@ use tofn::{
 use tracing::{info, warn};
 
 // error handling
-use crate::tss::{narwhal_types, TofndResult};
+use crate::types::{KeygenOutput, RecoverRequest};
 use anyhow::anyhow;
 
-use std::convert::TryInto;
-
 impl Gg20Service {
-    pub(super) async fn handle_recover(
-        &self,
-        request: narwhal_types::gg20::RecoverRequest,
-    ) -> TofndResult<()> {
+    pub async fn handle_recover(&self, request: RecoverRequest) -> anyhow::Result<()> {
         // get keygen init sanitized from request
         let keygen_init = {
             let keygen_init = request
@@ -40,8 +37,8 @@ impl Gg20Service {
 
         // check if key-uid already exists in kv-store. If yes, return success and don't update the kv-store
         if self
-            .kv_manager
-            .kv()
+            .kv_store
+            .tss_store()
             .exists(&keygen_init.new_key_uid)
             .await
             .map_err(|err| anyhow!(err))?
@@ -55,7 +52,7 @@ impl Gg20Service {
 
         // recover secret key shares from request
         // get mnemonic seed
-        let secret_recovery_key = self.kv_manager.seed().await?;
+        let secret_recovery_key = self.kv_store.seed().await?;
         let secret_key_shares = self
             .recover_secret_key_shares(&secret_recovery_key, &keygen_init, &keygen_output)
             .map_err(|err| anyhow!("Failed to acquire secret key share {}", err))?;
@@ -69,8 +66,8 @@ impl Gg20Service {
         &self,
         secret_recovery_key: &SecretRecoveryKey,
         init: &KeygenInitSanitized,
-        output: &narwhal_types::KeygenOutput,
-    ) -> TofndResult<Vec<SecretKeyShare>> {
+        output: &KeygenOutput,
+    ) -> anyhow::Result<Vec<SecretKeyShare>> {
         // get my share count safely
         let my_share_count = *init.party_share_counts.get(init.my_index).ok_or_else(|| {
             anyhow!(
@@ -113,7 +110,11 @@ impl Gg20Service {
 
         // try to recover keypairs
         let session_nonce = init.new_key_uid.as_bytes();
-        let party_keypair = match self.cfg.safe_keygen {
+        /*
+         * 2023-11-15 HuongND
+         * Temporary set match self.cfg.safe_keygen to true until we have config
+         */
+        let party_keypair = match true {
             true => recover_party_keypair(party_id, secret_recovery_key, session_nonce),
             false => recover_party_keypair_unsafe(party_id, secret_recovery_key, session_nonce),
         }
@@ -138,7 +139,7 @@ impl Gg20Service {
                 )
                 .map_err(|_| anyhow!("Cannot recover share [{}] of party [{}]", i, party_id))
             })
-            .collect::<TofndResult<_>>()?;
+            .collect::<anyhow::Result<_>>()?;
 
         Ok(secret_key_shares)
     }
@@ -148,12 +149,12 @@ impl Gg20Service {
         &self,
         keygen_init_sanitized: KeygenInitSanitized,
         secret_key_shares: Vec<SecretKeyShare>,
-    ) -> TofndResult<()> {
+    ) -> anyhow::Result<()> {
         // try to make a reservation
         let reservation = self
-            .kv_manager
-            .kv()
-            .reserve_key(keygen_init_sanitized.new_key_uid)
+            .kv_store
+            .tss_store()
+            .reserve_key(&keygen_init_sanitized.new_key_uid)
             .await
             .map_err(|err| anyhow!("failed to complete reservation: {}", err))?;
         // acquire kv-data
@@ -164,9 +165,9 @@ impl Gg20Service {
             keygen_init_sanitized.my_index,
         );
         // try writing the data to the kv-store
-        self.kv_manager
-            .kv()
-            .put(reservation, kv_data.try_into()?)
+        use crate::kv_manager::store::Store;
+        self.kv_store
+            .put(&reservation, &kv_data)
             .await
             .map_err(|err| anyhow!("failed to update kv store: {}", err))
     }

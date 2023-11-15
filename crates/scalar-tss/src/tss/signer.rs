@@ -15,6 +15,7 @@ use narwhal_config::{Authority, Committee};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tonic::Status;
 use tracing::{info, warn};
+
 #[derive(Clone)]
 pub struct TssSigner {
     pub uid: String,
@@ -172,6 +173,7 @@ impl TssSigner {
                             info!("party [{}] needs recover", my_uid);
                             // when recovery is needed, sign is canceled. We abort the protocol manualy instead of waiting parties to time out
                             // no worries that we don't wait for enough time, we will not be checking criminals in this case
+                            // TODO: Should deliver message_in::Data::Abort(false) to all parties
                             // delivery.send_timeouts(0);
                             break Ok(SignResult {
                                 sign_result_data: None,

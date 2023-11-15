@@ -8,12 +8,16 @@ use tokio::{
 
 use crate::{
     message_out::{KeygenResult, SignResult},
+    service::Gg20Service,
     storage::TssStore,
     tss_peer_server::{TssPeer, TssPeerServer},
     MessageIn, SignInit,
 };
 
-use super::{keygen::TssKeyGenerator, party::TssParty, service::TssPeerService, signer::TssSigner};
+use super::{
+    key_presence::TssKeyPresence, keygen::TssKeyGenerator, party::TssParty, recover::TssRecover,
+    service::TssPeerService, signer::TssSigner,
+};
 
 // TODO: Update the builder when keygen, signer and party are refactored
 pub struct PartyConfig {
@@ -71,14 +75,16 @@ impl PartyBuilder {
             rx_sign_result,
         };
 
+        let gg20_service = Gg20Service::new(self.tss_store, true);
+
         (
             UnstartedParty {
                 authority: self.authority,
                 committee: self.committee,
-                tss_store: self.tss_store,
+                gg20_service: gg20_service.clone(),
                 config,
             },
-            TssPeerServer::new(TssPeerService::new(tx_keygen, tx_sign)),
+            TssPeerServer::new(TssPeerService::new(tx_keygen, tx_sign, gg20_service)),
         )
     }
 }
@@ -86,7 +92,7 @@ impl PartyBuilder {
 pub struct UnstartedParty {
     authority: Authority,
     committee: Committee,
-    tss_store: TssStore,
+    gg20_service: Gg20Service,
     config: PartyConfig,
 }
 
@@ -99,7 +105,7 @@ impl UnstartedParty {
         let UnstartedParty {
             authority,
             committee,
-            tss_store,
+            gg20_service,
             config,
         } = self;
 
@@ -121,7 +127,18 @@ impl UnstartedParty {
             tx_sign.clone(),
         );
 
-        TssParty::new(authority.clone(), tss_store.clone(), tss_keygen, tss_signer)
+        let tss_key_presence = TssKeyPresence::new(gg20_service.clone());
+
+        let tss_recover = TssRecover::new(gg20_service.clone());
+
+        TssParty::new(
+            authority.clone(),
+            self.gg20_service,
+            tss_keygen,
+            tss_signer,
+            tss_key_presence,
+            tss_recover,
+        )
     }
 
     pub fn start(

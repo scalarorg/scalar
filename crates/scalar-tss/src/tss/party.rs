@@ -1,6 +1,7 @@
+use super::key_presence::TssKeyPresence;
+use super::recover::TssRecover;
 use super::signer::TssSigner;
 use crate::message_out::KeygenResult;
-use crate::storage::TssStore;
 use anemo::PeerId;
 use narwhal_config::Authority;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
@@ -19,23 +20,29 @@ use crate::service::Gg20Service;
 #[derive(Clone)]
 pub struct TssParty {
     authority: Authority,
-    tss_store: TssStore,
+    gg20_service: Gg20Service,
     tss_keygen: TssKeyGenerator,
     tss_signer: TssSigner,
+    tss_key_presence: TssKeyPresence,
+    tss_recover: TssRecover,
 }
 
 impl TssParty {
     pub fn new(
         authority: Authority,
-        tss_store: TssStore,
+        gg20_service: Gg20Service,
         tss_keygen: TssKeyGenerator,
         tss_signer: TssSigner,
+        tss_key_presence: TssKeyPresence,
+        tss_recover: TssRecover,
     ) -> Self {
         Self {
             authority,
-            tss_store,
+            gg20_service,
             tss_keygen,
             tss_signer,
+            tss_key_presence,
+            tss_recover,
         }
     }
 
@@ -53,33 +60,41 @@ impl TssParty {
         mut rx_sign_init: UnboundedReceiver<SignInit>,
         mut rx_shutdown: ConditionalBroadcastReceiver,
     ) -> Vec<JoinHandle<()>> {
-        //Init keygen protocol
-        let (tx_message_out, mut rx_message_out) = mpsc::unbounded_channel();
-
-        let keygen_init = self.tss_keygen.create_keygen_init();
         let uid = self.get_uid();
+        //Init keygen protocol
+        let (tx_message_out_keygen, mut rx_message_out_keygen) = mpsc::unbounded_channel();
 
         let mut handles = Vec::new();
-        let tss_store = self.tss_store.clone();
-        let gg20_service = Gg20Service::new(tss_store, true);
+
+        // TODO: create keygen init through config
+        let keygen_init = self.tss_keygen.create_keygen_init();
 
         let gg20_keygen_init = keygen_init.clone();
-        let tx_message_out_keygen = tx_message_out.clone();
-        let gg20_service_keygen = gg20_service.clone();
+        let gg20_service_keygen = self.gg20_service.clone();
         tokio::spawn(async move {
-            let _ = gg20_service_keygen.init_mnemonic().await;
-            let _ = gg20_service_keygen
-                .keygen_init(gg20_keygen_init, rx_keygen, tx_message_out_keygen)
-                .await;
+            // Check if key is present
+            let key_present = self.tss_key_presence.execute_key_presence(uid).await;
 
-            info!("Keygen protocol finished");
+            if key_present {
+                info!("Key is present, start recover process");
+
+                // TODO: implement recover process
+            } else {
+                let _ = gg20_service_keygen.init_mnemonic().await;
+                let _ = gg20_service_keygen
+                    .keygen_init(gg20_keygen_init, rx_keygen, tx_message_out_keygen)
+                    .await;
+
+                info!("Keygen protocol finished");
+            }
         });
 
         // handles.push(handle);
 
         let (tx_message_out_sign, mut rx_message_out_sign) = mpsc::unbounded_channel();
         tokio::spawn(async move {
-            if let Err(e) = gg20_service
+            if let Err(e) = self
+                .gg20_service
                 .sign_init(rx_sign, tx_message_out_sign.clone())
                 .await
             {
@@ -107,7 +122,7 @@ impl TssParty {
                     warn!("Node is shuting down");
                     shuting_down = true;
                 },
-                keygen_result = tss_keygen.keygen_execute(keygen_init, &mut rx_message_out) => match keygen_result {
+                keygen_result = tss_keygen.keygen_execute(keygen_init, &mut rx_message_out_keygen) => match keygen_result {
                     Ok(res) => {
                         info!("Keygen result");
 
