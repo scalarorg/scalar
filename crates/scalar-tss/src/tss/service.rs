@@ -1,23 +1,84 @@
-use crate::types::{
-    message_in, tss_peer_server::TssPeer, MessageIn, TrafficIn, TssAnemoKeygenRequest,
-    TssAnemoKeygenResponse, TssAnemoSignRequest, TssAnemoSignResponse, TssAnemoVerifyRequest,
-    TssAnemoVerifyResponse,
+use crate::{
+    service::Gg20Service,
+    types::{
+        key_presence_response, message_in, recover_response, tss_peer_server::TssPeer,
+        KeyPresenceRequest, KeyPresenceResponse, MessageIn, RecoverRequest, RecoverResponse,
+        TrafficIn, TssAnemoKeygenRequest, TssAnemoKeygenResponse, TssAnemoSignRequest,
+        TssAnemoSignResponse, TssAnemoVerifyRequest, TssAnemoVerifyResponse,
+    },
 };
 use anemo::{rpc::Status, Response};
 use tokio::sync::mpsc::UnboundedSender;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 pub struct TssPeerService {
     tx_keygen: UnboundedSender<MessageIn>,
     tx_sign: UnboundedSender<MessageIn>,
+    gg20_service: Gg20Service,
 }
 impl TssPeerService {
-    pub fn new(tx_keygen: UnboundedSender<MessageIn>, tx_sign: UnboundedSender<MessageIn>) -> Self {
-        Self { tx_keygen, tx_sign }
+    pub fn new(
+        tx_keygen: UnboundedSender<MessageIn>,
+        tx_sign: UnboundedSender<MessageIn>,
+        gg20_service: Gg20Service,
+    ) -> Self {
+        Self {
+            tx_keygen,
+            tx_sign,
+            gg20_service,
+        }
     }
 }
 #[anemo::async_trait]
 impl TssPeer for TssPeerService {
+    /// Recover. See [recover].
+    async fn recover(
+        &self,
+        request: anemo::Request<RecoverRequest>,
+    ) -> Result<Response<RecoverResponse>, Status> {
+        let request = request.into_body();
+
+        let response = self.gg20_service.handle_recover(request).await;
+        let response = match response {
+            Ok(()) => {
+                info!("Recovery completed successfully!");
+                recover_response::Response::Success
+            }
+            Err(err) => {
+                error!("Unable to complete recovery: {}", err);
+                recover_response::Response::Fail
+            }
+        };
+
+        Ok(Response::new(RecoverResponse {
+            // the prost way to convert enums to i32 https://github.com/danburkert/prost#enumerations
+            response: response as i32,
+        }))
+    }
+
+    /// KeyPresence. See [key_presence].
+    async fn key_presence(
+        &self,
+        request: anemo::Request<KeyPresenceRequest>,
+    ) -> Result<Response<KeyPresenceResponse>, Status> {
+        let request = request.into_body();
+
+        let response = match self.gg20_service.handle_key_presence(request).await {
+            Ok(res) => {
+                info!("Key presence check completed succesfully!");
+                res
+            }
+            Err(err) => {
+                error!("Unable to complete key presence check: {}", err);
+                key_presence_response::Response::Fail
+            }
+        };
+
+        Ok(Response::new(KeyPresenceResponse {
+            response: response as i32,
+        }))
+    }
+
     async fn keygen(
         &self,
         request: anemo::Request<TssAnemoKeygenRequest>,

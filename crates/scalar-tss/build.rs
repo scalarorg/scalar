@@ -79,6 +79,24 @@ fn build_tss_service(out_dir: &Path) {
                 // .server_handler_return_raw_bytes(true)
                 .build(),
         )
+        .method(
+            anemo_build::manual::Method::builder()
+                .name("recover")
+                .route_name("Recover")
+                .request_type("crate::RecoverRequest")
+                .response_type("crate::RecoverResponse")
+                .codec_path("anemo::rpc::codec::BincodeCodec")
+                .build(),
+        )
+        .method(
+            anemo_build::manual::Method::builder()
+                .name("key_presence")
+                .route_name("KeyPresence")
+                .request_type("crate::KeyPresenceRequest")
+                .response_type("crate::KeyPresenceResponse")
+                .codec_path("anemo::rpc::codec::BincodeCodec")
+                .build(),
+        )
         .build();
     anemo_build::manual::Builder::new()
         .out_dir(out_dir)
