@@ -12,7 +12,7 @@ impl TssKeyPresence {
         Self { gg20_service }
     }
 
-    pub async fn execute_key_presence(&mut self, key_uid: String) -> bool {
+    pub async fn execute_key_presence(&self, key_uid: String) -> bool {
         let key_presence_request = KeyPresenceRequest {
             key_uid,
             pub_key: vec![],

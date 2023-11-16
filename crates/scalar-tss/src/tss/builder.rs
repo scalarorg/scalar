@@ -81,10 +81,10 @@ impl PartyBuilder {
             UnstartedParty {
                 authority: self.authority,
                 committee: self.committee,
-                gg20_service: gg20_service.clone(),
+                gg20_service,
                 config,
             },
-            TssPeerServer::new(TssPeerService::new(tx_keygen, tx_sign, gg20_service)),
+            TssPeerServer::new(TssPeerService::new(tx_keygen, tx_sign)),
         )
     }
 }
@@ -133,7 +133,7 @@ impl UnstartedParty {
 
         TssParty::new(
             authority.clone(),
-            self.gg20_service,
+            gg20_service.clone(),
             tss_keygen,
             tss_signer,
             tss_key_presence,
@@ -145,7 +145,7 @@ impl UnstartedParty {
         self,
         network: Network,
         rx_shutdown: ConditionalBroadcastReceiver,
-    ) -> Vec<JoinHandle<()>> {
+    ) -> (JoinHandle<()>, TssParty) {
         let party = self.build(network);
         let PartyConfig {
             rx_keygen,
@@ -156,13 +156,16 @@ impl UnstartedParty {
             ..
         } = self.config;
 
-        party.run(
-            rx_keygen,
-            tx_keygen_result,
-            rx_sign,
-            tx_sign_result,
-            rx_sign_init,
-            rx_shutdown,
+        (
+            party.run(
+                rx_keygen,
+                tx_keygen_result,
+                rx_sign_init,
+                rx_sign,
+                tx_sign_result,
+                rx_shutdown,
+            ),
+            party,
         )
     }
 }

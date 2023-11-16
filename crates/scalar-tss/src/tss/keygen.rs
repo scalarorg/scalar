@@ -47,8 +47,15 @@ impl TssKeyGenerator {
             .map(|authority| PeerId(authority.network_key().0.to_bytes()).to_string())
             .collect::<Vec<String>>();
 
+        let epoch = self.committee.epoch();
+        info!("epoch: {}", epoch);
+        let my_party_index = self.authority.id().0 as u32;
+        info!("party index: {}", my_party_index);
+        info!("party uids: {:?}", party_uids);
+
         KeygenInit {
-            new_key_uid: format!("tss_session{}", self.committee.epoch()),
+            // Temporary set self.committee.epoch() to a fixed value
+            new_key_uid: format!("tss_session{}", 0),
             party_uids,
             party_share_counts: vec![1, 1, 1, 1],
             my_party_index: self.authority.id().0 as u32,

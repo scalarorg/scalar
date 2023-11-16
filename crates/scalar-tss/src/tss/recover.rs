@@ -12,7 +12,7 @@ impl TssRecover {
         Self { gg20_service }
     }
 
-    pub async fn execute_recover(&mut self, keygen_init: KeygenInit, keygen_output: KeygenOutput) {
+    pub async fn execute_recover(&self, keygen_init: KeygenInit, keygen_output: KeygenOutput) {
         let recover_request = RecoverRequest {
             keygen_init: Some(keygen_init),
             keygen_output: Some(keygen_output),

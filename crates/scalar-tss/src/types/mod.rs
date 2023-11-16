@@ -4,22 +4,6 @@ use serde::{Deserialize, Serialize};
 
 pub type KvValue = Vec<u8>;
 pub type KeyReservation = String;
-/// Returned from a successful `ReserveKey` command
-// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)] // disallow derive Clone, Copy
-// pub struct KeyReservation {
-//     pub(super) key: String,
-// }
-// /// kv store needs PartialEq to complare values
-// impl PartialEq for KeyReservation {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.key == other.key
-//     }
-// }
-
-// #[derive(Debug)]
-// pub struct ConditionalBroadcastReceiver {
-//     pub receiver: broadcast::Receiver<()>,
-// }
 
 /// Used by workers to send a new batch.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -50,12 +34,12 @@ pub struct TssAnemoSignResponse {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TssAnemoVerifyRequest {
+pub struct AbortRequest {
     pub message: TssAnemoDeliveryMessage,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TssAnemoVerifyResponse {
+pub struct AbortResponse {
     pub message: String,
 }
 
