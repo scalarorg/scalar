@@ -43,3 +43,8 @@ services:
     restart: unless-stopped
     volumes:
       - ../scripts/entry.sh:/entry.sh
+    ports:
+      - "30303:30303"         # Peering ports
+      - "30303:30303/udp"     # Peering ports
+      - "8545-8546:8545-8546" # http, ws
+      - "9001:9001"           # Metrics
