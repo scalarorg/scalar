@@ -256,7 +256,8 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         let db = Arc::new(init_db(&db_path, self.db.log_level)?.with_metrics());
         info!(target: "reth::cli", "Database opened");
 
-        self.start_metrics_endpoint(prometheus_handle, Arc::clone(&db)).await?;
+        self.start_metrics_endpoint(prometheus_handle, Arc::clone(&db))
+            .await?;
 
         debug!(target: "reth::cli", chain=%self.chain.chain, genesis=?self.chain.genesis_hash(), "Initializing genesis");
 
@@ -271,10 +272,13 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         debug!(target: "reth::cli", "Spawning stages metrics listener task");
         let (sync_metrics_tx, sync_metrics_rx) = unbounded_channel();
         let sync_metrics_listener = reth_stages::MetricsListener::new(sync_metrics_rx);
-        ctx.task_executor.spawn_critical("stages metrics listener task", sync_metrics_listener);
+        ctx.task_executor
+            .spawn_critical("stages metrics listener task", sync_metrics_listener);
 
-        let prune_config =
-            self.pruning.prune_config(Arc::clone(&self.chain))?.or(config.prune.clone());
+        let prune_config = self
+            .pruning
+            .prune_config(Arc::clone(&self.chain))?
+            .or(config.prune.clone());
 
         // configure blockchain tree
         let tree_externals = TreeExternals::new(
@@ -294,7 +298,9 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         debug!(target: "reth::cli", "configured blockchain tree");
 
         // fetch the head block from the database
-        let head = self.lookup_head(Arc::clone(&db)).wrap_err("the head block is missing")?;
+        let head = self
+            .lookup_head(Arc::clone(&db))
+            .wrap_err("the head block is missing")?;
 
         // setup the blockchain provider
         let factory = ProviderFactory::new(Arc::clone(&db), Arc::clone(&self.chain));
@@ -304,7 +310,11 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             .with_head_timestamp(head.timestamp)
             .kzg_settings(self.kzg_settings()?)
             .with_additional_tasks(1)
-            .build_with_tasks(blockchain_db.clone(), ctx.task_executor.clone(), blob_store.clone());
+            .build_with_tasks(
+                blockchain_db.clone(),
+                ctx.task_executor.clone(),
+                blob_store.clone(),
+            );
 
         let transaction_pool =
             reth_transaction_pool::Pool::eth_pool(validator, blob_store, self.txpool.pool_config());
@@ -329,8 +339,11 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         }
 
         info!(target: "reth::cli", "Connecting to P2P network");
-        let network_secret_path =
-            self.network.p2p_secret_key.clone().unwrap_or_else(|| data_dir.p2p_secret_path());
+        let network_secret_path = self
+            .network
+            .p2p_secret_key
+            .clone()
+            .unwrap_or_else(|| data_dir.p2p_secret_path());
         debug!(target: "reth::cli", ?network_secret_path, "Loading p2p key file");
         let secret_key = get_secret_key(&network_secret_path)?;
         let default_peers_path = data_dir.known_peers_path();
@@ -364,7 +377,9 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         self.ext.on_components_initialized(&components)?;
 
         debug!(target: "reth::cli", "Spawning payload builder service");
-        let payload_builder = self.ext.spawn_payload_builder_service(&self.builder, &components)?;
+        let payload_builder = self
+            .ext
+            .spawn_payload_builder_service(&self.builder, &components)?;
 
         let (consensus_engine_tx, consensus_engine_rx) = unbounded_channel();
         let max_block = if let Some(block) = self.debug.max_block {
@@ -529,16 +544,19 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         self.adjust_instance_ports();
 
         // Start RPC servers
-        let _rpc_server_handles =
-            self.rpc.start_servers(&components, engine_api, jwt_secret, &mut self.ext).await?;
+        let _rpc_server_handles = self
+            .rpc
+            .start_servers(&components, engine_api, jwt_secret, &mut self.ext)
+            .await?;
 
         // Run consensus engine to completion
         let (tx, rx) = oneshot::channel();
         info!(target: "reth::cli", "Starting consensus engine");
-        ctx.task_executor.spawn_critical_blocking("consensus engine", async move {
-            let res = beacon_consensus_engine.await;
-            let _ = tx.send(res);
-        });
+        ctx.task_executor
+            .spawn_critical_blocking("consensus engine", async move {
+                let res = beacon_consensus_engine.await;
+                let _ = tx.send(res);
+            });
 
         self.ext.on_node_started(&components)?;
 
@@ -721,7 +739,10 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         let factory = ProviderFactory::new(db, self.chain.clone());
         let provider = factory.provider()?;
 
-        let head = provider.get_stage_checkpoint(StageId::Finish)?.unwrap_or_default().block_number;
+        let head = provider
+            .get_stage_checkpoint(StageId::Finish)?
+            .unwrap_or_default()
+            .block_number;
 
         let header = provider
             .header_by_number(head)?
@@ -758,7 +779,10 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         DB: Database,
         Client: HeadersClient,
     {
-        Ok(self.fetch_tip(db, client, BlockHashOrNumber::Hash(tip)).await?.number)
+        Ok(self
+            .fetch_tip(db, client, BlockHashOrNumber::Hash(tip))
+            .await?
+            .number)
     }
 
     /// Attempt to look up the block with the given number and return the header.
@@ -782,7 +806,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         // try to look up the header in the database
         if let Some(header) = header {
             info!(target: "reth::cli", ?tip, "Successfully looked up tip block in the database");
-            return Ok(header.seal_slow())
+            return Ok(header.seal_slow());
         }
 
         info!(target: "reth::cli", ?tip, "Fetching tip block from the network.");
@@ -790,7 +814,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             match get_single_header(&client, tip).await {
                 Ok(tip_header) => {
                     info!(target: "reth::cli", ?tip, "Successfully fetched tip");
-                    return Ok(tip_header)
+                    return Ok(tip_header);
                 }
                 Err(error) => {
                     error!(target: "reth::cli", %error, "Failed to fetch the tip. Retrying...");
@@ -883,8 +907,11 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
 
         let prune_modes = prune_config.map(|prune| prune.segments).unwrap_or_default();
 
-        let header_mode =
-            if continuous { HeaderSyncMode::Continuous } else { HeaderSyncMode::Tip(tip_rx) };
+        let header_mode = if continuous {
+            HeaderSyncMode::Continuous
+        } else {
+            HeaderSyncMode::Tip(tip_rx)
+        };
         let pipeline = builder
             .with_tip_sender(tip_tx)
             .with_metrics_tx(metrics_tx.clone())
@@ -928,7 +955,9 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
                     stage_config.storage_hashing.clean_threshold,
                     stage_config.storage_hashing.commit_threshold,
                 ))
-                .set(MerkleStage::new_execution(stage_config.merkle.clean_threshold))
+                .set(MerkleStage::new_execution(
+                    stage_config.merkle.clean_threshold,
+                ))
                 .set(TransactionLookupStage::new(
                     stage_config.transaction_lookup.commit_threshold,
                     prune_modes.transaction_lookup,
@@ -956,7 +985,12 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
     ) -> Pruner<DB> {
         let segments = SegmentSet::default()
             // Receipts
-            .segment_opt(config.segments.receipts.map(reth_prune::segments::Receipts::new))
+            .segment_opt(
+                config
+                    .segments
+                    .receipts
+                    .map(reth_prune::segments::Receipts::new),
+            )
             // Receipts by logs
             .segment_opt((!config.segments.receipts_log_filter.is_empty()).then(|| {
                 reth_prune::segments::ReceiptsByLogs::new(
@@ -972,15 +1006,24 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             )
             // Sender recovery
             .segment_opt(
-                config.segments.sender_recovery.map(reth_prune::segments::SenderRecovery::new),
+                config
+                    .segments
+                    .sender_recovery
+                    .map(reth_prune::segments::SenderRecovery::new),
             )
             // Account history
             .segment_opt(
-                config.segments.account_history.map(reth_prune::segments::AccountHistory::new),
+                config
+                    .segments
+                    .account_history
+                    .map(reth_prune::segments::AccountHistory::new),
             )
             // Storage history
             .segment_opt(
-                config.segments.storage_history.map(reth_prune::segments::StorageHistory::new),
+                config
+                    .segments
+                    .storage_history
+                    .map(reth_prune::segments::StorageHistory::new),
             );
 
         Pruner::new(
@@ -1101,14 +1144,23 @@ mod tests {
     #[test]
     fn parse_metrics_port() {
         let cmd = NodeCommand::<()>::try_parse_from(["reth", "--metrics", "9001"]).unwrap();
-        assert_eq!(cmd.metrics, Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9001)));
+        assert_eq!(
+            cmd.metrics,
+            Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9001))
+        );
 
         let cmd = NodeCommand::<()>::try_parse_from(["reth", "--metrics", ":9001"]).unwrap();
-        assert_eq!(cmd.metrics, Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9001)));
+        assert_eq!(
+            cmd.metrics,
+            Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9001))
+        );
 
         let cmd =
             NodeCommand::<()>::try_parse_from(["reth", "--metrics", "localhost:9001"]).unwrap();
-        assert_eq!(cmd.metrics, Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9001)));
+        assert_eq!(
+            cmd.metrics,
+            Some(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 9001))
+        );
     }
 
     #[test]

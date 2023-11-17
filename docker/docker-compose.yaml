@@ -41,3 +41,5 @@ services:
       # don't use debug, it generates volumes of data.
     container_name: scalar-runner
     restart: unless-stopped
+    volumes:
+      - ../scripts/entry.sh:/entry.sh
