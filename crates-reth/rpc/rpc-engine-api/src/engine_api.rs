@@ -20,7 +20,8 @@ use reth_rpc_types_compat::engine::payload::{
     convert_payload_input_v2_to_payload, convert_to_payload_body_v1,
 };
 use reth_tasks::TaskSpawner;
-use scalar_consensus_adapter::EthConsensusAdapterHandler;
+//use scalar_consensus_adapter::EthConsensusAdapterHandler;
+use reth_beacon_consensus::BeaconConsensusEngineHandle;
 use std::{sync::Arc, time::Instant};
 use tokio::sync::oneshot;
 use tracing::trace;
@@ -43,7 +44,7 @@ struct EngineApiInner<Provider> {
     /// Consensus configuration
     chain_spec: Arc<ChainSpec>,
     /// The channel to send messages to the beacon consensus engine.
-    beacon_consensus: EthConsensusAdapterHandler,
+    beacon_consensus: BeaconConsensusEngineHandle,
     /// The type that can communicate with the payload service to retrieve payloads.
     payload_store: PayloadStore,
     /// For spawning and executing async tasks
@@ -60,7 +61,7 @@ where
     pub fn new(
         provider: Provider,
         chain_spec: Arc<ChainSpec>,
-        beacon_consensus: EthConsensusAdapterHandler,
+        beacon_consensus: BeaconConsensusEngineHandle,
         payload_store: PayloadStore,
         task_spawner: Box<dyn TaskSpawner>,
     ) -> Self {

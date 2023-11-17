@@ -2,17 +2,20 @@
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 RUNNER=scalar-runner
 
-tss() {
-  docker exec -it ${RUNNER} /entry.sh tss
+reth() {
+  docker exec -it ${RUNNER} /entry.sh reth
 }
 
-validator() {
-  docker exec -it ${RUNNER} /entry.sh validator
+scalar() {
+  docker exec -it ${RUNNER} /entry.sh scalar
+}
+
+tss() {
+  docker exec -it ${RUNNER} /entry.sh tss
 }
 
 relayer() {
   docker exec -it ${RUNNER} /entry.sh relayer
 }
-
 
 $@

@@ -43,7 +43,11 @@ members = [
   "crates/scalar-consensus-adapter",
   "crates/scalar-consensus-adapter/common",
   # Reth packages
+  "crates-reth/bin/reth",
   "crates-reth/config",
+  "crates-reth/consensus/auto-seal",
+  "crates-reth/consensus/beacon",
+  "crates-reth/consensus/common",
   "crates-reth/blockchain-tree",
   "crates-reth/interfaces",
   "crates-reth/payload/builder",
@@ -60,7 +64,7 @@ members = [
   "crates-reth/net/downloaders",
   "crates-reth/payload/basic",
   "crates-reth/primitives",
-  #"crates-reth/prune",
+  "crates-reth/prune",
   "crates-reth/revm",
   "crates-reth/revm/revm-inspectors",
   "crates-reth/rpc/ipc",
@@ -494,6 +498,7 @@ move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858
 # revision 5daaa7fe27fea8680d817a9d6eac35d1236a3355 
 
 # For Reth only
+reth = { path = "./crates-reth/bin/reth" }
 reth-primitives = { path = "./crates-reth/primitives" }
 reth-interfaces = { path = "./crates-reth/interfaces" }
 reth-provider = { path = "./crates-reth/storage/provider" }
