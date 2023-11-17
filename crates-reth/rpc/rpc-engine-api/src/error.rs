@@ -1,10 +1,10 @@
 use jsonrpsee_types::error::{
     INTERNAL_ERROR_CODE, INVALID_PARAMS_CODE, INVALID_PARAMS_MSG, SERVER_ERROR_MSG,
 };
-//use reth_beacon_consensus::{BeaconForkChoiceUpdateError, BeaconOnNewPayloadError};
+use reth_beacon_consensus::{BeaconForkChoiceUpdateError, BeaconOnNewPayloadError};
 use reth_payload_builder::error::PayloadBuilderError;
 use reth_primitives::{B256, U256};
-use scalar_consensus_adapter::{ConsensusForkChoiceUpdateError, ConsensusOnNewPayloadError};
+//use scalar_consensus_adapter::{BeaconForkChoiceUpdateError, BeaconOnNewPayloadError};
 use thiserror::Error;
 
 /// The Engine API result type
@@ -89,10 +89,10 @@ pub enum EngineApiError {
     },
     /// An error occurred while processing the fork choice update in the beacon consensus engine.
     #[error(transparent)]
-    ForkChoiceUpdate(#[from] ConsensusForkChoiceUpdateError),
+    ForkChoiceUpdate(#[from] BeaconForkChoiceUpdateError),
     /// An error occurred while processing a new payload in the beacon consensus engine.
     #[error(transparent)]
-    NewPayload(#[from] ConsensusOnNewPayloadError),
+    NewPayload(#[from] BeaconOnNewPayloadError),
     /// Encountered an internal error.
     #[error(transparent)]
     Internal(#[from] Box<dyn std::error::Error + Send + Sync>),
@@ -158,9 +158,9 @@ impl From<EngineApiError> for jsonrpsee_types::error::ErrorObject<'static> {
             ),
             // Error responses from the consensus engine
             EngineApiError::ForkChoiceUpdate(ref err) => match err {
-                ConsensusForkChoiceUpdateError::ForkchoiceUpdateError(err) => (*err).into(),
-                ConsensusForkChoiceUpdateError::EngineUnavailable
-                | ConsensusForkChoiceUpdateError::Internal(_) => {
+                BeaconForkChoiceUpdateError::ForkchoiceUpdateError(err) => (*err).into(),
+                BeaconForkChoiceUpdateError::EngineUnavailable
+                | BeaconForkChoiceUpdateError::Internal(_) => {
                     jsonrpsee_types::error::ErrorObject::owned(
                         INTERNAL_ERROR_CODE,
                         SERVER_ERROR_MSG,
@@ -169,21 +169,19 @@ impl From<EngineApiError> for jsonrpsee_types::error::ErrorObject<'static> {
                 }
             },
             EngineApiError::NewPayload(ref err) => match err {
-                ConsensusOnNewPayloadError::Internal(_) => {
-                    jsonrpsee_types::error::ErrorObject::owned(
-                        INTERNAL_ERROR_CODE,
-                        SERVER_ERROR_MSG,
-                        Some(ErrorData::new(error)),
-                    )
-                }
-                ConsensusOnNewPayloadError::PreCancunBlockWithBlobTransactions => {
+                BeaconOnNewPayloadError::Internal(_) => jsonrpsee_types::error::ErrorObject::owned(
+                    INTERNAL_ERROR_CODE,
+                    SERVER_ERROR_MSG,
+                    Some(ErrorData::new(error)),
+                ),
+                BeaconOnNewPayloadError::PreCancunBlockWithBlobTransactions => {
                     jsonrpsee_types::error::ErrorObject::owned(
                         INVALID_PARAMS_CODE,
                         INVALID_PARAMS_MSG,
                         Some(ErrorData::new(error)),
                     )
                 }
-                ConsensusOnNewPayloadError::EngineUnavailable => {
+                BeaconOnNewPayloadError::EngineUnavailable => {
                     jsonrpsee_types::error::ErrorObject::owned(
                         INTERNAL_ERROR_CODE,
                         SERVER_ERROR_MSG,
@@ -255,21 +253,17 @@ mod tests {
         ensure_engine_rpc_error(
             -38002,
             "Invalid forkchoice state",
-            EngineApiError::ForkChoiceUpdate(
-                ConsensusForkChoiceUpdateError::ForkchoiceUpdateError(
-                    ForkchoiceUpdateError::InvalidState,
-                ),
-            ),
+            EngineApiError::ForkChoiceUpdate(BeaconForkChoiceUpdateError::ForkchoiceUpdateError(
+                ForkchoiceUpdateError::InvalidState,
+            )),
         );
 
         ensure_engine_rpc_error(
             -38003,
             "Invalid payload attributes",
-            EngineApiError::ForkChoiceUpdate(
-                ConsensusForkChoiceUpdateError::ForkchoiceUpdateError(
-                    ForkchoiceUpdateError::UpdatedInvalidPayloadAttributes,
-                ),
-            ),
+            EngineApiError::ForkChoiceUpdate(BeaconForkChoiceUpdateError::ForkchoiceUpdateError(
+                ForkchoiceUpdateError::UpdatedInvalidPayloadAttributes,
+            )),
         );
 
         ensure_engine_rpc_error(

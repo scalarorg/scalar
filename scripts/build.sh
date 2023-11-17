@@ -8,6 +8,20 @@ BIN_DIR=${SCRIPT_DIR}/validator/${PROFILE}
 SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
+reth() {
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin reth
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/reth ${SCRIPT_DIR}/reth
+    docker cp ${SCRIPT_DIR}/reth ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/reth
+}
+
+scalar() {
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin scalar-node
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/scalar-node ${SCRIPT_DIR}/scalar-node
+    docker cp ${SCRIPT_DIR}/scalar-node ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/scalar-node
+}
+
 relayer() {
     BUILDER=scalar-relayer
     docker exec -it ${BUILDER} cargo build --manifest-path /scalar-relayer/Cargo.toml --profile dev
@@ -22,13 +36,6 @@ tss() {
     docker cp ${BUILDER}:/tofnd/target/${PROFILE}/tofnd ./tofnd
     docker cp ./tofnd ${RUNNER}:/usr/local/bin/scalar-tofnd
     rm ./tofnd
-}
-
-validator() {
-   docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin sui-test-validator
-   docker cp ${BUILDER}:/sui/target/${PROFILE}/sui-test-validator ./sui-test-validator
-   docker cp ./sui-test-validator ${RUNNER}:/usr/local/bin
-   rm ./sui-test-validator
 }
 
 $@

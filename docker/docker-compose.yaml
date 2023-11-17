@@ -15,6 +15,8 @@ services:
       - RUST_JSON_LOG=true
       - RUST_LOG=info
       - GIT_REVISION=experiment
+      # For stripped binary file
+      - RUSTFLAGS=-C link-arg=-s
       # don't use debug, it generates volumes of data.
 
     container_name: scalar-builder
