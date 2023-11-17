@@ -46,5 +46,6 @@ services:
     ports:
       - "30303:30303"         # Peering ports
       - "30303:30303/udp"     # Peering ports
-      - "8545-8546:8545-8546" # http, ws
+      - "8545:8545"           # http
+      - "8546:8546"           # ws
       - "9001:9001"           # Metrics
