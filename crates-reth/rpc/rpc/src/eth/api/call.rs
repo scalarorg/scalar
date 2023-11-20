@@ -1,6 +1,7 @@
 //! Contains RPC handler implementations specific to endpoints that call/execute within evm.
 
 use crate::{
+    debug,
     eth::{
         error::{ensure_success, EthApiError, EthResult, RevertError, RpcInvalidTransactionError},
         revm_utils::{
@@ -28,7 +29,8 @@ use revm::{
     primitives::{BlockEnv, CfgEnv, Env, ExecutionResult, Halt, TransactTo},
     DatabaseCommit,
 };
-use tracing::trace;
+use serde::de;
+use tracing::{debug, trace};
 
 // Gas per transaction not creating a contract.
 const MIN_TRANSACTION_GAS: u64 = 21_000u64;
@@ -44,6 +46,8 @@ where
     /// Estimate gas needed for execution of the `request` at the [BlockId].
     pub async fn estimate_gas_at(&self, request: CallRequest, at: BlockId) -> EthResult<U256> {
         let (cfg, block_env, at) = self.evm_env_at(at).await?;
+
+        debug!(target: "rpc::eth::estimate", ?cfg, ?block_env, ?at, "Starting gas estimation");
 
         self.on_blocking_task(|this| async move {
             let state = this.state_at(at)?;
@@ -78,18 +82,28 @@ where
         state_context: Option<StateContext>,
         mut state_override: Option<StateOverride>,
     ) -> EthResult<Vec<EthCallResponse>> {
-        let Bundle { transactions, block_override } = bundle;
+        let Bundle {
+            transactions,
+            block_override,
+        } = bundle;
         if transactions.is_empty() {
-            return Err(EthApiError::InvalidParams(String::from("transactions are empty.")))
+            return Err(EthApiError::InvalidParams(String::from(
+                "transactions are empty.",
+            )));
         }
 
-        let StateContext { transaction_index, block_number } = state_context.unwrap_or_default();
+        let StateContext {
+            transaction_index,
+            block_number,
+        } = state_context.unwrap_or_default();
         let transaction_index = transaction_index.unwrap_or_default();
 
         let target_block = block_number.unwrap_or(BlockId::Number(BlockNumberOrTag::Latest));
 
-        let ((cfg, block_env, _), block) =
-            futures::try_join!(self.evm_env_at(target_block), self.block_by_id(target_block))?;
+        let ((cfg, block_env, _), block) = futures::try_join!(
+            self.evm_env_at(target_block),
+            self.block_by_id(target_block)
+        )?;
 
         let block = block.ok_or_else(|| EthApiError::UnknownBlockNumber)?;
         let gas_limit = self.inner.gas_cap;
@@ -119,7 +133,11 @@ where
                 for tx in transactions {
                     let tx = tx.into_ecrecovered().ok_or(BlockError::InvalidSignature)?;
                     let tx = tx_env_with_recovered(&tx);
-                    let env = Env { cfg: cfg.clone(), block: block_env.clone(), tx };
+                    let env = Env {
+                        cfg: cfg.clone(),
+                        block: block_env.clone(),
+                        tx,
+                    };
                     let (res, _) = transact(&mut db, env)?;
                     db.commit(res.state);
                 }
@@ -145,10 +163,16 @@ where
 
                 match ensure_success(res.result) {
                     Ok(output) => {
-                        results.push(EthCallResponse { value: Some(output), error: None });
+                        results.push(EthCallResponse {
+                            value: Some(output),
+                            error: None,
+                        });
                     }
                     Err(err) => {
-                        results.push(EthCallResponse { value: None, error: Some(err.to_string()) });
+                        results.push(EthCallResponse {
+                            value: None,
+                            error: Some(err.to_string()),
+                        });
                     }
                 }
 
@@ -189,34 +213,49 @@ where
         let request_gas = request.gas;
         let request_gas_price = request.gas_price;
         let env_gas_limit = block.gas_limit;
+        debug!(target: "rpc::eth::estimate", ?cfg, ?block, ?request, "Starting gas estimation");
 
         // get the highest possible gas limit, either the request's set value or the currently
         // configured gas limit
         let mut highest_gas_limit = request.gas.unwrap_or(block.gas_limit);
+        debug!("highest_gas_limit1: {:?}", highest_gas_limit);
 
         // Configure the evm env
         let mut env = build_call_evm_env(cfg, block, request)?;
+        debug!("env: {:?}, ", env);
         let mut db = CacheDB::new(StateProviderDatabase::new(state));
+        debug!("highest_gas_limit2: {:?}", highest_gas_limit);
 
         // if the request is a simple transfer we can optimize
         if env.tx.data.is_empty() {
+            debug!("env.tx.data.is_empty()");
             if let TransactTo::Call(to) = env.tx.transact_to {
+                debug!("TransactTo::Call(to)");
                 if let Ok(code) = db.db.state().account_code(to) {
+                    debug!("code: {:?}", code);
                     let no_code_callee = code.map(|code| code.is_empty()).unwrap_or(true);
+                    debug!("no_code_callee: {:?}", no_code_callee);
                     if no_code_callee {
+                        debug!("no_code_callee");
                         // simple transfer, check if caller has sufficient funds
-                        let available_funds =
-                            db.basic_ref(env.tx.caller)?.map(|acc| acc.balance).unwrap_or_default();
+                        let available_funds = db
+                            .basic_ref(env.tx.caller)?
+                            .map(|acc| acc.balance)
+                            .unwrap_or_default();
+                        debug!("available_funds: {:?}", available_funds);
                         if env.tx.value > available_funds {
+                            debug!("env.tx.value > available_funds");
                             return Err(
                                 RpcInvalidTransactionError::InsufficientFundsForTransfer.into()
-                            )
+                            );
                         }
-                        return Ok(U256::from(MIN_TRANSACTION_GAS))
+                        return Ok(U256::from(MIN_TRANSACTION_GAS));
                     }
                 }
             }
         }
+
+        debug!("highest_gas_limit3: {:?}", highest_gas_limit);
 
         // check funds of the sender
         if env.tx.gas_price > U256::ZERO {
@@ -228,14 +267,19 @@ where
             }
         }
 
+        debug!("highest_gas_limit4: {:?}", highest_gas_limit);
+
         // if the provided gas limit is less than computed cap, use that
         let gas_limit = std::cmp::min(U256::from(env.tx.gas_limit), highest_gas_limit);
+        debug!("gas_limit: {:?}", gas_limit);
         env.tx.gas_limit = gas_limit.saturating_to();
 
         trace!(target: "rpc::eth::estimate", ?env, "Starting gas estimation");
 
         // transact with the highest __possible__ gas limit
         let ethres = transact(&mut db, env.clone());
+        debug!(target: "rpc::eth::estimate", ?ethres, "Finished gas estimation");
+        debug!(target: "rpc::eth::estimate", ?ethres, "Finished gas estimation");
 
         // Exceptional case: init used too much gas, we need to increase the gas limit and try
         // again
@@ -244,7 +288,7 @@ where
             // if price or limit was included in the request then we can execute the request
             // again with the block's gas limit to check if revert is gas related or not
             if request_gas.is_some() || request_gas_price.is_some() {
-                return Err(map_out_of_gas_err(env_gas_limit, env, &mut db))
+                return Err(map_out_of_gas_err(env_gas_limit, env, &mut db));
             }
         }
 
@@ -256,7 +300,7 @@ where
             ExecutionResult::Halt { reason, gas_used } => {
                 // here we don't check for invalid opcode because already executed with highest gas
                 // limit
-                return Err(RpcInvalidTransactionError::halt(reason, gas_used).into())
+                return Err(RpcInvalidTransactionError::halt(reason, gas_used).into());
             }
             ExecutionResult::Revert { output, .. } => {
                 // if price or limit was included in the request then we can execute the request
@@ -266,7 +310,7 @@ where
                 } else {
                     // the transaction did revert
                     Err(RpcInvalidTransactionError::Revert(RevertError::new(output)).into())
-                }
+                };
             }
         }
 
@@ -276,8 +320,11 @@ where
         // transaction requires to succeed
         let gas_used = res.result.gas_used();
         // the lowest value is capped by the gas it takes for a transfer
-        let mut lowest_gas_limit =
-            if env.tx.transact_to.is_create() { MIN_CREATE_GAS } else { MIN_TRANSACTION_GAS };
+        let mut lowest_gas_limit = if env.tx.transact_to.is_create() {
+            MIN_CREATE_GAS
+        } else {
+            MIN_TRANSACTION_GAS
+        };
         let mut highest_gas_limit: u64 = highest_gas_limit.try_into().unwrap_or(u64::MAX);
         // pick a point that's close to the estimated gas
         let mut mid_gas_limit = std::cmp::min(
@@ -303,7 +350,7 @@ where
 
                 // new midpoint
                 mid_gas_limit = ((highest_gas_limit as u128 + lowest_gas_limit as u128) / 2) as u64;
-                continue
+                continue;
             }
 
             let (res, _) = ethres?;
@@ -329,7 +376,7 @@ where
                         err => {
                             // these should be unreachable because we know the transaction succeeds,
                             // but we consider these cases an error
-                            return Err(RpcInvalidTransactionError::EvmHalt(err).into())
+                            return Err(RpcInvalidTransactionError::EvmHalt(err).into());
                         }
                     }
                 }
@@ -413,7 +460,10 @@ where
         request.access_list = Some(from_primitive_access_list(access_list.clone()));
         let gas_used = self.estimate_gas_with(env.cfg, env.block, request, db.db.state())?;
 
-        Ok(AccessListWithGasUsed { access_list: from_primitive_access_list(access_list), gas_used })
+        Ok(AccessListWithGasUsed {
+            access_list: from_primitive_access_list(access_list),
+            gas_used,
+        })
     }
 }
 

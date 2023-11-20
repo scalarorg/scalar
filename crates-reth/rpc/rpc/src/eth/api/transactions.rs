@@ -40,6 +40,8 @@ use revm::{
     Inspector,
 };
 use revm_primitives::{db::DatabaseCommit, Env, ExecutionResult, ResultAndState, SpecId, State};
+use serde::de;
+use tracing::debug;
 
 #[cfg(feature = "optimism")]
 use crate::eth::api::optimism::OptimismTxMeta;
@@ -342,7 +344,11 @@ where
 
     async fn evm_env_at(&self, at: BlockId) -> EthResult<(CfgEnv, BlockEnv, BlockId)> {
         if at.is_pending() {
-            let PendingBlockEnv { cfg, block_env, origin } = self.pending_block_env_and_cfg()?;
+            let PendingBlockEnv {
+                cfg,
+                block_env,
+                origin,
+            } = self.pending_block_env_and_cfg()?;
             Ok((cfg, block_env, origin.state_block_id()))
         } else {
             //  Use cached values if there is no pending block
@@ -380,7 +386,9 @@ where
         &self,
         block: BlockId,
     ) -> EthResult<Option<Vec<TransactionSigned>>> {
-        self.block_by_id(block).await.map(|block| block.map(|block| block.body))
+        self.block_by_id(block)
+            .await
+            .map(|block| block.map(|block| block.body))
     }
 
     async fn transaction_by_hash(&self, hash: B256) -> EthResult<Option<TransactionSource>> {
@@ -409,8 +417,10 @@ where
 
         if resp.is_none() {
             // tx not found on disk, check pool
-            if let Some(tx) =
-                self.pool().get(&hash).map(|tx| tx.transaction.to_recovered_transaction())
+            if let Some(tx) = self
+                .pool()
+                .get(&hash)
+                .map(|tx| tx.transaction.to_recovered_transaction())
             {
                 resp = Some(TransactionSource::Pool(tx));
             }
@@ -485,7 +495,9 @@ where
             None => return Ok(None),
         };
 
-        self.build_transaction_receipt(tx, meta, receipt).await.map(Some)
+        self.build_transaction_receipt(tx, meta, receipt)
+            .await
+            .map(Some)
     }
 
     async fn send_raw_transaction(&self, tx: Bytes) -> EthResult<B256> {
@@ -498,12 +510,16 @@ where
         let pool_transaction = <Pool::Transaction>::from_recovered_transaction(recovered);
 
         // submit the transaction to the pool with a `Local` origin
-        let hash = self.pool().add_transaction(TransactionOrigin::Local, pool_transaction).await?;
+        let hash = self
+            .pool()
+            .add_transaction(TransactionOrigin::Local, pool_transaction)
+            .await?;
 
         Ok(hash)
     }
 
     async fn send_transaction(&self, mut request: TransactionRequest) -> EthResult<B256> {
+        debug!("Hello world! {:?}", request);
         let from = match request.from {
             Some(from) => from,
             None => return Err(SignError::NoAccount.into()),
@@ -521,6 +537,11 @@ where
         // TODO: we need an oracle to fetch the gas price of the current chain
         let gas_price = request.gas_price.unwrap_or_default();
         let max_fee_per_gas = request.max_fee_per_gas.unwrap_or_default();
+
+        debug!("Gas price {:?}", gas_price);
+        debug!("Max fee per gas {:?}", max_fee_per_gas);
+        debug!("Chain id {:?}", chain_id);
+        debug!("From {:?}", from);
 
         let estimated_gas = self
             .estimate_gas_at(
@@ -543,10 +564,18 @@ where
                 BlockId::Number(BlockNumberOrTag::Pending),
             )
             .await?;
+
+        debug!("Estimated gas {:?}", estimated_gas);
         let gas_limit = estimated_gas;
+
+        debug!(
+            "Into typed request {:?}",
+            request.clone().into_typed_request()
+        );
 
         let transaction = match request.into_typed_request() {
             Some(TypedTransactionRequest::Legacy(mut m)) => {
+                debug!("Legacy {:?}", m);
                 m.chain_id = Some(chain_id.to());
                 m.gas_limit = gas_limit;
                 m.gas_price = gas_price;
@@ -579,13 +608,17 @@ where
 
         let signed_tx = self.sign_request(&from, transaction)?;
 
-        let recovered =
-            signed_tx.into_ecrecovered().ok_or(EthApiError::InvalidTransactionSignature)?;
+        let recovered = signed_tx
+            .into_ecrecovered()
+            .ok_or(EthApiError::InvalidTransactionSignature)?;
 
         let pool_transaction = <Pool::Transaction>::from_recovered_transaction(recovered.into());
 
         // submit the transaction to the pool with a `Local` origin
-        let hash = self.pool().add_transaction(TransactionOrigin::Local, pool_transaction).await?;
+        let hash = self
+            .pool()
+            .add_transaction(TransactionOrigin::Local, pool_transaction)
+            .await?;
 
         Ok(hash)
     }
@@ -629,8 +662,10 @@ where
         at: BlockId,
         overrides: EvmOverrides,
     ) -> EthResult<(ResultAndState, Env)> {
-        self.spawn_with_call_at(request, at, overrides, move |mut db, env| transact(&mut db, env))
-            .await
+        self.spawn_with_call_at(request, at, overrides, move |mut db, env| {
+            transact(&mut db, env)
+        })
+        .await
     }
 
     async fn spawn_inspect_call_at<I>(
@@ -643,8 +678,10 @@ where
     where
         I: for<'r> Inspector<StateCacheDB<'r>> + Send + 'static,
     {
-        self.spawn_with_call_at(request, at, overrides, move |db, env| inspect(db, env, inspector))
-            .await
+        self.spawn_with_call_at(request, at, overrides, move |db, env| {
+            inspect(db, env, inspector)
+        })
+        .await
     }
 
     fn trace_at<F, R>(
@@ -744,7 +781,11 @@ where
             // replay all transactions prior to the targeted transaction
             replay_transactions_until(&mut db, cfg.clone(), block_env.clone(), block_txs, tx.hash)?;
 
-            let env = Env { cfg, block: block_env, tx: tx_env_with_recovered(&tx) };
+            let env = Env {
+                cfg,
+                block: block_env,
+                tx: tx_env_with_recovered(&tx),
+            };
 
             let mut inspector = TracingInspector::new(config);
             let (res, _, db) = inspect_and_return_db(db, env, &mut inspector)?;
@@ -817,8 +858,11 @@ where
 
             let max_transactions =
                 highest_index.map_or(transactions.len(), |highest| highest as usize);
-            let mut transactions =
-                transactions.into_iter().take(max_transactions).enumerate().peekable();
+            let mut transactions = transactions
+                .into_iter()
+                .take(max_transactions)
+                .enumerate()
+                .peekable();
 
             while let Some((idx, tx)) = transactions.next() {
                 let tx = tx.into_ecrecovered().ok_or(BlockError::InvalidSignature)?;
@@ -831,7 +875,11 @@ where
                 };
 
                 let tx = tx_env_with_recovered(&tx);
-                let env = Env { cfg: cfg.clone(), block: block_env.clone(), tx };
+                let env = Env {
+                    cfg: cfg.clone(),
+                    block: block_env.clone(),
+                    tx,
+                };
 
                 let mut inspector = TracingInspector::new(config);
                 let (res, _) = inspect(&mut db, env, &mut inspector)?;
@@ -955,7 +1003,11 @@ where
                 None => (None, None),
             };
 
-            Ok(OptimismTxMeta::new(Some(l1_block_info), l1_fee, l1_data_gas))
+            Ok(OptimismTxMeta::new(
+                Some(l1_block_info),
+                l1_fee,
+                l1_data_gas,
+            ))
         } else {
             Ok(OptimismTxMeta::default())
         }
@@ -1012,7 +1064,7 @@ where
                 return match signer.sign_transaction(request, from) {
                     Ok(tx) => Ok(tx),
                     Err(e) => Err(e.into()),
-                }
+                };
             }
         }
         Err(EthApiError::InvalidTransactionSignature)
@@ -1032,15 +1084,16 @@ where
             let block_hash = block.hash;
             let block = block.unseal();
             if let Some(tx_signed) = block.body.into_iter().nth(index.into()) {
-                let tx =
-                    tx_signed.into_ecrecovered().ok_or(EthApiError::InvalidTransactionSignature)?;
+                let tx = tx_signed
+                    .into_ecrecovered()
+                    .ok_or(EthApiError::InvalidTransactionSignature)?;
                 return Ok(Some(from_recovered_with_block_context(
                     tx,
                     block_hash,
                     block.header.number,
                     block.header.base_fee_per_gas,
                     index.into(),
-                )))
+                )));
             }
         }
 
@@ -1093,7 +1146,13 @@ impl TransactionSource {
                     },
                 )
             }
-            TransactionSource::Block { transaction, index, block_hash, block_number, base_fee } => {
+            TransactionSource::Block {
+                transaction,
+                index,
+                block_hash,
+                block_number,
+                base_fee,
+            } => {
                 let hash = transaction.hash();
                 (
                     transaction,
@@ -1123,15 +1182,19 @@ impl From<TransactionSource> for Transaction {
     fn from(value: TransactionSource) -> Self {
         match value {
             TransactionSource::Pool(tx) => reth_rpc_types_compat::transaction::from_recovered(tx),
-            TransactionSource::Block { transaction, index, block_hash, block_number, base_fee } => {
-                from_recovered_with_block_context(
-                    transaction,
-                    block_hash,
-                    block_number,
-                    base_fee,
-                    U256::from(index),
-                )
-            }
+            TransactionSource::Block {
+                transaction,
+                index,
+                block_hash,
+                block_number,
+                base_fee,
+            } => from_recovered_with_block_context(
+                transaction,
+                block_hash,
+                block_number,
+                base_fee,
+                U256::from(index),
+            ),
         }
     }
 }
@@ -1144,8 +1207,10 @@ pub(crate) fn build_transaction_receipt_with_block_receipts(
     all_receipts: &[Receipt],
     #[cfg(feature = "optimism")] optimism_tx_meta: OptimismTxMeta,
 ) -> EthResult<TransactionReceipt> {
-    let transaction =
-        tx.clone().into_ecrecovered().ok_or(EthApiError::InvalidTransactionSignature)?;
+    let transaction = tx
+        .clone()
+        .into_ecrecovered()
+        .ok_or(EthApiError::InvalidTransactionSignature)?;
 
     // get the previous transaction cumulative gas used
     let gas_used = if meta.index == 0 {
@@ -1175,7 +1240,11 @@ pub(crate) fn build_transaction_receipt_with_block_receipts(
         // TODO pre-byzantium receipts have a post-transaction state root
         state_root: None,
         logs_bloom: receipt.bloom_slow(),
-        status_code: if receipt.success { Some(U64::from(1)) } else { Some(U64::from(0)) },
+        status_code: if receipt.success {
+            Some(U64::from(1))
+        } else {
+            Some(U64::from(0))
+        },
         // EIP-4844 fields
         blob_gas_price: meta.excess_blob_gas.map(calc_blob_gasprice).map(U128::from),
         blob_gas_used: transaction.transaction.blob_gas_used().map(U128::from),
@@ -1189,8 +1258,9 @@ pub(crate) fn build_transaction_receipt_with_block_receipts(
     if let Some(l1_block_info) = optimism_tx_meta.l1_block_info {
         if !tx.is_deposit() {
             res_receipt.l1_fee = optimism_tx_meta.l1_fee;
-            res_receipt.l1_gas_used =
-                optimism_tx_meta.l1_data_gas.map(|dg| dg + l1_block_info.l1_fee_overhead);
+            res_receipt.l1_gas_used = optimism_tx_meta
+                .l1_data_gas
+                .map(|dg| dg + l1_block_info.l1_fee_overhead);
             res_receipt.l1_fee_scalar =
                 Some(l1_block_info.l1_fee_scalar.div(U256::from(1_000_000)));
             res_receipt.l1_gas_price = Some(l1_block_info.l1_base_fee);
@@ -1283,7 +1353,13 @@ mod tests {
             pool.len()
         );
 
-        assert!(pool.get(&tx_1_result).is_some(), "tx1 not found in the pool");
-        assert!(pool.get(&tx_2_result).is_some(), "tx2 not found in the pool");
+        assert!(
+            pool.get(&tx_1_result).is_some(),
+            "tx1 not found in the pool"
+        );
+        assert!(
+            pool.get(&tx_2_result).is_some(),
+            "tx2 not found in the pool"
+        );
     }
 }

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 reth() {
-    RUST_LOG=info /usr/local/bin/reth node \
+    RUST_LOG=DEBUG /usr/local/bin/reth node \
         --chain dev \
         --http \
         --http.addr 0.0.0.0 \
