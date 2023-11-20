@@ -39,6 +39,10 @@ impl TssKeyGenerator {
         }
     }
 
+    pub fn get_key_uid(&self) -> String {
+        format!("tss_session{}", self.committee.epoch())
+    }
+
     /// Create a keygen init for tofnd
     pub fn create_keygen_init(&self) -> KeygenInit {
         let party_uids = self
@@ -47,15 +51,10 @@ impl TssKeyGenerator {
             .map(|authority| PeerId(authority.network_key().0.to_bytes()).to_string())
             .collect::<Vec<String>>();
 
-        let epoch = self.committee.epoch();
-        info!("epoch: {}", epoch);
-        let my_party_index = self.authority.id().0 as u32;
-        info!("party index: {}", my_party_index);
-        info!("party uids: {:?}", party_uids);
+        let new_key_uid = self.get_key_uid();
 
         KeygenInit {
-            // Temporary set self.committee.epoch() to a fixed value
-            new_key_uid: format!("tss_session{}", 0),
+            new_key_uid,
             party_uids,
             party_share_counts: vec![1, 1, 1, 1],
             my_party_index: self.authority.id().0 as u32,
@@ -114,7 +113,7 @@ impl TssKeyGenerator {
                                     self.deliver_keygen(&m).await;
                                 }
                             }
-                            self.deliver_keygen_v2(&msg).await;
+                            self.deliver_keygen(&msg).await;
                         }
                         message_out::Data::KeygenResult(res) => {
                             info!("party [{}] keygen finished!", my_uid);
@@ -166,84 +165,7 @@ impl TssKeyGenerator {
                 payload: msg.payload.clone(),
             })),
         };
-        //Send to own tofnd gGpc Server
-        info!(
-            "Send message {:?} to the local gRPC server via channel",
-            &msg_in
-        );
-        info!(
-            "Send message to the local gRPC server via channel",
-            // &msg_in
-        );
-        let _ = self.tx_keygen.send(msg_in);
-        //info!("Broadcast message {:?} from {:?}", msg, from);
-        let mut handlers = Vec::new();
-
-        // let peers = self
-        //     .committee
-        //     .authorities()
-        //     .filter(|auth| auth.id().0 != self.authority.id().0)
-        //     .map(|auth| auth.network_key().clone())
-        //     .collect::<Vec<NetworkPublicKey>>();
-
-        let peers = self.network.peers();
-
-        let tss_message = TssAnemoDeliveryMessage {
-            from_party_uid: self.uid.clone(),
-            is_broadcast: msg.is_broadcast,
-            payload: msg.payload.clone(),
-        };
-
-        //Send to other peers vis anemo network
-        for peer in peers {
-            let network = self.network.clone();
-            let message = tss_message.clone();
-            info!(
-                "Deliver keygen message from to peer {:?}",
-                // from,
-                peer.to_string()
-            );
-            let f = move |peer| {
-                let request = TssAnemoKeygenRequest {
-                    message: message.to_owned(),
-                };
-                async move {
-                    info!("Create and send keygen request to peer");
-                    let result = TssPeerClient::new(peer).keygen(request).await;
-                    match result.as_ref() {
-                        Ok(_r) => {
-                            //info!("TssPeerClient keygen result {:?}", r);
-                        }
-                        Err(e) => {
-                            info!("TssPeerClient keygen error {:?}", e);
-                        }
-                    }
-                    result
-                }
-            };
-
-            let handle = send(network, peer, f);
-            handlers.push(handle);
-        }
-        let _results = join_all(handlers).await;
-    }
-
-    pub async fn deliver_keygen_v2(&self, msg: &MessageOut) {
-        let msg = msg.data.as_ref().expect("missing data");
-        let msg = match msg {
-            message_out::Data::Traffic(t) => t,
-            _ => {
-                panic!("msg must be traffic out");
-            }
-        };
-        let msg_in = MessageIn {
-            data: Some(message_in::Data::Traffic(TrafficIn {
-                from_party_uid: self.uid.clone(),
-                is_broadcast: msg.is_broadcast,
-                payload: msg.payload.clone(),
-            })),
-        };
-        info!("Send received message to the local gg20 Service via channel");
+        // Send received message to the local gg20 Service via channel
         let _ = self.tx_keygen.send(msg_in);
         let mut handlers = Vec::new();
 
@@ -261,22 +183,17 @@ impl TssKeyGenerator {
             is_broadcast: msg.is_broadcast,
             payload: msg.payload.clone(),
         };
-        info!("Then broadcast it to {} other peers", peers.len());
+
         //Send to other peers vis anemo network
         for peer in peers {
             let network = self.network.clone();
             let message = gg20_message.clone();
-            info!(
-                "Deliver keygen message from to peer {:?}",
-                // from,
-                peer.to_string()
-            );
             let f = move |peer| {
                 let request = TssAnemoKeygenRequest {
                     message: message.to_owned(),
                 };
                 async move {
-                    info!("Create and send keygen request to peer");
+                    // Create and send keygen request to peer
                     let result = TssPeerClient::new(peer).keygen(request).await;
                     match result.as_ref() {
                         Ok(_r) => {

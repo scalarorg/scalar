@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anemo::Network;
 use narwhal_config::{Authority, Committee};
 use narwhal_types::ConditionalBroadcastReceiver;
@@ -31,6 +33,7 @@ pub struct PartyConfig {
     rx_sign: mpsc::UnboundedReceiver<MessageIn>,
     tx_sign_result: watch::Sender<Option<SignResult>>,
     pub rx_sign_result: watch::Receiver<Option<SignResult>>,
+    root: PathBuf,
 }
 
 pub struct PartyBuilder {
@@ -48,7 +51,7 @@ impl PartyBuilder {
         }
     }
 
-    pub fn build(self) -> (UnstartedParty, TssPeerServer<impl TssPeer>) {
+    pub fn build(self, root: PathBuf) -> (UnstartedParty, TssPeerServer<impl TssPeer>) {
         // Channel for communication between Tss spawn and Anemo Tss service
         let (tx_keygen, rx_keygen) = mpsc::unbounded_channel();
         let (tx_sign, rx_sign) = mpsc::unbounded_channel();
@@ -73,9 +76,10 @@ impl PartyBuilder {
             rx_sign_init,
             tx_sign_result,
             rx_sign_result,
+            root: root.clone(),
         };
 
-        let gg20_service = Gg20Service::new(self.tss_store, true);
+        let gg20_service = Gg20Service::new(root, self.tss_store, true);
 
         (
             UnstartedParty {
@@ -101,13 +105,19 @@ impl UnstartedParty {
         &self.config
     }
 
-    pub fn build(&self, network: Network) -> TssParty {
+    pub async fn build(&self, network: Network) -> TssParty {
         let UnstartedParty {
             authority,
             committee,
             gg20_service,
             config,
         } = self;
+
+        // Init mnemonic
+        gg20_service
+            .init_mnemonic()
+            .await
+            .expect("Mnemonic should be initialized");
 
         let PartyConfig {
             tx_keygen, tx_sign, ..
@@ -132,6 +142,7 @@ impl UnstartedParty {
         let tss_recover = TssRecover::new(gg20_service.clone());
 
         TssParty::new(
+            network.clone(),
             authority.clone(),
             gg20_service.clone(),
             tss_keygen,
@@ -141,12 +152,12 @@ impl UnstartedParty {
         )
     }
 
-    pub fn start(
+    pub async fn start(
         self,
         network: Network,
         rx_shutdown: ConditionalBroadcastReceiver,
     ) -> (JoinHandle<()>, TssParty) {
-        let party = self.build(network);
+        let party = self.build(network).await;
         let PartyConfig {
             rx_keygen,
             tx_keygen_result,
@@ -156,6 +167,32 @@ impl UnstartedParty {
             ..
         } = self.config;
 
+        (
+            party.run(
+                rx_keygen,
+                tx_keygen_result,
+                rx_sign_init,
+                rx_sign,
+                tx_sign_result,
+                rx_shutdown,
+            ),
+            party,
+        )
+    }
+
+    pub fn start_with_party(
+        self,
+        party: TssParty,
+        rx_shutdown: ConditionalBroadcastReceiver,
+    ) -> (JoinHandle<()>, TssParty) {
+        let PartyConfig {
+            rx_keygen,
+            tx_keygen_result,
+            rx_sign_init,
+            rx_sign,
+            tx_sign_result,
+            ..
+        } = self.config;
         (
             party.run(
                 rx_keygen,

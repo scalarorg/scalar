@@ -1,25 +1,23 @@
 use super::key_presence::TssKeyPresence;
+use super::keygen::TssKeyGenerator;
 use super::recover::TssRecover;
 use super::signer::TssSigner;
 use crate::message_out::KeygenResult;
+use crate::service::Gg20Service;
+use crate::types::{message_out::SignResult, MessageIn, SignInit};
 use crate::KeygenOutput;
 use anemo::PeerId;
 use narwhal_config::Authority;
+use narwhal_types::ConditionalBroadcastReceiver;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tonic::Status;
 use tracing::{error, info, warn};
-// use types::TssAnemoKeygenRequest;
-use crate::types::{message_out::SignResult, MessageIn, SignInit};
-use narwhal_types::ConditionalBroadcastReceiver;
-
-// use crate::encrypted_sled::PasswordMethod;
-use super::keygen::TssKeyGenerator;
-use crate::service::Gg20Service;
 
 #[derive(Clone)]
 pub struct TssParty {
+    network: anemo::Network,
     authority: Authority,
     gg20_service: Gg20Service,
     pub tss_keygen: TssKeyGenerator,
@@ -30,6 +28,7 @@ pub struct TssParty {
 
 impl TssParty {
     pub fn new(
+        network: anemo::Network,
         authority: Authority,
         gg20_service: Gg20Service,
         tss_keygen: TssKeyGenerator,
@@ -38,6 +37,7 @@ impl TssParty {
         tss_recover: TssRecover,
     ) -> Self {
         Self {
+            network,
             authority,
             gg20_service,
             tss_keygen,
@@ -63,11 +63,13 @@ impl TssParty {
 
         let gg20_keygen_init = keygen_init.clone();
         let gg20_service_keygen = self.gg20_service.clone();
+
+        // Spawn keygen protocol
         tokio::spawn(async move {
-            let _ = gg20_service_keygen.init_mnemonic().await;
-            let _ = gg20_service_keygen
+            gg20_service_keygen
                 .keygen_init(gg20_keygen_init, rx_keygen, tx_message_out_keygen)
-                .await;
+                .await
+                .expect("Keygen protocol should be executed successfully");
 
             info!("Keygen protocol finished");
         });
@@ -80,6 +82,7 @@ impl TssParty {
                 warn!("Node is shuting down");
                 shuting_down = true;
             },
+            // Initialize keygen process & handle keygen messages from gg20 keygen protocol
             keygen_result = tss_keygen.keygen_execute(keygen_init, &mut rx_message_out_keygen) => match keygen_result {
                 Ok(res) => {
                     info!("Keygen result");
@@ -131,7 +134,7 @@ impl TssParty {
                 },
                 Some(sign_init) = rx_sign_init.recv() => {
                     info!("Received sign init");
-                    match tss_signer.sign_execute_v2(&mut rx_message_out_sign, &sign_init).await {
+                    match tss_signer.execute_sign(&mut rx_message_out_sign, &sign_init).await {
                         Ok(sign_result) => {
                             info!("Sign result {:?}", &sign_result);
                             tx_sign_result.send(Some(sign_result)).expect("Sign result should be sent successfully");
@@ -157,6 +160,11 @@ impl TssParty {
         self.tss_key_presence.execute_key_presence(key_uid).await
     }
 
+    pub async fn shutdown(&self) -> anyhow::Result<()> {
+        self.network.shutdown().await
+        // TODO: Stop all running protocol
+    }
+
     pub fn run(
         &self,
         rx_keygen: UnboundedReceiver<MessageIn>,
@@ -167,17 +175,29 @@ impl TssParty {
         mut rx_shutdown: ConditionalBroadcastReceiver,
     ) -> JoinHandle<()> {
         let party = self.clone();
+        // Init mnemonic
         tokio::spawn(async move {
-            info!("Init TssParty node, starting keygen process");
+            info!("Init TssParty node, uid: {:?}", party.get_uid());
+            let mut shuting_down = false;
 
-            let shuting_down = party
-                .execute_keygen(rx_keygen, tx_keygen_result, &mut rx_shutdown)
+            // Check if key is already generated
+            let key_presence = party
+                .execute_key_presence(party.tss_keygen.get_key_uid())
                 .await;
 
-            info!(
-                "Finished keygen process, loop for handling sign messsage. Shuting_down {}",
-                shuting_down
-            );
+            if key_presence {
+                info!("Key is already generated, skip keygen process");
+            } else {
+                info!("Key is not generated, start keygen process");
+                shuting_down = party
+                    .execute_keygen(rx_keygen, tx_keygen_result, &mut rx_shutdown)
+                    .await;
+
+                info!(
+                    "Finished keygen process, loop for handling sign messsage. Shuting_down {}",
+                    shuting_down
+                );
+            }
 
             if !shuting_down {
                 party

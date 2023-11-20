@@ -53,6 +53,10 @@ impl Gg20Service {
         // recover secret key shares from request
         // get mnemonic seed
         let secret_recovery_key = self.kv_store.seed().await?;
+        info!(
+            "Secret recovery key acquired in recover {:?}",
+            secret_recovery_key
+        );
         let secret_key_shares = self
             .recover_secret_key_shares(&secret_recovery_key, &keygen_init, &keygen_output)
             .map_err(|err| anyhow!("Failed to acquire secret key share {}", err))?;
@@ -110,6 +114,7 @@ impl Gg20Service {
 
         // try to recover keypairs
         let session_nonce = init.new_key_uid.as_bytes();
+
         /*
          * 2023-11-15 HuongND
          * Temporary set match self.cfg.safe_keygen to true until we have config

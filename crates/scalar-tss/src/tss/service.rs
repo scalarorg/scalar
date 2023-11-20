@@ -27,7 +27,7 @@ impl TssPeer for TssPeerService {
         };
 
         if let Err(e) = self.tx_sign.send(msg_in) {
-            warn!("anemo TssSend error {:?}", e);
+            warn!("Send Sign abort error {:?}", e);
         }
 
         let reply = crate::AbortResponse {
@@ -52,7 +52,7 @@ impl TssPeer for TssPeerService {
         //info!("Received keygen request: {:?}", &body);
         info!("Received keygen request");
         if let Err(e) = self.tx_keygen.send(msg_in) {
-            warn!("gRpc TssSend error {:?}", e);
+            warn!("Send keygen message error {:?}", e);
         }
 
         let reply = TssAnemoKeygenResponse {
@@ -74,7 +74,7 @@ impl TssPeer for TssPeerService {
             })),
         };
         if let Err(e) = self.tx_sign.send(msg_in) {
-            warn!("gRpc TssSend error {:?}", e);
+            warn!("Send sign message error {:?}", e);
         }
         let reply = TssAnemoSignResponse {
             message: format!(

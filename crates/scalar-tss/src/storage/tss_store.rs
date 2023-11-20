@@ -2,6 +2,7 @@ use super::TSSES_CF;
 use crate::types::{KeyReservation, KvValue};
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::info;
 use typed_store::rocks::{open_cf, DBMap, MetricConf, ReadWriteOptions};
 use typed_store::{reopen, Map, TypedStoreError};
 
