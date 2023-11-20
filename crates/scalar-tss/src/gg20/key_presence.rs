@@ -13,8 +13,12 @@ impl Gg20Service {
         &self,
         request: KeyPresenceRequest,
     ) -> anyhow::Result<key_presence_response::Response> {
-        // check if mnemonic is available
-        let _ = self.kv_store.seed().await?;
+        let secret_recovery_key = self.kv_store.seed().await?;
+
+        info!(
+            "Secret recovery key acquired in recover (from key presence) {:?}",
+            secret_recovery_key
+        );
 
         // check if requested key exists
         if self.kv_store.tss_store().exists(&request.key_uid).await? {

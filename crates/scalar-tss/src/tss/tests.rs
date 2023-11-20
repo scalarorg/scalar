@@ -1,11 +1,20 @@
-use super::builder::{PartyBuilder, UnstartedParty};
-use crate::{
-    message_out::{self, KeygenResult},
-    storage::TssStore,
-    KeygenOutput,
+use std::path::Path;
+
+use super::{
+    builder::{PartyBuilder, UnstartedParty},
+    party::TssParty,
 };
-use anemo::{types::Address, Config};
+use crate::{
+    message_out::{self, KeygenResult, SignResult},
+    storage::TssStore,
+    KeygenOutput, SignInit,
+};
+use anemo::{types::Address, Config, PeerId};
 use narwhal_config::{Authority, Committee};
+use narwhal_types::PreSubscribedBroadcastSender;
+use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
+use tokio_stream::wrappers::WatchStream;
+use tokio_stream::StreamExt;
 use tracing::info;
 
 #[tokio::test]
@@ -18,18 +27,17 @@ async fn test_basic_case_with_recovery() -> anyhow::Result<()> {
     basic_keygen_and_sign(true).await
 }
 
+const PARTY_COUNT: usize = 4;
+
 #[cfg(test)]
 pub async fn basic_keygen_and_sign(recover: bool) -> anyhow::Result<()> {
-    use crate::SignInit;
-    use anemo::PeerId;
+    const NUM_SHUTDOWN_RECEIVERS: u64 = 10;
     use futures_util::future::join_all;
     use narwhal_test_utils::CommitteeFixture;
-    use narwhal_types::PreSubscribedBroadcastSender;
     use std::num::NonZeroUsize;
-    use tokio_stream::{wrappers::WatchStream, StreamExt};
+    use testdir::testdir;
 
-    const PARTY_COUNT: usize = 4;
-    const NUM_SHUTDOWN_RECEIVERS: u64 = 10;
+    let dir = testdir!();
 
     let _guard = init_tracing_for_testing();
 
@@ -42,165 +50,59 @@ pub async fn basic_keygen_and_sign(recover: bool) -> anyhow::Result<()> {
         .build();
     let committee = fixture.committee();
 
-    // Spawn parties and collect their channels.
-    let mut tss_channels = Vec::new();
-    let mut parties = Vec::new();
+    // Setup all parties.
+    let (parties, network) = setup_parties(committee.clone(), &dir).await;
+    let channels = gather_party_channels(&parties);
 
-    // Each default committee from fixture has 4 authorities.
-    for authority in committee.authorities() {
-        let party = init_party(committee.clone(), authority.clone());
-        let rx_keygen_result = WatchStream::new(party.0.get_config().rx_keygen_result.clone());
-        let tx_sign_init = party.0.get_config().tx_sign_init.clone();
-        let rx_sign_result = WatchStream::new(party.0.get_config().rx_sign_result.clone());
-        tss_channels.push((rx_keygen_result, tx_sign_init, rx_sign_result));
-        parties.push(party);
-    }
-
-    let mut connected = 0;
-
-    // Connect all party's networks to each other.
-    for (_, network) in &parties {
-        for (_, other_network) in &parties {
-            if network.local_addr().port() != other_network.local_addr().port() {
-                network
-                    .connect_with_peer_id(other_network.local_addr(), other_network.peer_id())
-                    .await?;
-                connected += 1;
-            }
-        }
-    }
-
-    // Make sure all parties are connected.
-    assert_eq!(connected, PARTY_COUNT * (PARTY_COUNT - 1));
-    for (_, network) in &parties {
-        assert_eq!(network.peers().len(), PARTY_COUNT - 1);
-    }
-
-    let mut new_parties = vec![];
     // Spawn all parties
-    for (builder, network) in parties {
-        let rx_shutdown = tx_shutdown.subscribe();
-        let (handle, party) = builder.start(network, rx_shutdown);
-        new_parties.push(party);
-        all_handles.push(handle);
-    }
+    let (handles, parties) = spawn_parties(parties, network, &mut tx_shutdown, None).await;
+    all_handles.extend(handles);
 
     // When the keygen result is received, send the sign init.
     let handle = tokio::spawn(async move {
-        // Check if all default rx_keygen_result are taken (None).
-        let mut ready = 0;
-        for (rx_keygen_result, _, _) in &mut tss_channels {
-            if rx_keygen_result
-                .next()
-                .await
-                .expect("Get initial data")
-                .is_none()
-            {
-                ready += 1;
-            }
-        }
-        assert_eq!(ready, PARTY_COUNT);
-
-        let mut keygen_results = vec![];
-        // Wait for all rx_keygen_result receive all keygen results.
-        for (rx_keygen_result, _, _) in &mut tss_channels {
-            let keygen_result = rx_keygen_result
-                .next()
-                .await
-                .expect("Receive keygen result");
-
-            assert!(keygen_result.is_some());
-
-            keygen_results.push(keygen_result.unwrap());
-        }
-
-        info!("Receive all keygen result!");
-
-        let party_uids = committee
-            .authorities()
-            .map(|authority| PeerId(authority.network_key().0.to_bytes()).to_string())
-            .collect::<Vec<String>>()
-            .clone();
-        // Send a 32 byte message to the sign init channel.
-        let message_to_sign = [1u8; 32].to_vec();
-
-        info!("Message to sign has length {}", message_to_sign.len());
-
-        let new_sig_uid = uuid::Uuid::new_v4().to_string();
-
-        let key_uid = match recover {
-            true => format!("tss_session{}", committee.epoch()),
-            false => format!("tss_session{}", committee.epoch() + 1),
-        };
-
-        let mut sign_init_msg = SignInit {
-            new_sig_uid: new_sig_uid.clone(),
-            key_uid: format!("tss_session{}", key_uid),
-            party_uids: party_uids.clone(),
-            message_to_sign: message_to_sign.clone(),
-        };
-
-        // Send sign init to all parties.
-        for (_, tx_sign_init, _) in &tss_channels {
-            tx_sign_init
-                .send(sign_init_msg.clone())
-                .expect("Sign init should be sent successfully");
-        }
-
-        // Check if all default rx_sign_result are taken (None).
-        let mut ready = 0;
-        for (_, _, rx_sign_result) in &mut tss_channels {
-            if rx_sign_result
-                .next()
-                .await
-                .expect("Get initial data")
-                .is_none()
-            {
-                ready += 1;
-            }
-        }
-        assert_eq!(ready, PARTY_COUNT);
-
-        // Wait for all rx_sign_result receive all sign results.
-        for (_, _, rx_sign_result) in &mut tss_channels {
-            let sign_result = rx_sign_result
-                .next()
-                .await
-                .expect("Receive sign result")
-                .expect("Sign result should be some");
-
-            match recover {
-                true => {
-                    assert!(sign_result.sign_result_data.is_none());
-                }
-                false => {
-                    assert!(sign_result.sign_result_data.is_some());
-                }
-            }
-        }
-
-        info!("Receive all sign result!");
+        let (keygen_results, mut sign_init_msg) =
+            send_keygen_and_sign_message(channels, committee.clone(), recover).await;
 
         match recover {
             true => {
+                info!("Recover keygen results!");
                 let keygen_output = gather_recover_info(&keygen_results);
-                // Try recover the key.
-                for index in 0..PARTY_COUNT {
-                    new_parties[index]
-                        .execute_recover(keygen_output[index].clone())
-                        .await
-                }
+
+                // Shutdown all parties.
+                shutdown_parties(parties).await;
+
+                // Reinitialize parties with recovered keygen results.
+                let (parties, network) = setup_parties(committee.clone(), &dir).await;
+                let mut channels = gather_party_channels(&parties);
+
+                let (handles, _parties) =
+                    spawn_parties(parties, network, &mut tx_shutdown, Some(keygen_output)).await;
+                // all_handles.extend(handles);
 
                 // Try sign again.
                 sign_init_msg.key_uid = format!("tss_session{}", committee.epoch());
-                for (_, tx_sign_init, _) in &tss_channels {
+                for PartyChannel { tx_sign_init, .. } in &channels {
                     tx_sign_init
                         .send(sign_init_msg.clone())
                         .expect("Sign init should be sent successfully");
                 }
 
+                // Check if all default rx_sign_result are taken (None).
+                let mut ready = 0;
+                for PartyChannel { rx_sign_result, .. } in &mut channels {
+                    if rx_sign_result
+                        .next()
+                        .await
+                        .expect("Get initial data")
+                        .is_none()
+                    {
+                        ready += 1;
+                    }
+                }
+                assert_eq!(ready, PARTY_COUNT);
+
                 // Wait for all rx_sign_result receive all sign results.
-                for (_, _, rx_sign_result) in &mut tss_channels {
+                for PartyChannel { rx_sign_result, .. } in &mut channels {
                     let sign_result = rx_sign_result.next().await.expect("Receive sign result");
                     assert!(sign_result
                         .expect("Sign result should be some")
@@ -213,6 +115,8 @@ pub async fn basic_keygen_and_sign(recover: bool) -> anyhow::Result<()> {
                 tx_shutdown
                     .send()
                     .expect("Shutdown should be sent successfully");
+
+                join_all(handles).await;
             }
 
             false => {
@@ -231,6 +135,158 @@ pub async fn basic_keygen_and_sign(recover: bool) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub async fn shutdown_parties(mut parties: Vec<TssParty>) {
+    for party in parties.iter_mut() {
+        party.shutdown().await.expect("Shutdown successfully");
+    }
+    info!("Shutdown all parties!");
+}
+
+pub async fn send_keygen_and_sign_message(
+    mut channels: Vec<PartyChannel>,
+    committee: Committee,
+    recover: bool,
+) -> (Vec<KeygenResult>, SignInit) {
+    // Check if all default rx_keygen_result are taken (None).
+    let mut ready = 0;
+    for PartyChannel {
+        rx_keygen_result, ..
+    } in &mut channels
+    {
+        if rx_keygen_result
+            .next()
+            .await
+            .expect("Get initial data")
+            .is_none()
+        {
+            ready += 1;
+        }
+    }
+    assert_eq!(ready, PARTY_COUNT);
+
+    let mut keygen_results = vec![];
+    // Wait for all rx_keygen_result receive all keygen results.
+    for PartyChannel {
+        rx_keygen_result, ..
+    } in &mut channels
+    {
+        let keygen_result = rx_keygen_result
+            .next()
+            .await
+            .expect("Receive keygen result");
+
+        assert!(keygen_result.is_some());
+
+        keygen_results.push(keygen_result.unwrap());
+    }
+
+    info!("Receive all keygen result!");
+
+    let party_uids = committee
+        .authorities()
+        .map(|authority| PeerId(authority.network_key().0.to_bytes()).to_string())
+        .collect::<Vec<String>>()
+        .clone();
+    // Send a 32 byte message to the sign init channel.
+    let message_to_sign = [1u8; 32].to_vec();
+
+    info!("Message to sign has length {}", message_to_sign.len());
+
+    let new_sig_uid = uuid::Uuid::new_v4().to_string();
+
+    let key_uid = match recover {
+        true => format!("tss_session{}", committee.epoch() + 1),
+        false => format!("tss_session{}", committee.epoch()),
+    };
+
+    let sign_init_msg = SignInit {
+        new_sig_uid: new_sig_uid.clone(),
+        key_uid,
+        party_uids: party_uids.clone(),
+        message_to_sign: message_to_sign.clone(),
+    };
+
+    // Send sign init to all parties.
+    for PartyChannel { tx_sign_init, .. } in &channels {
+        tx_sign_init
+            .send(sign_init_msg.clone())
+            .expect("Sign init should be sent successfully");
+    }
+
+    // Check if all default rx_sign_result are taken (None).
+    let mut ready = 0;
+    for PartyChannel { rx_sign_result, .. } in &mut channels {
+        if rx_sign_result
+            .next()
+            .await
+            .expect("Get initial data")
+            .is_none()
+        {
+            ready += 1;
+        }
+    }
+    assert_eq!(ready, PARTY_COUNT);
+
+    // Wait for all rx_sign_result receive all sign results.
+    for PartyChannel { rx_sign_result, .. } in &mut channels {
+        let sign_result = rx_sign_result
+            .next()
+            .await
+            .expect("Receive sign result")
+            .expect("Sign result should be some");
+
+        match recover {
+            true => {
+                assert!(sign_result.sign_result_data.is_none());
+            }
+            false => {
+                assert!(sign_result.sign_result_data.is_some());
+            }
+        }
+    }
+
+    info!("Receive all sign result!");
+
+    (keygen_results, sign_init_msg)
+}
+
+pub async fn spawn_parties(
+    parties: Vec<UnstartedParty>,
+    networks: Vec<anemo::Network>,
+    tx_shutdown: &mut PreSubscribedBroadcastSender,
+    // If keygen_results is provided, then the keygens of the parties will be recovered.
+    keygen_results: Option<Vec<KeygenOutput>>,
+) -> (Vec<JoinHandle<()>>, Vec<TssParty>) {
+    let mut all_handles = vec![];
+    let mut spawned_parties = vec![];
+
+    match keygen_results {
+        Some(keygen_results) => {
+            for ((builder, network), keygen_result) in parties
+                .into_iter()
+                .zip(networks.into_iter())
+                .zip(keygen_results.into_iter())
+            {
+                let party = builder.build(network).await;
+                party.execute_recover(keygen_result).await;
+
+                let (handle, party) = builder.start_with_party(party, tx_shutdown.subscribe());
+                all_handles.push(handle);
+                spawned_parties.push(party);
+            }
+        }
+        None => {
+            for (party, network) in parties.into_iter().zip(networks.into_iter()) {
+                let (handle, party) = party.start(network, tx_shutdown.subscribe()).await;
+                all_handles.push(handle);
+                spawned_parties.push(party);
+            }
+        }
+    }
+
+    (all_handles, spawned_parties)
+}
+
 pub fn gather_recover_info(results: &[KeygenResult]) -> Vec<KeygenOutput> {
     // gather recover info
     let mut recover_infos = vec![];
@@ -246,13 +302,96 @@ pub fn gather_recover_info(results: &[KeygenResult]) -> Vec<KeygenOutput> {
     recover_infos
 }
 
-pub fn init_party(committee: Committee, authority: Authority) -> (UnstartedParty, anemo::Network) {
+pub struct PartyChannel {
+    pub rx_keygen_result: WatchStream<Option<KeygenResult>>,
+    pub tx_sign_init: UnboundedSender<SignInit>,
+    pub rx_sign_result: WatchStream<Option<SignResult>>,
+}
+
+pub fn gather_party_channels(parties: &[UnstartedParty]) -> Vec<PartyChannel> {
+    let mut channels = vec![];
+
+    for party in parties {
+        let config = party.get_config();
+        let rx_keygen_result = WatchStream::new(config.rx_keygen_result.clone());
+        let tx_sign_init = config.tx_sign_init.clone();
+        let rx_sign_result = WatchStream::new(config.rx_sign_result.clone());
+
+        channels.push(PartyChannel {
+            rx_keygen_result,
+            tx_sign_init,
+            rx_sign_result,
+        });
+    }
+
+    channels
+}
+
+pub async fn setup_parties(
+    committee: Committee,
+    dir: &Path,
+) -> (Vec<UnstartedParty>, Vec<anemo::Network>) {
+    let (parties, networks) = init_parties(committee.clone(), dir);
+
+    // Connect all party's networks to each other.
+    connect_networks(&networks).await;
+
+    (parties, networks)
+}
+
+pub fn init_parties(
+    committee: Committee,
+    dir: &Path,
+) -> (Vec<UnstartedParty>, Vec<anemo::Network>) {
+    let mut parties = vec![];
+    let mut networks = vec![];
+    for (index, authority) in committee.authorities().enumerate() {
+        let (party, network) = init_party(committee.clone(), authority.clone(), dir, index);
+
+        parties.push(party);
+        networks.push(network);
+    }
+
+    (parties, networks)
+}
+
+pub async fn connect_networks(networks: &[anemo::Network]) {
+    let mut connected = 0;
+
+    // Connect all party's networks to each other.
+    for network in networks {
+        for other_network in networks {
+            if network.local_addr().port() != other_network.local_addr().port() {
+                network
+                    .connect_with_peer_id(other_network.local_addr(), other_network.peer_id())
+                    .await
+                    .expect("Connect successfully");
+                connected += 1;
+            }
+        }
+    }
+
+    // Make sure all parties are connected.
+    assert_eq!(connected, networks.len() * (networks.len() - 1));
+    for network in networks {
+        assert_eq!(network.peers().len(), networks.len() - 1);
+    }
+}
+
+pub fn init_party(
+    committee: Committee,
+    authority: Authority,
+    testdir: &Path,
+    party_index: usize,
+) -> (UnstartedParty, anemo::Network) {
+    let tofnd_path = format!("test-key-{:02}", party_index);
+    let tofnd_path = testdir.join(tofnd_path);
     let address = authority.primary_address();
     let addr = address.to_anemo_address().unwrap();
 
     let tss_store = TssStore::new_for_tests();
 
-    let (party, tss_server) = PartyBuilder::new(authority, committee, tss_store).build();
+    let (party, tss_server) = PartyBuilder::new(authority, committee, tss_store).build(tofnd_path);
 
     let network = build_network(addr, |router| router.add_rpc_service(tss_server));
 

@@ -1,5 +1,7 @@
 //! This mod includes the service implementation derived from
 
+use std::path::PathBuf;
+
 // use super::types::{Config, Entropy, PartyInfo};
 use super::types::PartyInfo;
 // use crate::akv_manager::error::{InnerKvError, KvError};
@@ -31,8 +33,8 @@ pub struct Gg20Service {
 }
 
 impl Gg20Service {
-    pub fn new(tss_store: TssStore, safe_keygen: bool) -> Gg20Service {
-        let kv_store = KvStore::new(tss_store, safe_keygen);
+    pub fn new(root: PathBuf, tss_store: TssStore, safe_keygen: bool) -> Gg20Service {
+        let kv_store = KvStore::new(root, tss_store, safe_keygen);
         Self { kv_store }
     }
     pub fn kv(&self) -> &KvStore {

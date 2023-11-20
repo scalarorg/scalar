@@ -185,7 +185,7 @@ impl Gg20Service {
 
         for aggregator in aggregator_receivers {
             let res = aggregator.await??;
-            info!("Kegen output {:?}", &res);
+            // info!("Kegen output {:?}", &res);
             keygen_outputs.push(res);
         }
 

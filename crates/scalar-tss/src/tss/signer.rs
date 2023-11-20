@@ -75,11 +75,11 @@ impl TssSigner {
         for peer in peers {
             let network = self.network.clone();
             let message = tss_message.clone();
-            info!(
-                "Deliver sign message from {:?} to peer {:?}",
-                &self.uid,
-                peer.to_string()
-            );
+            // info!(
+            //     "Deliver sign message from {:?} to peer {:?}",
+            //     &self.uid,
+            //     peer.to_string()
+            // );
             let f = move |peer| {
                 let request = TssAnemoSignRequest {
                     message: message.to_owned(),
@@ -87,8 +87,8 @@ impl TssSigner {
                 async move {
                     let result = TssPeerClient::new(peer).sign(request).await;
                     match result.as_ref() {
-                        Ok(r) => {
-                            info!("TssPeerClient sign result {:?}", r);
+                        Ok(_r) => {
+                            info!("TssPeerClient sign result");
                         }
                         Err(e) => {
                             info!("TssPeerClient sign error {:?}", e);
@@ -103,7 +103,6 @@ impl TssSigner {
         }
 
         join_all(handlers).await;
-        info!("All sign result received");
         // handlers
     }
 
@@ -112,12 +111,12 @@ impl TssSigner {
         let msg = match msg {
             message_out::Data::NeedRecover(t) => t,
             _ => {
-                panic!("msg must be traffic out");
+                panic!("msg must be need recover out");
             }
         };
 
         let msg_in = MessageIn {
-            data: Some(message_in::Data::Abort(msg.clone())),
+            data: Some(message_in::Data::Abort(*msg)),
         };
 
         //Send to own server
@@ -132,14 +131,11 @@ impl TssSigner {
         let mut handlers = Vec::new();
         let peers = self.network.peers();
 
+        // Broadcast to other peers vis anemo network
         for peer in peers {
             let network = self.network.clone();
             let message = tss_message.clone();
-            info!(
-                "Deliver abort message from {:?} to peer {:?}",
-                &self.uid,
-                peer.to_string()
-            );
+
             let f = move |peer| {
                 let request = AbortRequest {
                     message: message.to_owned(),
@@ -204,7 +200,7 @@ impl TssSigner {
         handlers
     }
 
-    pub async fn sign_execute_v2(
+    pub async fn execute_sign(
         &self,
         sign_server_outgoing: &mut UnboundedReceiver<Result<MessageOut, Status>>,
         sign_init: &SignInit,

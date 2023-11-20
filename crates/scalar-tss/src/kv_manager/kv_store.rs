@@ -2,7 +2,6 @@ use super::{
     error::{KvError, KvResult},
     store::Store,
 };
-use crate::storage::TssStore;
 use crate::types::KeyReservation;
 use crate::{
     gg20::types::Entropy,
@@ -10,10 +9,11 @@ use crate::{
     kv_manager::error::InnerKvError,
     mnemonic::bip39_bindings::{bip39_new_w24, bip39_seed},
 };
+use crate::{mnemonic::FileIo, storage::TssStore};
 use async_trait::async_trait;
 use futures_util::TryFutureExt;
 use serde::{de::DeserializeOwned, Serialize};
-use std::fmt::Debug;
+use std::{fmt::Debug, path::PathBuf};
 use tofn::{
     gg20::keygen::SecretRecoveryKey,
     sdk::api::{deserialize, serialize},
@@ -31,17 +31,22 @@ const DEFAULT_RESERVE: Vec<u8> = Vec::new();
 pub struct KvStore {
     pub(crate) tss_store: TssStore,
     safe_keygen: bool,
+    io: FileIo,
 }
 
 impl KvStore {
-    pub fn new(tss_store: TssStore, safe_keygen: bool) -> Self {
+    pub fn new(root: PathBuf, tss_store: TssStore, safe_keygen: bool) -> Self {
         Self {
             tss_store,
             safe_keygen,
+            io: FileIo::new(root),
         }
     }
     pub fn tss_store(&self) -> &TssStore {
         &self.tss_store
+    }
+    pub fn io(&self) -> &FileIo {
+        &self.io
     }
     pub fn is_safe_keygen(&self) -> bool {
         self.safe_keygen
@@ -53,6 +58,16 @@ impl KvStore {
         let key = String::from(MNEMONIC_KEY);
         let mnemonic: KvResult<Vec<u8>> = self.get(&key).await;
         if mnemonic.is_err() {
+            // create a new entropy
+            let new_entropy = bip39_new_w24();
+            self.handle_insert(new_entropy.clone()).await?;
+        };
+        Ok(())
+    }
+    pub async fn handle_existing_mnemonic(&self) -> KvResult<()> {
+        let key = String::from(MNEMONIC_KEY);
+        let mnemonic: KvResult<Vec<u8>> = self.get(&key).await;
+        if mnemonic.is_ok() {
             // create a new entropy
             let new_entropy = bip39_new_w24();
             self.handle_insert(new_entropy.clone()).await?;
