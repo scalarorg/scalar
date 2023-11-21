@@ -59,6 +59,9 @@ pub struct NodeConfig {
     #[serde(default = "default_json_rpc_address")]
     pub json_rpc_address: SocketAddr,
 
+    #[serde(default = "default_consensus_rpc_address")]
+    pub consensus_rpc_address: SocketAddr,
+
     #[serde(default)]
     pub enable_experimental_rest_api: bool,
 
@@ -236,6 +239,11 @@ pub fn default_admin_interface_port() -> u16 {
 pub fn default_json_rpc_address() -> SocketAddr {
     use std::net::{IpAddr, Ipv4Addr};
     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 9000)
+}
+
+pub fn default_consensus_rpc_address() -> SocketAddr {
+    use std::net::{IpAddr, Ipv4Addr};
+    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 9090)
 }
 
 pub fn default_concurrency_limit() -> Option<usize> {

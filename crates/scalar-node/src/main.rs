@@ -6,12 +6,12 @@ use mysten_common::sync::async_once_cell::AsyncOnceCell;
 use scalar_config::{Config, NodeConfig};
 use scalar_core::runtime::SuiRuntimes;
 use scalar_node::metrics;
+use scalar_telemetry::send_telemetry_event;
 use scalar_types::multiaddr::Multiaddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use sui_protocol_config::SupportedProtocolVersions;
-use scalar_telemetry::send_telemetry_event;
 use tokio::time::sleep;
 use tracing::{error, info};
 
@@ -55,6 +55,7 @@ fn main() {
         config.supported_protocol_versions.is_none(),
         "supported_protocol_versions cannot be read from the config file"
     );
+
     config.supported_protocol_versions = Some(SupportedProtocolVersions::SYSTEM_DEFAULT);
 
     let runtimes = SuiRuntimes::new(&config);
@@ -100,9 +101,15 @@ fn main() {
     let node_once_cell = Arc::new(AsyncOnceCell::<Arc<scalar_node::SuiNode>>::new());
     let node_once_cell_clone = node_once_cell.clone();
     let rpc_runtime = runtimes.json_rpc.handle().clone();
-
+    let consensus_runtime = runtimes.consensus_rpc.handle().clone();
     runtimes.scalar_node.spawn(async move {
-        match scalar_node::SuiNode::start_async(&config, registry_service, Some(rpc_runtime)).await
+        match scalar_node::SuiNode::start_async(
+            &config,
+            registry_service,
+            Some(rpc_runtime),
+            Some(consensus_runtime),
+        )
+        .await
         {
             Ok(scalar_node) => node_once_cell_clone
                 .set(scalar_node)

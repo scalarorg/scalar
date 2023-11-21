@@ -13,7 +13,7 @@ reth() {
 }
 
 scalar() {
-    RUST_LOG=debug /usr/local/bin/scalar-node
+    RUST_LOG=debug /usr/local/bin/scalar-node --config-path /scalar/fullnode.yaml
 }
 
 $@

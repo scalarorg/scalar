@@ -81,7 +81,7 @@ impl Balance {
     }
 
     pub fn layout(type_param: TypeTag) -> MoveStructLayout {
-        MoveStructLayout::WithTypes {
+        MoveStructLayout {
             type_: Self::type_(type_param),
             fields: vec![MoveFieldLayout::new(
                 ident_str!("value").to_owned(),

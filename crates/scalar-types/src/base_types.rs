@@ -12,6 +12,7 @@
 
 use crate::coin::Coin;
 use crate::coin::CoinMetadata;
+use crate::coin::TreasuryCap;
 use crate::coin::COIN_MODULE_NAME;
 use crate::coin::COIN_STRUCT_NAME;
 pub use crate::committee::EpochId;
@@ -292,6 +293,15 @@ impl MoveObjectType {
         }
     }
 
+    pub fn is_treasury_cap(&self) -> bool {
+        match &self.0 {
+            MoveObjectType_::GasCoin | MoveObjectType_::StakedSui | MoveObjectType_::Coin(_) => {
+                false
+            }
+            MoveObjectType_::Other(s) => TreasuryCap::is_treasury_type(s),
+        }
+    }
+
     pub fn is_dynamic_field(&self) -> bool {
         match &self.0 {
             MoveObjectType_::GasCoin | MoveObjectType_::StakedSui | MoveObjectType_::Coin(_) => {
@@ -321,6 +331,11 @@ impl MoveObjectType {
             }
             MoveObjectType_::Other(o) => s == o,
         }
+    }
+
+    /// Returns the string representation of this object's type using the canonical display.    
+    pub fn to_canonical_string(&self, with_prefix: bool) -> String {
+        StructTag::from(self.clone()).to_canonical_string(with_prefix)
     }
 }
 

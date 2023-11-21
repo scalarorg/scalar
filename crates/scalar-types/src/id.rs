@@ -64,7 +64,7 @@ impl UID {
     }
 
     pub fn layout() -> MoveStructLayout {
-        MoveStructLayout::WithTypes {
+        MoveStructLayout {
             type_: Self::type_(),
             fields: vec![MoveFieldLayout::new(
                 ident_str!("id").to_owned(),
@@ -89,7 +89,7 @@ impl ID {
     }
 
     pub fn layout() -> MoveStructLayout {
-        MoveStructLayout::WithTypes {
+        MoveStructLayout {
             type_: Self::type_(),
             fields: vec![MoveFieldLayout::new(
                 ident_str!("bytes").to_owned(),

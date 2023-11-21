@@ -93,10 +93,12 @@ use scalar_json_rpc::read_api::ReadApi;
 use scalar_json_rpc::transaction_builder_api::TransactionBuilderApi;
 use scalar_json_rpc::transaction_execution_api::TransactionExecutionApi;
 use scalar_json_rpc::JsonRpcServerBuilder;
+use scalar_kvstore::writer::setup_key_value_store_uploader;
 use scalar_network::api::ValidatorServer;
 use scalar_network::discovery;
 use scalar_network::discovery::TrustedPeerChangeEvent;
 use scalar_network::state_sync;
+use scalar_snapshot::uploader::StateSnapshotUploader;
 use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
 use scalar_storage::{
     http_key_value_store::HttpKVStore,
@@ -115,10 +117,8 @@ use scalar_types::quorum_driver_types::QuorumDriverEffectsQueueResult;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use scalar_types::sui_system_state::SuiSystemStateTrait;
-use scalar_kvstore::writer::setup_key_value_store_uploader;
 use sui_macros::fail_point_async;
 use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
-use scalar_snapshot::uploader::StateSnapshotUploader;
 use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
@@ -246,8 +246,15 @@ impl SuiNode {
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
+        consensus_runtime: Option<Handle>,
     ) -> Result<Arc<SuiNode>> {
-        Self::start_async(config, registry_service, custom_rpc_runtime).await
+        Self::start_async(
+            config,
+            registry_service,
+            custom_rpc_runtime,
+            consensus_runtime,
+        )
+        .await
     }
 
     fn start_jwk_updater(
@@ -389,6 +396,7 @@ impl SuiNode {
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
+        consensus_runtime: Option<Handle>,
     ) -> Result<Arc<SuiNode>> {
         NodeConfigMetrics::new(&registry_service.default_registry()).record_metrics(config);
         let mut config = config.clone();
@@ -634,6 +642,14 @@ impl SuiNode {
             &config,
             &prometheus_registry,
             custom_rpc_runtime,
+        )?;
+
+        let consensus_server = build_consensus_server(
+            state.clone(),
+            &transaction_orchestrator.clone(),
+            &config,
+            &prometheus_registry,
+            consensus_runtime,
         )?;
 
         let accumulator = Arc::new(StateAccumulator::new(store));
@@ -1758,6 +1774,95 @@ pub fn build_http_server(
     let addr = server.local_addr();
     let handle = tokio::spawn(async move { server.await.unwrap() });
 
+    info!(local_addr =? addr, "Sui JSON-RPC server listening on {addr}");
+
+    Ok(Some(handle))
+}
+
+/*
+ * 231121-TaiVV
+ * Add consensus server
+ */
+pub fn build_consensus_server(
+    state: Arc<AuthorityState>,
+    transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+    config: &NodeConfig,
+    prometheus_registry: &Registry,
+    consensus_runtime: Option<Handle>,
+) -> Result<Option<tokio::task::JoinHandle<()>>> {
+    // Validators do not expose these APIs
+    if config.consensus_config().is_some() {
+        return Ok(None);
+    }
+
+    let mut router = axum::Router::new();
+
+    let consensus_router = {
+        let mut server = JsonRpcServerBuilder::new(env!("CARGO_PKG_VERSION"), prometheus_registry);
+
+        let kv_store = build_kv_store(&state, config, prometheus_registry)?;
+
+        let metrics = Arc::new(JsonRpcMetrics::new(prometheus_registry));
+        server.register_module(ReadApi::new(
+            state.clone(),
+            kv_store.clone(),
+            metrics.clone(),
+        ))?;
+        server.register_module(CoinReadApi::new(
+            state.clone(),
+            kv_store.clone(),
+            metrics.clone(),
+        ))?;
+        server.register_module(TransactionBuilderApi::new(state.clone()))?;
+        server.register_module(GovernanceReadApi::new(state.clone(), metrics.clone()))?;
+
+        if let Some(transaction_orchestrator) = transaction_orchestrator {
+            server.register_module(TransactionExecutionApi::new(
+                state.clone(),
+                transaction_orchestrator.clone(),
+                metrics.clone(),
+            ))?;
+        }
+
+        let name_service_config =
+            if let (Some(package_address), Some(registry_id), Some(reverse_registry_id)) = (
+                config.name_service_package_address,
+                config.name_service_registry_id,
+                config.name_service_reverse_registry_id,
+            ) {
+                scalar_json_rpc::name_service::NameServiceConfig::new(
+                    package_address,
+                    registry_id,
+                    reverse_registry_id,
+                )
+            } else {
+                scalar_json_rpc::name_service::NameServiceConfig::default()
+            };
+
+        server.register_module(IndexerApi::new(
+            state.clone(),
+            ReadApi::new(state.clone(), kv_store.clone(), metrics.clone()),
+            kv_store,
+            name_service_config,
+            metrics,
+            config.indexer_max_subscriptions,
+        ))?;
+        server.register_module(MoveUtils::new(state.clone()))?;
+
+        server.to_router(None)?
+    };
+
+    router = router.merge(consensus_router);
+
+    let server =
+        axum::Server::bind(&config.consensus_rpc_address).serve(router.into_make_service());
+
+    let addr = server.local_addr();
+    let handle = if let Some(handle) = consensus_runtime {
+        handle.spawn(async move { server.await.unwrap() })
+    } else {
+        tokio::spawn(async move { server.await.unwrap() })
+    };
     info!(local_addr =? addr, "Sui JSON-RPC server listening on {addr}");
 
     Ok(Some(handle))

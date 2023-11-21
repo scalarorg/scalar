@@ -153,11 +153,7 @@ impl Event {
         contents: &[u8],
         resolver: &impl GetModule,
     ) -> SuiResult<MoveStruct> {
-        let layout = MoveObject::get_layout_from_struct_tag(
-            type_.clone(),
-            ObjectFormatOptions::default(),
-            resolver,
-        )?;
+        let layout = MoveObject::get_layout_from_struct_tag(type_.clone(), resolver)?;
         MoveStruct::simple_deserialize(contents, &layout).map_err(|e| {
             SuiError::ObjectSerializationError {
                 error: e.to_string(),

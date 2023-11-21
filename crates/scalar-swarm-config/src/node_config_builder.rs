@@ -135,6 +135,9 @@ impl ValidatorConfigBuilder {
             json_rpc_address: local_ip_utils::new_tcp_address_for_testing(&localhost)
                 .to_socket_addr()
                 .unwrap(),
+            consensus_rpc_address: local_ip_utils::new_tcp_address_for_testing(&localhost)
+                .to_socket_addr()
+                .unwrap(),
             consensus_config: Some(consensus_config),
             enable_event_processing: false,
             enable_index_processing: default_enable_index_processing(),
@@ -196,6 +199,8 @@ pub struct FullnodeConfigBuilder {
     db_path: Option<PathBuf>,
     network_address: Option<Multiaddr>,
     json_rpc_address: Option<SocketAddr>,
+    consensus_rpc_address: Option<SocketAddr>,
+    consensus_rpc_port: Option<u16>,
     metrics_address: Option<SocketAddr>,
     admin_interface_port: Option<u16>,
     genesis: Option<Genesis>,
@@ -348,7 +353,12 @@ impl FullnodeConfigBuilder {
                 .unwrap_or_else(|| local_ip_utils::get_available_port(&ip));
             format!("{}:{}", ip, rpc_port).parse().unwrap()
         });
-
+        let consensus_rpc_address = self.rpc_addr.unwrap_or_else(|| {
+            let rpc_port = self
+                .consensus_rpc_port
+                .unwrap_or_else(|| local_ip_utils::get_available_port(&ip));
+            format!("{}:{}", ip, rpc_port).parse().unwrap()
+        });
         NodeConfig {
             protocol_key_pair: AuthorityKeyPairWithPath::new(validator_config.key_pair),
             account_key_pair: KeyPairWithPath::new(validator_config.account_key_pair),
@@ -371,6 +381,7 @@ impl FullnodeConfigBuilder {
                 .admin_interface_port
                 .unwrap_or(local_ip_utils::get_available_port(&localhost)),
             json_rpc_address: self.json_rpc_address.unwrap_or(json_rpc_address),
+            consensus_rpc_address: self.consensus_rpc_address.unwrap_or(consensus_rpc_address),
             consensus_config: None,
             enable_event_processing: true, // This is unused.
             enable_index_processing: default_enable_index_processing(),

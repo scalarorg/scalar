@@ -34,7 +34,6 @@ pub use move_core_types::ident_str;
 pub use move_core_types::identifier;
 pub use move_core_types::language_storage;
 pub use move_core_types::u256;
-pub use move_core_types::value;
 pub use move_core_types::vm_status;
 
 // pub mod runtime;
@@ -49,3 +48,5 @@ pub use move_command_line_common::types;
 pub use move_command_line_common::values;
 
 pub use move_bytecode_utils::{layout, module_cache};
+
+pub use move_core_types::annotated_value as value;

@@ -325,27 +325,19 @@ impl MoveObject {
     /// Get a `MoveStructLayout` for `self`.
     /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
     /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
-    pub fn get_layout(
-        &self,
-        format: ObjectFormatOptions,
-        resolver: &impl GetModule,
-    ) -> Result<MoveStructLayout, SuiError> {
-        Self::get_layout_from_struct_tag(self.type_().clone().into(), format, resolver)
+    pub fn get_layout(&self, resolver: &impl GetModule) -> Result<MoveStructLayout, SuiError> {
+        Self::get_layout_from_struct_tag(self.type_().clone().into(), resolver)
     }
 
     pub fn get_layout_from_struct_tag(
         struct_tag: StructTag,
-        format: ObjectFormatOptions,
         resolver: &impl GetModule,
     ) -> Result<MoveStructLayout, SuiError> {
         let type_ = TypeTag::Struct(Box::new(struct_tag));
-        let layout = if format.include_types {
-            TypeLayoutBuilder::build_with_types(&type_, resolver)
-        } else {
-            TypeLayoutBuilder::build_with_fields(&type_, resolver)
-        }
-        .map_err(|e| SuiError::ObjectSerializationError {
-            error: e.to_string(),
+        let layout = TypeLayoutBuilder::build_with_types(&type_, resolver).map_err(|e| {
+            SuiError::ObjectSerializationError {
+                error: e.to_string(),
+            }
         })?;
         match layout {
             MoveTypeLayout::Struct(l) => Ok(l),
@@ -367,10 +359,9 @@ impl MoveObject {
     /// Convert `self` to the JSON representation dictated by `layout`.
     pub fn to_move_struct_with_resolver(
         &self,
-        format: ObjectFormatOptions,
         resolver: &impl GetModule,
     ) -> Result<MoveStruct, SuiError> {
-        self.to_move_struct(&self.get_layout(format, resolver)?)
+        self.to_move_struct(&self.get_layout(resolver)?)
     }
 
     pub fn to_rust<'de, T: Deserialize<'de>>(&'de self) -> Option<T> {
@@ -431,10 +422,10 @@ impl MoveObject {
         balances: &mut BTreeMap<TypeTag, u64>,
         value_depth: u64,
     ) -> Result<(), SuiError> {
-        let (struct_type, fields) = match s {
-            MoveStruct::WithTypes { type_, fields } => (type_, fields),
-            _ => unreachable!(),
-        };
+        let MoveStruct {
+            type_: struct_type,
+            fields,
+        } = s;
 
         if let Some(type_tag) = Self::is_balance(struct_type) {
             let balance = match fields[0].1 {
@@ -930,11 +921,10 @@ impl Object {
     /// dependencies of `self.type_` in order for this to succeed. Failure will result in an `ObjectSerializationError`
     pub fn get_layout(
         &self,
-        format: ObjectFormatOptions,
         resolver: &impl GetModule,
     ) -> Result<Option<MoveStructLayout>, SuiError> {
         match &self.data {
-            Data::Move(m) => Ok(Some(m.get_layout(format, resolver)?)),
+            Data::Move(m) => Ok(Some(m.get_layout(resolver)?)),
             Data::Package(_) => Ok(None),
         }
     }

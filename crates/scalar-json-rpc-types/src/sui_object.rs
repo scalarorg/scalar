@@ -11,9 +11,9 @@ use anyhow::anyhow;
 use colored::Colorize;
 use fastcrypto::encoding::Base64;
 use move_bytecode_utils::module_cache::GetModule;
+use move_core_types::annotated_value::{MoveStruct, MoveStructLayout};
 use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::StructTag;
-use move_core_types::value::{MoveStruct, MoveStructLayout};
 use scalar_types::base_types::{
     ObjectDigest, ObjectID, ObjectInfo, ObjectRef, ObjectType, SequenceNumber, SuiAddress,
     TransactionDigest,
@@ -860,7 +860,7 @@ pub trait SuiMoveObject: Sized {
         -> Result<Self, anyhow::Error>;
 
     fn try_from(o: MoveObject, resolver: &impl GetModule) -> Result<Self, anyhow::Error> {
-        let layout = o.get_layout(ObjectFormatOptions::default(), resolver)?;
+        let layout = o.get_layout(resolver)?;
         Self::try_from_layout(o, layout)
     }
 

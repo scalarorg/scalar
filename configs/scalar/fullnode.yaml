@@ -1,0 +1,26 @@
+# Update this value to the location you want Sui to store its database
+db-path: "/scalar/db"
+
+network-address: "/dns/localhost/tcp/8080/http"
+metrics-address: "0.0.0.0:9184"
+# this address is also used for web socket connections
+json-rpc-address: "0.0.0.0:9000"
+# this address is also used for web socket connections
+consensus-rpc-address: "0.0.0.0:9090"
+enable-event-processing: true
+
+genesis:
+  # Update this to the location of where the genesis file is stored
+  genesis-file-location: "/scalar/dev/genesis.blob"
+
+authority-store-pruning-config:
+  num-latest-epoch-dbs-to-retain: 3
+  epoch-db-pruning-period-secs: 3600
+  num-epochs-to-retain: 1
+  max-checkpoints-in-batch: 10
+  max-transactions-in-batch: 1000
+  pruning-run-delay-seconds: 60
+
+supported-protocol-versions:
+  min: 1
+  max: 31
