@@ -43,6 +43,10 @@ pub use dev_args::DevArgs;
 mod pruning_args;
 pub use pruning_args::PruningArgs;
 
+/// ConsensusArgs for configuring the Scalar consensus
+mod consensus_args;
+pub use consensus_args::ConsensusArgs;
+
 /// RollupArgs for configuring the op-reth rollup
 #[cfg(feature = "optimism")]
 mod rollup_args;

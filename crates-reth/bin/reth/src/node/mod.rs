@@ -5,8 +5,8 @@ use crate::{
     args::{
         get_secret_key,
         utils::{chain_help, genesis_value_parser, parse_socket_address, SUPPORTED_CHAINS},
-        DatabaseArgs, DebugArgs, DevArgs, NetworkArgs, PayloadBuilderArgs, PruningArgs,
-        RpcServerArgs, TxPoolArgs,
+        ConsensusArgs, DatabaseArgs, DebugArgs, DevArgs, NetworkArgs, PayloadBuilderArgs,
+        PruningArgs, RpcServerArgs, TxPoolArgs,
     },
     cli::{
         components::RethNodeComponentsImpl,
@@ -179,6 +179,10 @@ pub struct NodeCommand<Ext: RethCliExt = ()> {
     #[clap(flatten)]
     pub pruning: PruningArgs,
 
+    /// All consensus related arguments
+    #[clap(flatten)]
+    pub consensus: ConsensusArgs,
+
     /// Rollup related arguments
     #[cfg(feature = "optimism")]
     #[clap(flatten)]
@@ -207,6 +211,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             db,
             dev,
             pruning,
+            consensus,
             #[cfg(feature = "optimism")]
             rollup,
             ..
@@ -226,6 +231,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             db,
             dev,
             pruning,
+            consensus,
             #[cfg(feature = "optimism")]
             rollup,
             ext,
@@ -539,6 +545,18 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         // extract the jwt secret from the args if possible
         let default_jwt_path = data_dir.jwt_path();
         let jwt_secret = self.rpc.auth_jwt_secret(default_jwt_path)?;
+
+        /*
+         * 231120 Taivv
+         * Add transaction listeners for push to Consensus
+         */
+        let _consensus_handle = self
+            .consensus
+            .start_client(&components, jwt_secret.clone(), &mut self.ext)
+            .await?;
+        /*
+         * End of prepare consensus adapter
+         */
 
         // adjust rpc port numbers based on instance number
         self.adjust_instance_ports();

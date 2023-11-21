@@ -48,6 +48,7 @@ members = [
   "crates-reth/consensus/auto-seal",
   "crates-reth/consensus/beacon",
   "crates-reth/consensus/common",
+  "crates-reth/consensus/narwhal",
   "crates-reth/blockchain-tree",
   "crates-reth/interfaces",
   "crates-reth/payload/builder",
@@ -523,6 +524,7 @@ reth-tokio-util = { path = "crates-reth/tokio-util" }
 reth-snapshot = { path = "./crates-reth/snapshot" }
 reth-stages = { path = "./crates-reth/stages" }
 reth-downloaders = { path = "./crates-reth/net/downloaders" }
+scalar-narwhal-consensus = { path = "./crates-reth/consensus/narwhal" }
 # revm
 revm = { git = "https://github.com/bluealloy/revm", rev = "1609e07c68048909ad1682c98cf2b9baa76310b5" }
 revm-primitives = { git = "https://github.com/bluealloy/revm", rev = "1609e07c68048909ad1682c98cf2b9baa76310b5" }
