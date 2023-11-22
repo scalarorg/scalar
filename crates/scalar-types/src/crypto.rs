@@ -1,8 +1,5 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-use crate::base_types::{AuthorityName, SuiAddress};
-use crate::committee::{Committee, EpochId, StakeUnit};
-use crate::error::{SuiError, SuiResult};
 use crate::fp_ensure;
 use anyhow::{anyhow, Error};
 use derive_more::{AsMut, AsRef, From};
@@ -28,6 +25,7 @@ pub use fastcrypto::traits::{
     AggregateAuthenticator, Authenticator, EncodeDecodeBase64, SigningKey, ToFromBytes,
     VerifyingKey,
 };
+use fastcrypto_zkp::bn254::utils::big_int_str_to_bytes;
 use rand::rngs::{OsRng, StdRng};
 use rand::SeedableRng;
 use roaring::RoaringBitmap;
@@ -41,12 +39,12 @@ use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use strum::EnumString;
-/*
- * 2023-11-02 TaiVV
- * doi ten file sui_serde -> scalar_serde
- * Tags: SCALAR_SERDE
- */
+
+use crate::base_types::{AuthorityName, SuiAddress};
+use crate::committee::{Committee, EpochId, StakeUnit};
+use crate::error::{SuiError, SuiResult};
 use crate::scalar_serde::{Readable, SuiBitmap};
+use crate::signature::GenericSignature;
 pub use enum_dispatch::enum_dispatch;
 use fastcrypto::encoding::{Base64, Encoding, Hex};
 use fastcrypto::error::FastCryptoError;
@@ -244,14 +242,40 @@ pub enum PublicKey {
     Ed25519(Ed25519PublicKeyAsBytes),
     Secp256k1(Secp256k1PublicKeyAsBytes),
     Secp256r1(Secp256r1PublicKeyAsBytes),
+    ZkLogin(ZkLoginPublicIdentifier),
 }
 
+/// A wrapper struct to retrofit in [enum PublicKey] for zkLogin.
+/// Useful to construct [struct MultiSigPublicKey].
+#[derive(Clone, Debug, PartialEq, Eq, JsonSchema, Serialize, Deserialize)]
+pub struct ZkLoginPublicIdentifier(#[schemars(with = "Base64")] pub Vec<u8>);
+
+impl ZkLoginPublicIdentifier {
+    /// Consists of iss_bytes_len || iss_bytes || padded_32_byte_address_seed.
+    pub fn new(iss: &str, address_seed: &str) -> SuiResult<Self> {
+        let mut bytes = Vec::new();
+        let iss_bytes = iss.as_bytes();
+        bytes.extend([iss_bytes.len() as u8]);
+        bytes.extend(iss_bytes);
+
+        // pad 0 to make it 32 bytes.
+        let address_seed_bytes =
+            big_int_str_to_bytes(address_seed).map_err(|_| SuiError::InvalidAddress)?;
+        let mut padded = Vec::new();
+        padded.extend(vec![0; 32 - address_seed_bytes.len()]);
+        padded.extend(address_seed_bytes);
+        bytes.extend(padded.clone());
+
+        Ok(Self(bytes))
+    }
+}
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
         match self {
             PublicKey::Ed25519(pk) => &pk.0,
             PublicKey::Secp256k1(pk) => &pk.0,
             PublicKey::Secp256r1(pk) => &pk.0,
+            PublicKey::ZkLogin(z) => &z.0,
         }
     }
 }
@@ -320,6 +344,7 @@ impl PublicKey {
             PublicKey::Ed25519(_) => Ed25519SuiSignature::SCHEME,
             PublicKey::Secp256k1(_) => Secp256k1SuiSignature::SCHEME,
             PublicKey::Secp256r1(_) => Secp256r1SuiSignature::SCHEME,
+            PublicKey::ZkLogin(_) => SignatureScheme::ZkLoginAuthenticator,
         }
     }
 }
@@ -662,65 +687,6 @@ impl Signature {
         let mut hasher = DefaultHash::default();
         hasher.update(&bcs::to_bytes(&value).expect("Message serialization should not fail"));
         Signer::sign(secret, &hasher.finalize().digest)
-    }
-
-    /// Parse [enum CompressedSignature] from trait SuiSignature `flag || sig || pk`.
-    /// This is useful for the MultiSig to combine partial signature into a MultiSig public key.
-    pub fn to_compressed(&self) -> Result<CompressedSignature, SuiError> {
-        let bytes = self.signature_bytes();
-        match self.scheme() {
-            SignatureScheme::ED25519 => Ok(CompressedSignature::Ed25519(
-                (&Ed25519Signature::from_bytes(bytes).map_err(|_| SuiError::InvalidSignature {
-                    error: "Cannot parse sig".to_string(),
-                })?)
-                    .into(),
-            )),
-            SignatureScheme::Secp256k1 => Ok(CompressedSignature::Secp256k1(
-                (&Secp256k1Signature::from_bytes(bytes).map_err(|_| {
-                    SuiError::InvalidSignature {
-                        error: "Cannot parse sig".to_string(),
-                    }
-                })?)
-                    .into(),
-            )),
-            SignatureScheme::Secp256r1 => Ok(CompressedSignature::Secp256r1(
-                (&Secp256r1Signature::from_bytes(bytes).map_err(|_| {
-                    SuiError::InvalidSignature {
-                        error: "Cannot parse sig".to_string(),
-                    }
-                })?)
-                    .into(),
-            )),
-            _ => Err(SuiError::UnsupportedFeatureError {
-                error: "Unsupported signature scheme in MultiSig".to_string(),
-            }),
-        }
-    }
-
-    /// Parse [struct PublicKey] from trait SuiSignature `flag || sig || pk`.
-    /// This is useful for the MultiSig to construct the bitmap in [struct MultiPublicKey].
-    pub fn to_public_key(&self) -> Result<PublicKey, SuiError> {
-        let bytes = self.public_key_bytes();
-        match self.scheme() {
-            SignatureScheme::ED25519 => Ok(PublicKey::Ed25519(
-                (&Ed25519PublicKey::from_bytes(bytes)
-                    .map_err(|_| SuiError::KeyConversionError("Cannot parse pk".to_string()))?)
-                    .into(),
-            )),
-            SignatureScheme::Secp256k1 => Ok(PublicKey::Secp256k1(
-                (&Secp256k1PublicKey::from_bytes(bytes)
-                    .map_err(|_| SuiError::KeyConversionError("Cannot parse pk".to_string()))?)
-                    .into(),
-            )),
-            SignatureScheme::Secp256r1 => Ok(PublicKey::Secp256r1(
-                (&Secp256r1PublicKey::from_bytes(bytes)
-                    .map_err(|_| SuiError::KeyConversionError("Cannot parse pk".to_string()))?)
-                    .into(),
-            )),
-            _ => Err(SuiError::UnsupportedFeatureError {
-                error: "Unsupported signature scheme in MultiSig".to_string(),
-            }),
-        }
     }
 }
 
@@ -1678,13 +1644,13 @@ impl SignatureScheme {
         }
     }
 }
-
 /// Unlike [enum Signature], [enum CompressedSignature] does not contain public key.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
 pub enum CompressedSignature {
     Ed25519(Ed25519SignatureAsBytes),
     Secp256k1(Secp256k1SignatureAsBytes),
     Secp256r1(Secp256r1SignatureAsBytes),
+    ZkLogin(GenericSignature), // Rely on GenericSignature to handle serde. It can only be GenericSignature::ZkLoginAuthenticator.
 }
 
 impl AsRef<[u8]> for CompressedSignature {
@@ -1693,6 +1659,7 @@ impl AsRef<[u8]> for CompressedSignature {
             CompressedSignature::Ed25519(sig) => &sig.0,
             CompressedSignature::Secp256k1(sig) => &sig.0,
             CompressedSignature::Secp256r1(sig) => &sig.0,
+            CompressedSignature::ZkLogin(sig) => sig.as_ref(),
         }
     }
 }
@@ -1705,6 +1672,13 @@ impl FromStr for Signature {
 }
 
 impl FromStr for PublicKey {
+    type Err = eyre::Report;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::decode_base64(s).map_err(|e| eyre!("Fail to decode base64 {}", e.to_string()))
+    }
+}
+
+impl FromStr for GenericSignature {
     type Err = eyre::Report;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::decode_base64(s).map_err(|e| eyre!("Fail to decode base64 {}", e.to_string()))

@@ -325,7 +325,7 @@ impl std::error::Error for VMStatus {}
 
 pub mod known_locations {
     use crate::ident_str;
-    use crate::move_types::{
+    use move_core_types::{
         identifier::IdentStr,
         language_storage::{ModuleId, CORE_CODE_ADDRESS},
         vm_status::AbortLocation,

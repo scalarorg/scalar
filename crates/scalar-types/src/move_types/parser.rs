@@ -447,8 +447,8 @@ pub fn parse_address_number(s: &str) -> Option<([u8; AccountAddress::LENGTH], Nu
 
 #[cfg(test)]
 mod tests {
-    use crate::move_types::{account_address::AccountAddress, u256::U256};
-    use crate::move_types::{
+    use move_core_types::{account_address::AccountAddress, u256::U256};
+    use move_core_types::{
         address::{NumericalAddress, ParsedAddress},
         types::{ParsedStructType, ParsedType},
         values::ParsedValue,
@@ -501,7 +501,7 @@ mod tests {
                     AccountAddress::from_hex_literal("0x0")
                         .unwrap()
                         .into_bytes(),
-                    crate::move_types::parser::NumberFormat::Hex,
+                    move_core_types::parser::NumberFormat::Hex,
                 ))),
             ),
             (
@@ -510,7 +510,7 @@ mod tests {
                     AccountAddress::from_hex_literal("0x0")
                         .unwrap()
                         .into_bytes(),
-                    crate::move_types::parser::NumberFormat::Hex,
+                    move_core_types::parser::NumberFormat::Hex,
                 ))),
             ),
             (
@@ -519,7 +519,7 @@ mod tests {
                     AccountAddress::from_hex_literal("0x54afa3526")
                         .unwrap()
                         .into_bytes(),
-                    crate::move_types::parser::NumberFormat::Hex,
+                    move_core_types::parser::NumberFormat::Hex,
                 ))),
             ),
             (

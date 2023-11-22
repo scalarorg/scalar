@@ -21,6 +21,7 @@ use scalar_types::crypto::{
     AuthorityKeyPair, AuthorityPublicKeyBytes, AuthoritySignInfo, AuthoritySignInfoTrait,
     AuthoritySignature, DefaultHash, SuiAuthoritySignature,
 };
+use scalar_types::digests::ChainIdentifier;
 use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI, TransactionEvents};
 use scalar_types::epoch_data::EpochData;
 use scalar_types::gas::SuiGasStatus;
@@ -36,7 +37,9 @@ use scalar_types::metrics::LimitsMetrics;
 use scalar_types::object::{Object, Owner};
 use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use scalar_types::sui_system_state::{get_sui_system_state, SuiSystemState, SuiSystemStateTrait};
-use scalar_types::transaction::{CallArg, Command, InputObjectKind, InputObjects, Transaction};
+use scalar_types::transaction::{
+    CallArg, CheckedInputObjects, Command, InputObjectKind, ObjectReadResult, Transaction,
+};
 use scalar_types::{SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS};
 use shared_crypto::intent::{Intent, IntentMessage, IntentScope};
 use std::collections::{BTreeMap, HashSet};
@@ -161,10 +164,7 @@ impl Builder {
     pub fn unsigned_genesis_checkpoint(&self) -> Option<UnsignedGenesis> {
         self.built_genesis.clone()
     }
-    /*
-     * 23-11-06 TaiVV
-     * Comment out
-     */
+
     pub fn build_unsigned_genesis_checkpoint(&mut self) -> UnsignedGenesis {
         if let Some(built_genesis) = &self.built_genesis {
             return built_genesis.clone();
@@ -206,10 +206,6 @@ impl Builder {
     pub fn protocol_version(&self) -> ProtocolVersion {
         self.parameters.protocol_version
     }
-    /*
-     * 23-11-06 TaiVV
-     * Comment out
-     */
 
     pub fn build(mut self) -> Genesis {
         let UnsignedGenesis {
@@ -663,11 +659,6 @@ impl Builder {
     }
 }
 
-/*
- * 23-11-06 TaiVV
- * Move Sui (Move package) ra component doc lap (xu ly sau)
- * Tags: SCALAR_MOVE, SCALAR_PACKAGE
- */
 // Create a Genesis Txn Context to be used when generating genesis objects by hashing all of the
 // inputs into genesis ans using that as our "Txn Digest". This is done to ensure that coin objects
 // created between chains are unique
@@ -701,14 +692,13 @@ fn get_genesis_protocol_config(version: ProtocolVersion) -> ProtocolConfig {
     // We have a circular dependency here. Protocol config depends on chain ID, which
     // depends on genesis checkpoint (digest), which depends on genesis transaction, which
     // depends on protocol config.
-    // However since we know there are no chain specific protocol config options in genesis,
-    // we use Chain::Unknown here.
-    ProtocolConfig::get_for_version(version, Chain::Unknown)
+    //
+    // ChainIdentifier::default().chain() which can be overridden by the
+    // SUI_PROTOCOL_CONFIG_CHAIN_OVERRIDE if necessary (this is mainly used for compatibility tests
+    // in which we want to start a cluster that thinks it is mainnet).
+    ProtocolConfig::get_for_version(version, ChainIdentifier::default().chain())
 }
-/*
- * 23-11-06 TaiVV
- * Move Move package ra component rieng
- */
+
 fn build_unsigned_genesis_data(
     parameters: &GenesisCeremonyParameters,
     token_distribution_schedule: &TokenDistributionSchedule,
@@ -855,7 +845,7 @@ fn create_genesis_transaction(
         let certificate_deny_set = HashSet::new();
         let transaction_data = &genesis_transaction.data().intent_message().value;
         let (kind, signer, _) = transaction_data.execution_parts();
-        let input_objects = InputObjects::new(vec![]);
+        let input_objects = CheckedInputObjects::new_for_genesis(vec![]);
         let (inner_temp_store, effects, _execution_error) = executor
             .execute_transaction_to_effects(
                 &InMemoryStorage::new(Vec::new()),
@@ -887,10 +877,6 @@ fn create_genesis_transaction(
     (genesis_transaction, effects, events, objects)
 }
 
-/*
- * 23-11-06 TaiVV
- * Not include Move package
-**/
 fn create_genesis_objects(
     genesis_ctx: &mut TxContext,
     input_objects: &[Object],
@@ -982,9 +968,9 @@ fn process_package(
         .iter()
         .zip(dependency_objects)
         .filter_map(|(dependency, object)| {
-            Some((
+            Some(ObjectReadResult::new(
                 InputObjectKind::MovePackage(*dependency),
-                object?.to_owned(),
+                object?.clone().into(),
             ))
         })
         .collect();
@@ -1008,7 +994,7 @@ fn process_package(
         protocol_config,
         metrics,
         ctx,
-        InputObjects::new(loaded_dependencies),
+        CheckedInputObjects::new_for_genesis(loaded_dependencies),
         pt,
     )?;
 
@@ -1103,7 +1089,7 @@ pub fn generate_genesis_system_object(
         &protocol_config,
         metrics,
         genesis_ctx,
-        InputObjects::new(vec![]),
+        CheckedInputObjects::new_for_genesis(vec![]),
         pt,
     )?;
 
@@ -1127,15 +1113,15 @@ mod test {
     use crate::validator_info::ValidatorInfo;
     use crate::Builder;
     use fastcrypto::traits::KeyPair;
-    use scalar_config::genesis::*;
-    use scalar_config::local_ip_utils;
-    use scalar_config::node::DEFAULT_COMMISSION_RATE;
-    use scalar_config::node::DEFAULT_VALIDATOR_GAS_PRICE;
     use scalar_types::base_types::SuiAddress;
     use scalar_types::crypto::{
         generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
         NetworkKeyPair,
     };
+    use sui_config::genesis::*;
+    use sui_config::local_ip_utils;
+    use sui_config::node::DEFAULT_COMMISSION_RATE;
+    use sui_config::node::DEFAULT_VALIDATOR_GAS_PRICE;
 
     #[test]
     fn allocation_csv() {

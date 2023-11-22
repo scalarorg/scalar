@@ -9,7 +9,7 @@
  */
 
 use crate::ident_str;
-use crate::move_types::{
+use move_core_types::{
     account_address::AccountAddress, identifier::IdentStr, language_storage::StructTag,
 };
 // use move_binary_format::{binary_views::BinaryIndexedView, file_format::SignatureToken};
