@@ -14,6 +14,13 @@ use move_bytecode_utils::module_cache::GetModule;
 use move_core_types::annotated_value::{MoveStruct, MoveStructLayout};
 use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::StructTag;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
+use serde_with::serde_as;
+use serde_with::DisplayFromStr;
+
 use scalar_types::base_types::{
     ObjectDigest, ObjectID, ObjectInfo, ObjectRef, ObjectType, SequenceNumber, SuiAddress,
     TransactionDigest,
@@ -24,16 +31,10 @@ use scalar_types::error::{
 use scalar_types::gas_coin::GasCoin;
 use scalar_types::messages_checkpoint::CheckpointSequenceNumber;
 use scalar_types::move_package::{MovePackage, TypeOrigin, UpgradeInfo};
-use scalar_types::object::{Data, MoveObject, Object, ObjectFormatOptions, ObjectRead, Owner};
+use scalar_types::object::{Data, MoveObject, Object, ObjectRead, Owner};
 use scalar_types::scalar_serde::BigInt;
 use scalar_types::scalar_serde::SequenceNumber as AsSequenceNumber;
 use scalar_types::scalar_serde::SuiStructTag;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde::Serialize;
-use serde_json::Value;
-use serde_with::serde_as;
-use serde_with::DisplayFromStr;
 use sui_protocol_config::ProtocolConfig;
 
 use crate::{Page, SuiMoveStruct, SuiMoveValue};
@@ -94,9 +95,6 @@ impl PartialOrd for SuiObjectResponse {
 
 impl SuiObjectResponse {
     pub fn move_object_bcs(&self) -> Option<&Vec<u8>> {
-        /*
-         * 23-11-07 TaiVV
-         */
         match &self.data {
             Some(SuiObjectData {
                 bcs: Some(SuiRawData::MoveObject(obj)),
@@ -205,10 +203,6 @@ pub struct SuiObjectData {
     /// See more details in <https://forums.sui.io/t/nft-object-display-proposal/4872>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<DisplayFieldsResponse>,
-    /*
-     * 23-11-07 TaiVV
-     * Commnet out MOVE Language related
-     */
     /// Move object content or package content, default to be None unless SuiObjectDataOptions.showContent is set to true
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<SuiParsedData>,
@@ -278,10 +272,10 @@ impl Display for SuiObjectData {
                 previous_transaction
             )?;
         }
-        // if let Some(content) = self.content.as_ref() {
-        //     writeln!(writer, "{}", "----- Data -----".bold())?;
-        //     write!(writer, "{}", content)?;
-        // }
+        if let Some(content) = self.content.as_ref() {
+            writeln!(writer, "{}", "----- Data -----".bold())?;
+            write!(writer, "{}", content)?;
+        }
 
         write!(f, "{}", writer)
     }
@@ -503,9 +497,7 @@ impl
         } else {
             None
         };
-        /*
-         * 23-11-07 TaiVV move MOVE language part
-         */
+
         let bcs: Option<SuiRawData> = if show_bcs {
             let data = match o.data.clone() {
                 Data::Move(m) => {
@@ -699,10 +691,7 @@ impl From<ObjectRef> for SuiObjectRef {
         }
     }
 }
-/*
- * 23-11-07 TaiVV
- * Move to scalar-move/src/move_json_rpc_types/sui_move_object.rs
- */
+
 pub trait SuiData: Sized {
     type ObjectType;
     type PackageType;
@@ -851,10 +840,7 @@ impl SuiParsedData {
         }
     }
 }
-/*
- * 23-11-07 TaiVV
- * Move to scalar-move/src/move_json_rpc_types/sui_move_object.rs
- */
+
 pub trait SuiMoveObject: Sized {
     fn try_from_layout(object: MoveObject, layout: MoveStructLayout)
         -> Result<Self, anyhow::Error>;

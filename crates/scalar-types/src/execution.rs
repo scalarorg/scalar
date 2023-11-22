@@ -7,7 +7,6 @@
  * Tags: SCALAR_EXECUTION
  */
 
-use crate::move_types::{identifier::IdentStr, resolver::ResourceResolver};
 use crate::{
     base_types::{ObjectID, ObjectRef, SequenceNumber, SuiAddress},
     coin::Coin,
@@ -19,8 +18,8 @@ use crate::{
     storage::{BackingPackageStore, ChildObjectResolver, ObjectChange, StorageView},
     transfer::Receiving,
 };
-//use move_binary_format::file_format::AbilitySet;
-use crate::move_types::file_format::AbilitySet;
+use move_binary_format::file_format::AbilitySet;
+use move_core_types::{identifier::IdentStr, resolver::ResourceResolver};
 use move_vm_types::loaded_data::runtime_types::Type;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};

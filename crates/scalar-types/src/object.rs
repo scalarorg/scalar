@@ -1,35 +1,31 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-02 TaiVV
- * copy and modify from sui-types/src/object.rs
- * Tags: SCALAR_OBJECT, SCALAR_MOVE_LANGUAGE
- */
-
-use super::balance::Balance;
-use super::base_types::{MoveObjectType, ObjectIDParseError};
-use super::gas_coin::GAS;
-use crate::move_package::MovePackage;
-use crate::move_types::{
-    language_storage::{StructTag, TypeTag},
-    layout::TypeLayoutBuilder,
-    module_cache::GetModule,
-    value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue},
-};
-use move_binary_format::CompiledModule;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Formatter};
 use std::mem::size_of;
-// use move_bytecode_utils::layout::TypeLayoutBuilder;
-// use move_bytecode_utils::module_cache::GetModule;
 
+use move_binary_format::CompiledModule;
+use move_bytecode_utils::layout::TypeLayoutBuilder;
+use move_bytecode_utils::module_cache::GetModule;
+use move_core_types::annotated_value::{MoveStruct, MoveStructLayout, MoveTypeLayout, MoveValue};
+use move_core_types::language_storage::StructTag;
+use move_core_types::language_storage::TypeTag;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
+use serde_with::Bytes;
+
+use crate::balance::Balance;
+use crate::base_types::{MoveObjectType, ObjectIDParseError};
 use crate::coin::{Coin, CoinMetadata, TreasuryCap};
 use crate::crypto::{default_hash, deterministic_random_account_key};
 use crate::error::{ExecutionError, ExecutionErrorKind, UserInputError, UserInputResult};
 use crate::error::{SuiError, SuiResult};
+use crate::gas_coin::GAS;
 use crate::is_system_package;
+use crate::move_package::MovePackage;
 use crate::type_resolver::LayoutResolver;
 use crate::{
     base_types::{
@@ -37,10 +33,6 @@ use crate::{
     },
     gas_coin::GasCoin,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
-use serde_with::Bytes;
 use sui_protocol_config::ProtocolConfig;
 
 pub const GAS_VALUE_FOR_TESTING: u64 = 300_000_000_000_000;
@@ -51,8 +43,8 @@ pub const OBJECT_START_VERSION: SequenceNumber = SequenceNumber::from_u64(1);
 pub struct MoveObject {
     /// The type of this object. Immutable
     type_: MoveObjectType,
-    /// Determines if it is usable with the TransferObject command
-    /// Derived from the type_
+    /// DEPRECATED this field is no longer used to determine whether a tx can transfer this
+    /// object. Instead, it is always calculated from the objects type when loaded in execution
     has_public_transfer: bool,
     /// Number that increases each time a tx takes this object as a mutable input
     /// This is a lamport timestamp, not a sequentially increasing version
@@ -64,28 +56,6 @@ pub struct MoveObject {
 
 /// Index marking the end of the object's ID + the beginning of its version
 pub const ID_END_INDEX: usize = ObjectID::LENGTH;
-
-/// Different schemes for converting a Move value into a structured representation
-#[derive(Eq, PartialEq, Debug, Clone, Deserialize, Serialize, Hash)]
-pub struct ObjectFormatOptions {
-    /// If true, include the type of each object as well as its fields; e.g.:
-    /// `{ "fields": { "f": 20, "g": { "fields" { "h": true }, "type": "0x0::MyModule::MyNestedType" }, "type": "0x0::MyModule::MyType" }`
-    ///  If false, include field names only; e.g.:
-    /// `{ "f": 20, "g": { "h": true } }`
-    include_types: bool,
-}
-
-impl ObjectFormatOptions {
-    pub fn with_types() -> Self {
-        ObjectFormatOptions {
-            include_types: true,
-        }
-    }
-
-    pub fn include_types(&self) -> bool {
-        self.include_types
-    }
-}
 
 impl MoveObject {
     /// Creates a new Move object of type `type_` with BCS encoded bytes in `contents`
@@ -240,6 +210,10 @@ impl MoveObject {
         self.type_.is_coin()
     }
 
+    pub fn is_staked_sui(&self) -> bool {
+        self.type_.is_staked_sui()
+    }
+
     pub fn is_clock(&self) -> bool {
         self.type_.is(&crate::clock::Clock::type_())
     }
@@ -315,12 +289,6 @@ impl MoveObject {
     pub fn into_inner(self) -> (MoveObjectType, Vec<u8>) {
         (self.type_, self.contents)
     }
-    /*
-     * 2023-11-02 TaiVV
-     * Tam thoi comment out code lien quan toi Move
-     * Se add lai vao cac package doc lap xu ly Move logic
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
 
     /// Get a `MoveStructLayout` for `self`.
     /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
@@ -407,7 +375,7 @@ impl MoveObject {
                 *balances.entry(type_tag).or_insert(0) += balance;
             }
         } else {
-            let layout = layout_resolver.get_layout(self, ObjectFormatOptions::with_types())?;
+            let layout = layout_resolver.get_annotated_layout(self)?;
             let move_struct = self.to_move_struct(&layout)?;
             Self::get_coin_balances_in_struct(&move_struct, &mut balances, 0)?;
         }
@@ -481,23 +449,10 @@ impl MoveObject {
 pub enum Data {
     /// An object whose governing logic lives in a published Move module
     Move(MoveObject),
-    // Map from each module name to raw serialized Move module bytes
+    /// Map from each module name to raw serialized Move module bytes
     Package(MovePackage),
-    /*
-     * 2023-11-02 TaiVV
-     * Thay the Package(MovePackage) boi Package(String) de han che viec modify code
-     * 2023-11-03 reimport MovePackage
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
     // ... Sui "native" types go here
 }
-
-/*
- * 2023-11-02 TaiVV
- * Tam thoi comment out code lien quan toi Move
- * Se add lai vao cac package doc lap xu ly Move logic
- * Tags: SCALAR_MOVE_LANGUAGE
- */
 
 impl Data {
     pub fn try_as_move(&self) -> Option<&MoveObject> {
@@ -689,12 +644,6 @@ impl Object {
         self.is_package() && is_system_package(self.id())
     }
 
-    /*
-     * 2023-11-02 TaiVV
-     * Move code lien quan toi Move ra package rieng (xu ly sau)
-     * Tạo mới MovePackage
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
     /// Create a system package which is not subject to size limits. Panics if the object ID is not
     /// a known system package.
     pub fn new_system_package(
@@ -722,13 +671,6 @@ impl Object {
             storage_rebate: 0,
         }
     }
-
-    /*
-     * 2023-11-02 TaiVV
-     * Move code lien quan toi Move ra package rieng (xu ly sau)
-     * Tao moi MovePackage
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
 
     // Note: this will panic if `modules` is empty
     pub fn new_from_package(package: MovePackage, previous_transaction: TransactionDigest) -> Self {
@@ -909,12 +851,6 @@ impl Object {
     pub fn transfer(&mut self, new_owner: SuiAddress) {
         self.owner = Owner::AddressOwner(new_owner);
     }
-
-    /*
-     * 2023-11-02 TaiVV
-     * Move code lien quan toi Move ra package rieng (xu ly sau)
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
 
     /// Get a `MoveStructLayout` for `self`.
     /// The `resolver` value must contain the module that declares `self.type_` and the (transitive)
@@ -1161,14 +1097,6 @@ impl ObjectRead {
             Self::Deleted(oref) => oref.0,
             Self::NotExists(id) => *id,
             Self::Exists(oref, _, _) => oref.0,
-        }
-    }
-}
-
-impl Default for ObjectFormatOptions {
-    fn default() -> Self {
-        ObjectFormatOptions {
-            include_types: true,
         }
     }
 }

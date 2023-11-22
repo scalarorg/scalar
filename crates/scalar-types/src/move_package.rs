@@ -10,11 +10,6 @@
 
 use crate::execution_status::PackageUpgradeError;
 use crate::ident_str;
-use crate::move_types::{
-    account_address::AccountAddress,
-    identifier::{IdentStr, Identifier},
-    language_storage::{ModuleId, StructTag},
-};
 use crate::{
     base_types::{ObjectID, SequenceNumber},
     crypto::DefaultHash,
@@ -29,6 +24,11 @@ use move_binary_format::access::ModuleAccess;
 use move_binary_format::binary_views::BinaryIndexedView;
 use move_binary_format::file_format::CompiledModule;
 use move_binary_format::normalized;
+use move_core_types::{
+    account_address::AccountAddress,
+    identifier::{IdentStr, Identifier},
+    language_storage::{ModuleId, StructTag},
+};
 use move_disassembler::disassembler::Disassembler;
 use move_ir_types::location::Spanned;
 use schemars::JsonSchema;

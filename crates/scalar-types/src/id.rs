@@ -8,14 +8,15 @@
  * Tags: SCALAR_ID
  */
 
-use crate::move_types::{
-    account_address::AccountAddress,
-    language_storage::{StructTag, TypeTag},
-    value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout},
-};
 use crate::MoveTypeTagTrait;
 use crate::{base_types::ObjectID, SUI_FRAMEWORK_ADDRESS};
-use crate::{ident_str, identifier::IdentStr};
+use move_core_types::{
+    account_address::AccountAddress,
+    annotated_value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout},
+    ident_str,
+    identifier::IdentStr,
+    language_storage::{StructTag, TypeTag},
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

@@ -54,8 +54,8 @@ mysten-common.workspace = true
 mysten-network.workspace = true
 telemetry-subscribers.workspace = true
 typed-store-derive.workspace = true
+typed-store-error.workspace = true
 typed-store.workspace = true
-
 mysten-metrics.workspace = true
 narwhal-config.workspace = true
 narwhal-crypto.workspace = true
@@ -78,7 +78,7 @@ scalar-network.workspace = true
 sui-protocol-config.workspace = true
 
 scalar-archival.workspace = true
-#scalar-simulator.workspace = true
+sui-simulator.workspace = true
 scalar-storage.workspace = true
 scalar-framework.workspace = true
 scalar-config.workspace = true
@@ -88,6 +88,8 @@ scalar-types.workspace = true
 scalar-transaction-checks.workspace = true
 scalar-json-rpc-types.workspace = true
 workspace-hack.workspace = true
+zeroize.workspace = true
+mysticeti-core = { git = "https://github.com/MystenLabs/mysticeti", rev = "318d61d27f47d257d99a86983d835e9e9756bc59" }
 
 [dev-dependencies]
 clap.workspace = true

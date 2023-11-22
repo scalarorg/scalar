@@ -21,7 +21,7 @@ use json_to_table::json_to_table;
 use tabled::settings::Style as TableStyle;
 
 use crate::{type_and_fields_from_move_struct, Page};
-use scalar_types::sui_serde::SuiStructTag;
+use scalar_types::scalar_serde::SuiStructTag;
 pub type EventPage = Page<SuiEvent, EventID>;
 
 #[serde_as]

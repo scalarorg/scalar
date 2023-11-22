@@ -1,19 +1,12 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-06 TaiVV
- * copy and modify from sui-types/src/messages_grpc.rs
- * Dinh nghia cac struct phuc vu qua trinh giao tiep giua ScalarGrpc Server va external grpc client
- * Tags: SCALAR_GRPC, SCALAR_MESSAGE
- */
-
 use crate::base_types::{ObjectID, SequenceNumber, TransactionDigest};
 use crate::crypto::{AuthoritySignInfo, AuthorityStrongQuorumSignInfo};
 use crate::effects::{
     SignedTransactionEffects, TransactionEvents, VerifiedSignedTransactionEffects,
 };
-use crate::object::{Object, ObjectFormatOptions};
+use crate::object::Object;
 use crate::transaction::{SenderSignedData, SignedTransaction};
 use move_core_types::annotated_value::MoveStructLayout;
 use serde::{Deserialize, Serialize};
@@ -35,6 +28,7 @@ pub enum LayoutGenerationOption {
     Generate,
     None,
 }
+
 /// A request for information about an object and optionally its
 /// parent certificate at a specific version.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]

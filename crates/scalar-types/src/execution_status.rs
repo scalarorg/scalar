@@ -7,10 +7,9 @@
  * Tags: SCALAR_EXECUTION
  */
 
-use crate::move_types::language_storage::ModuleId;
 use crate::ObjectID;
-//use move_binary_format::file_format::{CodeOffset, TypeParameterIndex};
-use crate::move_types::file_format::CodeOffset;
+use move_binary_format::file_format::{CodeOffset, TypeParameterIndex};
+use move_core_types::language_storage::ModuleId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use sui_macros::EnumVariantOrder;

@@ -8,11 +8,11 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use crate::move_types::{
+use fastcrypto::encoding::Hex;
+use move_core_types::{
     account_address::AccountAddress,
     language_storage::{StructTag, TypeTag},
 };
-use fastcrypto::encoding::Hex;
 use schemars::JsonSchema;
 use serde;
 use serde::de::{Deserializer, Error};

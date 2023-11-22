@@ -31,7 +31,7 @@ mysten-metrics.workspace = true
 scalar-types.workspace = true
 scalar-json.workspace = true
 workspace-hack.workspace = true
-move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-utils" }
+move-bytecode-utils.workspace = true
 
 [dev-dependencies]
 scalar-types = { workspace = true, features = ["test-utils"] }

@@ -6,13 +6,13 @@ use crate::network_config::NetworkConfig;
 use fastcrypto::encoding::{Encoding, Hex};
 use fastcrypto::traits::KeyPair;
 use narwhal_config::{NetworkAdminServerParameters, PrometheusMetricsParameters};
-use scalar_config::node::default_zklogin_oauth_providers;
 use scalar_config::node::{
     default_enable_index_processing, default_end_of_epoch_broadcast_channel_capacity,
     AuthorityKeyPairWithPath, AuthorityStorePruningConfig, DBCheckpointConfig,
     ExpensiveSafetyCheckConfig, Genesis, KeyPairWithPath, StateArchiveConfig, StateSnapshotConfig,
     DEFAULT_GRPC_CONCURRENCY_LIMIT,
 };
+use scalar_config::node::{default_zklogin_oauth_providers, ConsensusProtocol};
 use scalar_config::p2p::{P2pConfig, SeedPeer};
 use scalar_config::{
     local_ip_utils, ConsensusConfig, NodeConfig, AUTHORITIES_DB_NAME, CONSENSUS_DB_NAME,
@@ -90,6 +90,7 @@ impl ValidatorConfigBuilder {
             max_pending_transactions: None,
             max_submit_position: None,
             submit_delay_step_override_millis: None,
+            protocol: ConsensusProtocol::Narwhal,
             narwhal_config: narwhal_config::Parameters {
                 network_admin_server: NetworkAdminServerParameters {
                     primary_network_admin_server_port: local_ip_utils::get_available_port(

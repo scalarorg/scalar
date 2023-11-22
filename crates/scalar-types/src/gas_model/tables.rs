@@ -13,8 +13,8 @@ use std::collections::BTreeMap;
 
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 
-use crate::move_types::language_storage::ModuleId;
 use move_core_types::gas_algebra::{AbstractMemorySize, InternalGas, NumArgs, NumBytes};
+use move_core_types::language_storage::ModuleId;
 
 use move_core_types::vm_status::StatusCode;
 #[cfg(debug_assertions)]

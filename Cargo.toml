@@ -268,6 +268,7 @@ insta = { version = "1.21.1", features = ["redactions", "yaml", "json"] }
 integer-encoding = "3.0.1"
 
 json_to_table = { git = "https://github.com/zhiburt/tabled/", rev = "e449317a1c02eb6b29e409ad6617e5d9eb7b3bd4" }
+leb128 = "0.2.5"
 linked-hash-map = "0.5.6"
 lru = "0.12"
 mockall = "0.11.4"
@@ -376,6 +377,7 @@ tracing-subscriber = { version = "0.3.15", default-features = false, features = 
   "env-filter",
 ] }
 zstd = "0.12.3"
+zeroize = "1.6.0"
 url = "2.3.1"
 uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 
@@ -406,6 +408,7 @@ scalar-genesis-builder = { path = "crates/scalar-genesis-builder" }
 scalar-swarm-config = { path = "crates/scalar-swarm-config" }
 scalar-archival = { path = "crates/scalar-archival" }
 scalar-storage = { path = "crates/scalar-storage" }
+#scalar-simulator = { path = "crates/scalar-simulator" }
 scalar-json = { path = "crates/scalar-json" }
 scalar-json-rpc = { path = "crates/scalar-json-rpc" }
 scalar-json-rpc-types = { path = "crates/scalar-json-rpc-types" }
@@ -490,12 +493,16 @@ move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca
 move-command-line-common = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-command-line-common" }
 move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-utils" }
 move-package = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-package" }
+move-vm-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-config " }
 move-ir-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-ir-types" }
 move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-symbol-pool" }
 move-disassembler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-disassembler" }
 move-bytecode-source-map = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-source-map" }
 move-coverage = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-coverage" }
 move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-compiler" }
+
+# For execution
+move-bytecode-verifier = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier" }
 
 # 23-11-08 TaiVV
 # For Reth itegration

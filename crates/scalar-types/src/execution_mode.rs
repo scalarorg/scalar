@@ -9,7 +9,7 @@
  * Tags: SCALAR_EXECUTION
  */
 
-use crate::move_types::language_storage::TypeTag;
+use move_core_types::language_storage::TypeTag;
 
 use crate::{
     error::ExecutionError,

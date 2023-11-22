@@ -40,3 +40,4 @@ sui-macros.workspace = true
 
 [target.'cfg(msim)'.dependencies]
 sui-simulator.workspace = true
+#scalar-simulator.workspace = true

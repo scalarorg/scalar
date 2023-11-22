@@ -49,6 +49,7 @@ pub mod multisig_legacy;
 pub mod object;
 pub mod programmable_transaction_builder;
 pub mod quorum_driver_types;
+pub mod randomness_state;
 pub mod scalar_serde;
 pub mod signature;
 pub mod storage;
@@ -68,10 +69,10 @@ use base_types::{ObjectID, SequenceNumber, SuiAddress};
 use move_binary_format::binary_views::BinaryIndexedView;
 use move_binary_format::file_format::{AbilitySet, SignatureToken};
 use move_bytecode_utils::resolve_struct;
-pub use move_types::ident_str;
-pub use move_types::{
+
+pub use move_core_types::{
     account_address::AccountAddress,
-    identifier,
+    ident_str, identifier,
     language_storage::{StructTag, TypeTag},
 };
 pub use mysten_network::multiaddr;

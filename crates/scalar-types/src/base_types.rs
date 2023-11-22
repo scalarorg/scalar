@@ -33,15 +33,13 @@ use crate::gas_coin::GAS;
 use crate::governance::StakedSui;
 use crate::governance::STAKED_SUI_STRUCT_NAME;
 use crate::governance::STAKING_POOL_MODULE_NAME;
-use crate::ident_str;
-use crate::identifier::IdentStr;
 use crate::messages_checkpoint::CheckpointTimestamp;
-use crate::move_types::account_address::AccountAddress;
-use crate::move_types::language_storage::{ModuleId, StructTag, TypeTag};
 use crate::multisig::MultiSigPublicKey;
+use crate::multisig_legacy::MultiSigPublicKeyLegacy;
 use crate::object::{Object, Owner};
 use crate::parse_sui_struct_tag;
-use crate::scalar_serde::{to_sui_struct_tag_string, HexAccountAddress, Readable};
+use crate::scalar_serde::Readable;
+use crate::scalar_serde::{to_sui_struct_tag_string, HexAccountAddress};
 use crate::signature::GenericSignature;
 use crate::transaction::Transaction;
 use crate::transaction::VerifiedTransaction;
@@ -56,18 +54,15 @@ use fastcrypto::encoding::{Encoding, Hex};
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::AllowedRng;
 use fastcrypto_zkp::bn254::utils::big_int_str_to_bytes;
-
-/*
- * 2023-11-02 TaiVV
- * Tam thoi comment out code lien quan toi Move
- * Se add lai vao cac package doc lap xu ly Move logic
- * Tags: SCALAR_MOVE_LANGUAGE
- */
-
 use move_binary_format::binary_views::BinaryIndexedView;
 use move_binary_format::file_format::SignatureToken;
 use move_bytecode_utils::resolve_struct;
-
+use move_core_types::account_address::AccountAddress;
+use move_core_types::ident_str;
+use move_core_types::identifier::IdentStr;
+use move_core_types::language_storage::ModuleId;
+use move_core_types::language_storage::StructTag;
+use move_core_types::language_storage::TypeTag;
 use rand::Rng;
 use schemars::JsonSchema;
 use serde::ser::Error;
@@ -322,6 +317,17 @@ impl MoveObjectType {
         }
     }
 
+    pub fn try_extract_field_value(&self) -> SuiResult<TypeTag> {
+        match &self.0 {
+            MoveObjectType_::GasCoin | MoveObjectType_::StakedSui | MoveObjectType_::Coin(_) => {
+                Err(SuiError::ObjectDeserializationError {
+                    error: "Error extracting dynamic object value from Coin object".to_string(),
+                })
+            }
+            MoveObjectType_::Other(s) => DynamicFieldInfo::try_extract_field_value(s),
+        }
+    }
+
     pub fn is(&self, s: &StructTag) -> bool {
         match &self.0 {
             MoveObjectType_::GasCoin => GasCoin::is_gas_coin(s),
@@ -400,13 +406,6 @@ impl TryFrom<ObjectType> for StructTag {
         }
     }
 }
-
-/*
- * 2023-11-02 TaiVV
- * Tam thoi comment out code lien quan toi Move
- * Se add lai vao cac package doc lap xu ly Move logic
- * Tags: SCALAR_MOVE_LANGUAGE
- */
 
 impl FromStr for ObjectType {
     type Err = anyhow::Error;
@@ -631,30 +630,24 @@ impl From<&PublicKey> for SuiAddress {
     }
 }
 
-/*
- * 2023-11-02 TaiVV
- * Khong support deprecated version MultiSig Legacy
- * Tags: SCALAR_TYPES, SCALAR_MULTISIG
- */
-
-// impl From<&MultiSigPublicKeyLegacy> for SuiAddress {
-//     /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
-//     /// is defined as the 32-byte Blake2b hash of serializing the flag, the
-//     /// threshold, concatenation of all n flag, public keys and
-//     /// its weight. `flag_MultiSig || threshold || flag_1 || pk_1 || weight_1
-//     /// || ... || flag_n || pk_n || weight_n`.
-//     fn from(multisig_pk: &MultiSigPublicKeyLegacy) -> Self {
-//         let mut hasher = DefaultHash::default();
-//         hasher.update([SignatureScheme::MultiSig.flag()]);
-//         hasher.update(multisig_pk.threshold().to_le_bytes());
-//         multisig_pk.pubkeys().iter().for_each(|(pk, w)| {
-//             hasher.update([pk.flag()]);
-//             hasher.update(pk.as_ref());
-//             hasher.update(w.to_le_bytes());
-//         });
-//         SuiAddress(hasher.finalize().digest)
-//     }
-// }
+impl From<&MultiSigPublicKeyLegacy> for SuiAddress {
+    /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
+    /// is defined as the 32-byte Blake2b hash of serializing the flag, the
+    /// threshold, concatenation of all n flag, public keys and
+    /// its weight. `flag_MultiSig || threshold || flag_1 || pk_1 || weight_1
+    /// || ... || flag_n || pk_n || weight_n`.
+    fn from(multisig_pk: &MultiSigPublicKeyLegacy) -> Self {
+        let mut hasher = DefaultHash::default();
+        hasher.update([SignatureScheme::MultiSig.flag()]);
+        hasher.update(multisig_pk.threshold().to_le_bytes());
+        multisig_pk.pubkeys().iter().for_each(|(pk, w)| {
+            hasher.update([pk.flag()]);
+            hasher.update(pk.as_ref());
+            hasher.update(w.to_le_bytes());
+        });
+        SuiAddress(hasher.finalize().digest)
+    }
+}
 
 impl From<&MultiSigPublicKey> for SuiAddress {
     /// Derive a SuiAddress from [struct MultiSigPublicKey]. A MultiSig address
@@ -662,6 +655,9 @@ impl From<&MultiSigPublicKey> for SuiAddress {
     /// threshold, concatenation of all n flag, public keys and
     /// its weight. `flag_MultiSig || threshold || flag_1 || pk_1 || weight_1
     /// || ... || flag_n || pk_n || weight_n`.
+    ///
+    /// When flag_i is ZkLogin, pk_i refers to [struct ZkLoginPublicIdentifier]
+    /// derived from padded address seed in bytes and iss.
     fn from(multisig_pk: &MultiSigPublicKey) -> Self {
         let mut hasher = DefaultHash::default();
         hasher.update([SignatureScheme::MultiSig.flag()]);
@@ -676,8 +672,7 @@ impl From<&MultiSigPublicKey> for SuiAddress {
 }
 
 /// Sui address for [struct ZkLoginAuthenticator] is defined as the black2b hash of
-/// [zklogin_flag || iss_bytes_length || iss_bytes || address_seed in bytes] where
-/// AddressParams contains iss and aud string.
+/// [zklogin_flag || iss_bytes_length || iss_bytes || address_seed in bytes].
 impl TryFrom<&ZkLoginAuthenticator> for SuiAddress {
     type Error = SuiError;
     fn try_from(authenticator: &ZkLoginAuthenticator) -> SuiResult<Self> {
@@ -710,7 +705,7 @@ impl TryFrom<&GenericSignature> for SuiAddress {
                 Ok(SuiAddress::from(&pub_key))
             }
             GenericSignature::MultiSig(ms) => Ok(ms.get_pk().into()),
-            //GenericSignature::MultiSigLegacy(ms) => Ok(ms.get_pk().into()),
+            GenericSignature::MultiSigLegacy(ms) => Ok(ms.get_pk().into()),
             GenericSignature::ZkLoginAuthenticator(zklogin) => zklogin.try_into(),
         }
     }
@@ -888,12 +883,6 @@ impl TxContext {
             ids_created: 0,
         }
     }
-    /*
-     * 2023-11-02 TaiVV
-     * Tam thoi comment out code lien quan toi Move
-     * Se add lai vao cac package doc lap xu ly Move logic
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
 
     /// Returns whether the type signature is &mut TxContext, &TxContext, or none of the above.
     pub fn kind(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> TxContextKind {

@@ -10,10 +10,11 @@
  * Tags: SCALAR_TRANSACTION_BUILDER
  */
 
-use crate::move_types::language_storage::TypeTag;
-use crate::{ident_str, identifier::Identifier, move_package::PACKAGE_MODULE_NAME};
+use crate::{ident_str, move_package::PACKAGE_MODULE_NAME};
 use anyhow::Context;
 use indexmap::IndexMap;
+use move_core_types::identifier::Identifier;
+use move_core_types::language_storage::TypeTag;
 use serde::Serialize;
 
 use crate::{
