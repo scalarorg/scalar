@@ -8,54 +8,56 @@ mod checked {
 
     use move_binary_format::CompiledModule;
     use move_vm_runtime::move_vm::MoveVM;
-    use std::{collections::HashSet, sync::Arc};
-    use sui_types::balance::{
+    use scalar_types::balance::{
         BALANCE_CREATE_REWARDS_FUNCTION_NAME, BALANCE_DESTROY_REBATES_FUNCTION_NAME,
         BALANCE_MODULE_NAME,
     };
-    use sui_types::execution_mode::{self, ExecutionMode};
-    use sui_types::gas_coin::GAS;
-    use sui_types::metrics::LimitsMetrics;
-    use sui_types::object::OBJECT_START_VERSION;
-    use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+    use scalar_types::execution_mode::{self, ExecutionMode};
+    use scalar_types::gas_coin::GAS;
+    use scalar_types::metrics::LimitsMetrics;
+    use scalar_types::object::OBJECT_START_VERSION;
+    use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+    use std::{collections::HashSet, sync::Arc};
     use tracing::{info, instrument, trace, warn};
 
     use crate::programmable_transactions;
     use crate::type_layout_resolver::TypeLayoutResolver;
     use crate::{gas_charger::GasCharger, temporary_store::TemporaryStore};
     use move_binary_format::access::ModuleAccess;
-    use sui_protocol_config::{check_limit_by_meter, LimitThresholdCrossed, ProtocolConfig};
-    use sui_types::authenticator_state::{
+    use scalar_types::authenticator_state::{
         AUTHENTICATOR_STATE_CREATE_FUNCTION_NAME, AUTHENTICATOR_STATE_EXPIRE_JWKS_FUNCTION_NAME,
         AUTHENTICATOR_STATE_MODULE_NAME, AUTHENTICATOR_STATE_UPDATE_FUNCTION_NAME,
     };
-    use sui_types::clock::{CLOCK_MODULE_NAME, CONSENSUS_COMMIT_PROLOGUE_FUNCTION_NAME};
-    use sui_types::committee::EpochId;
-    use sui_types::effects::TransactionEffects;
-    use sui_types::error::{ExecutionError, ExecutionErrorKind};
-    use sui_types::execution::is_certificate_denied;
-    use sui_types::execution_status::ExecutionStatus;
-    use sui_types::gas::GasCostSummary;
-    use sui_types::gas::SuiGasStatus;
-    use sui_types::inner_temporary_store::InnerTemporaryStore;
-    use sui_types::messages_consensus::ConsensusCommitPrologue;
-    use sui_types::storage::BackingStore;
+    use scalar_types::clock::{CLOCK_MODULE_NAME, CONSENSUS_COMMIT_PROLOGUE_FUNCTION_NAME};
+    use scalar_types::committee::EpochId;
+    use scalar_types::effects::TransactionEffects;
+    use scalar_types::error::{ExecutionError, ExecutionErrorKind};
+    use scalar_types::execution::is_certificate_denied;
+    use scalar_types::execution_status::ExecutionStatus;
+    use scalar_types::gas::GasCostSummary;
+    use scalar_types::gas::SuiGasStatus;
+    use scalar_types::inner_temporary_store::InnerTemporaryStore;
+    use scalar_types::messages_consensus::ConsensusCommitPrologue;
+    use scalar_types::storage::BackingStore;
     #[cfg(msim)]
-    use sui_types::sui_system_state::advance_epoch_result_injection::maybe_modify_result;
-    use sui_types::sui_system_state::{AdvanceEpochParams, ADVANCE_EPOCH_SAFE_MODE_FUNCTION_NAME};
-    use sui_types::transaction::CheckedInputObjects;
-    use sui_types::transaction::{
+    use scalar_types::sui_system_state::advance_epoch_result_injection::maybe_modify_result;
+    use scalar_types::sui_system_state::{
+        AdvanceEpochParams, ADVANCE_EPOCH_SAFE_MODE_FUNCTION_NAME,
+    };
+    use scalar_types::transaction::CheckedInputObjects;
+    use scalar_types::transaction::{
         Argument, AuthenticatorStateExpire, AuthenticatorStateUpdate, CallArg, ChangeEpoch,
         Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg, ProgrammableTransaction,
         TransactionKind,
     };
-    use sui_types::{
+    use scalar_types::{
         base_types::{ObjectRef, SuiAddress, TransactionDigest, TxContext},
         object::Object,
         sui_system_state::{ADVANCE_EPOCH_FUNCTION_NAME, SUI_SYSTEM_MODULE_NAME},
         SUI_AUTHENTICATOR_STATE_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI_FRAMEWORK_PACKAGE_ID,
         SUI_SYSTEM_PACKAGE_ID,
     };
+    use sui_protocol_config::{check_limit_by_meter, LimitThresholdCrossed, ProtocolConfig};
 
     #[instrument(name = "tx_execute_to_effects", level = "debug", skip_all)]
     pub fn execute_transaction_to_effects<Mode: ExecutionMode>(
@@ -341,7 +343,7 @@ mod checked {
         is_genesis_tx: bool,
         advance_epoch_gas_summary: Option<(u64, u64)>,
     ) -> Result<(), ExecutionError> {
-        let mut result: std::result::Result<(), sui_types::error::ExecutionError> = Ok(());
+        let mut result: std::result::Result<(), scalar_types::error::ExecutionError> = Ok(());
         if !is_genesis_tx && !Mode::skip_conservation_checks() {
             // ensure that this transaction did not create or destroy SUI, try to recover if the check fails
             let conservation_result = {
@@ -516,7 +518,7 @@ mod checked {
 
                 for genesis_object in objects {
                     match genesis_object {
-                        sui_types::transaction::GenesisObject::RawObject { data, owner } => {
+                        scalar_types::transaction::GenesisObject::RawObject { data, owner } => {
                             let object = Object {
                                 data,
                                 owner,

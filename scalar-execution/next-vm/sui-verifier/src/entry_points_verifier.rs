@@ -8,7 +8,7 @@ use move_binary_format::{
     CompiledModule,
 };
 use move_bytecode_utils::format_signature_token;
-use sui_types::{
+use scalar_types::{
     base_types::{TxContext, TxContextKind, TX_CONTEXT_MODULE_NAME, TX_CONTEXT_STRUCT_NAME},
     clock::Clock,
     error::ExecutionError,

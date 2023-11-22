@@ -12,7 +12,7 @@ use move_binary_format::{
     binary_views::BinaryIndexedView,
     file_format::{CompiledModule, SignatureToken},
 };
-use sui_types::{
+use scalar_types::{
     error::ExecutionError,
     fp_ensure,
     id::{OBJECT_MODULE_NAME, UID_STRUCT_NAME},

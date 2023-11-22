@@ -10,12 +10,7 @@ use move_vm_types::{
     loaded_data::runtime_types::Type,
     values::{GlobalValue, StructRef, Value},
 };
-use std::{
-    collections::{btree_map, BTreeMap},
-    sync::Arc,
-};
-use sui_protocol_config::{check_limit_by_meter, LimitThresholdCrossed};
-use sui_types::{
+use scalar_types::{
     base_types::{MoveObjectType, ObjectID, SequenceNumber},
     committee::EpochId,
     error::VMMemoryLimitExceededSubStatusCode,
@@ -24,6 +19,11 @@ use sui_types::{
     object::{Data, MoveObject, Object, Owner},
     storage::ChildObjectResolver,
 };
+use std::{
+    collections::{btree_map, BTreeMap},
+    sync::Arc,
+};
+use sui_protocol_config::{check_limit_by_meter, LimitThresholdCrossed};
 
 use super::get_all_uids;
 pub(super) struct ChildObject {

@@ -1,15 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-03 TaiVV
- * copy and modify from sui-types/src/move_package.rs
- * Chi giu lai phan nho su dung trong cac module khac
- * Tags: SCALAR_MOVE_LANGUAGE
- */
-
 use crate::execution_status::PackageUpgradeError;
-use crate::ident_str;
 use crate::{
     base_types::{ObjectID, SequenceNumber},
     crypto::DefaultHash,
@@ -24,10 +16,12 @@ use move_binary_format::access::ModuleAccess;
 use move_binary_format::binary_views::BinaryIndexedView;
 use move_binary_format::file_format::CompiledModule;
 use move_binary_format::normalized;
+use move_core_types::language_storage::ModuleId;
 use move_core_types::{
     account_address::AccountAddress,
+    ident_str,
     identifier::{IdentStr, Identifier},
-    language_storage::{ModuleId, StructTag},
+    language_storage::StructTag,
 };
 use move_disassembler::disassembler::Disassembler;
 use move_ir_types::location::Spanned;
@@ -249,12 +243,6 @@ impl MovePackage {
         digest.finalize().digest
     }
 
-    /*
-     * 2023-11-03 TaiVV
-     * Create Move package tu compiledModule
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
-
     /// Create an initial version of the package along with this version's type origin and linkage
     /// tables.
     pub fn new_initial<'p>(
@@ -394,7 +382,7 @@ impl MovePackage {
             linkage_table,
         )
     }
-    /******** */
+
     // Retrieve the module with `ModuleId` in the given package.
     // The module must be the `storage_id` or the call will return `None`.
     // Check if the address of the module is the same of the package
@@ -478,11 +466,7 @@ impl MovePackage {
     pub fn linkage_table(&self) -> &BTreeMap<ObjectID, UpgradeInfo> {
         &self.linkage_table
     }
-    /*
-     * 2023-11-03 TaiVV
-     * Lay package id tu module address
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
+
     /// The ObjectID that this package's modules believe they are from, at runtime (can differ from
     /// `MovePackage::id()` in the case of package upgrades).
     pub fn original_package_id(&self) -> ObjectID {
@@ -491,11 +475,7 @@ impl MovePackage {
             .expect("A Move package contains a module that cannot be deserialized");
         (*module.address()).into()
     }
-    /*
-     * 2023-11-03 TaiVV
-     * Deserialize module
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
+
     pub fn deserialize_module(
         &self,
         module: &Identifier,
@@ -518,11 +498,7 @@ impl MovePackage {
             error: error.to_string(),
         })
     }
-    /*
-     * 2023-11-08 TaiVV
-     * Comment out disassemble function
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
+
     pub fn disassemble(&self) -> SuiResult<BTreeMap<String, Value>> {
         disassemble_modules(self.module_map.values())
     }
@@ -593,17 +569,17 @@ impl UpgradeReceipt {
     }
 }
 
-// /// Checks if a function is annotated with one of the test-related annotations
-// pub fn is_test_fun(name: &IdentStr, module: &CompiledModule, fn_info_map: &FnInfoMap) -> bool {
-//     let fn_name = name.to_string();
-//     let mod_handle = module.self_handle();
-//     let mod_addr = *module.address_identifier_at(mod_handle.address);
-//     let fn_info_key = FnInfoKey { fn_name, mod_addr };
-//     match fn_info_map.get(&fn_info_key) {
-//         Some(fn_info) => fn_info.is_test,
-//         None => false,
-//     }
-// }
+/// Checks if a function is annotated with one of the test-related annotations
+pub fn is_test_fun(name: &IdentStr, module: &CompiledModule, fn_info_map: &FnInfoMap) -> bool {
+    let fn_name = name.to_string();
+    let mod_handle = module.self_handle();
+    let mod_addr = *module.address_identifier_at(mod_handle.address);
+    let fn_info_key = FnInfoKey { fn_name, mod_addr };
+    match fn_info_map.get(&fn_info_key) {
+        Some(fn_info) => fn_info.is_test,
+        None => false,
+    }
+}
 
 pub fn disassemble_modules<'a, I>(modules: I) -> SuiResult<BTreeMap<String, Value>>
 where
@@ -634,11 +610,6 @@ where
     Ok(disassembled)
 }
 
-/*
- * 2023-11-03 TaiVV
- * Chua hieu y nghia cua module's normalization
- * Tags: SCALAR_MOVE_LANGUAGE
- */
 pub fn normalize_modules<'a, I>(
     modules: I,
     max_binary_format_version: u32,

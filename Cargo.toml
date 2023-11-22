@@ -222,6 +222,7 @@ backoff = { version = "0.4.0", features = [
 base64 = "0.21.2"
 base64-url = "2"
 bcs = { version = "0.1", default-features = false }
+better_any = "0.1.1"
 bincode = "1.3.3"
 bip32 = "0.4.0"
 byteorder = "1.4.3"
@@ -326,6 +327,7 @@ serde_with = { version = "2.1.0", features = ["hex"] }
 serde_yaml = "0.8.26"
 signature = "1.6.0"
 slip10_ed25519 = "0.1.3"
+smallvec = "1.10.0"
 snap = "1.1.0"
 static_assertions = "1.1.0"
 structopt = "0.3.26"
@@ -493,7 +495,7 @@ move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca
 move-command-line-common = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-command-line-common" }
 move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-utils" }
 move-package = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-package" }
-move-vm-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-config " }
+move-vm-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-config" }
 move-ir-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-ir-types" }
 move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-symbol-pool" }
 move-disassembler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-disassembler" }
@@ -503,7 +505,9 @@ move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6a
 
 # For execution
 move-bytecode-verifier = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier" }
-
+move-vm-runtime = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime" }
+move-stdlib = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-stdlib" }
+move-abstract-stack = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-abstract-stack" }
 # 23-11-08 TaiVV
 # For Reth itegration
 # Copy from Reth repository = "https://github.com/paradigmxyz/reth"

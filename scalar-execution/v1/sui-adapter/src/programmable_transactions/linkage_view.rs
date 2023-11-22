@@ -13,8 +13,8 @@ use move_core_types::{
     language_storage::{ModuleId, StructTag},
     resolver::{LinkageResolver, ModuleResolver, ResourceResolver},
 };
-use sui_types::storage::{get_module, PackageObjectArc};
-use sui_types::{
+use scalar_types::storage::{get_module, PackageObjectArc};
+use scalar_types::{
     base_types::ObjectID,
     error::{ExecutionError, SuiError, SuiResult},
     execution::SuiResolver,

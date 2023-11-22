@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[macro_use]
-extern crate sui_types;
+extern crate scalar_types;
 
 pub mod adapter;
 pub mod error;

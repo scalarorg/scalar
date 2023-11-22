@@ -6,23 +6,19 @@ use move_core_types::account_address::AccountAddress;
 use move_core_types::language_storage::StructTag;
 use move_core_types::resolver::ResourceResolver;
 use parking_lot::RwLock;
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::ops::Deref;
-use std::sync::Arc;
-use sui_protocol_config::ProtocolConfig;
-use sui_types::base_types::VersionDigest;
-use sui_types::committee::EpochId;
-use sui_types::digests::ObjectDigest;
-use sui_types::effects::{TransactionEffects, TransactionEvents};
-use sui_types::execution::{
+use scalar_types::base_types::VersionDigest;
+use scalar_types::committee::EpochId;
+use scalar_types::digests::ObjectDigest;
+use scalar_types::effects::{TransactionEffects, TransactionEvents};
+use scalar_types::execution::{
     DynamicallyLoadedObjectMetadata, ExecutionResults, ExecutionResultsV2, SharedInput,
 };
-use sui_types::execution_status::ExecutionStatus;
-use sui_types::inner_temporary_store::InnerTemporaryStore;
-use sui_types::storage::{BackingStore, PackageObjectArc};
-use sui_types::sui_system_state::{get_sui_system_state_wrapper, AdvanceEpochParams};
-use sui_types::type_resolver::LayoutResolver;
-use sui_types::{
+use scalar_types::execution_status::ExecutionStatus;
+use scalar_types::inner_temporary_store::InnerTemporaryStore;
+use scalar_types::storage::{BackingStore, PackageObjectArc};
+use scalar_types::sui_system_state::{get_sui_system_state_wrapper, AdvanceEpochParams};
+use scalar_types::type_resolver::LayoutResolver;
+use scalar_types::{
     base_types::{ObjectID, ObjectRef, SequenceNumber, SuiAddress, TransactionDigest},
     effects::EffectsObjectChange,
     error::{ExecutionError, SuiError, SuiResult},
@@ -33,7 +29,11 @@ use sui_types::{
     storage::{BackingPackageStore, ChildObjectResolver, ParentSync, Storage},
     transaction::InputObjects,
 };
-use sui_types::{is_system_package, SUI_SYSTEM_STATE_OBJECT_ID};
+use scalar_types::{is_system_package, SUI_SYSTEM_STATE_OBJECT_ID};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::ops::Deref;
+use std::sync::Arc;
+use sui_protocol_config::ProtocolConfig;
 
 pub struct TemporaryStore<'backing> {
     // The backing store for retrieving Move packages onchain.

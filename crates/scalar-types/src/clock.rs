@@ -9,11 +9,11 @@
  */
 
 use crate::ident_str;
+use move_binary_format::{binary_views::BinaryIndexedView, file_format::SignatureToken};
+use move_bytecode_utils::resolve_struct;
 use move_core_types::{
     account_address::AccountAddress, identifier::IdentStr, language_storage::StructTag,
 };
-// use move_binary_format::{binary_views::BinaryIndexedView, file_format::SignatureToken};
-// use move_bytecode_utils::resolve_struct;
 use serde::{Deserialize, Serialize};
 
 use crate::{id::UID, SUI_FRAMEWORK_ADDRESS};
@@ -45,13 +45,13 @@ impl Clock {
         }
     }
 
-    // /// Detects a `&mut sui::clock::Clock` or `sui::clock::Clock` in the signature.
-    // pub fn is_mutable(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> bool {
-    //     use SignatureToken as S;
-    //     match s {
-    //         S::MutableReference(inner) => Self::is_mutable(view, inner),
-    //         S::Struct(idx) => resolve_struct(view, *idx) == RESOLVED_SUI_CLOCK,
-    //         _ => false,
-    //     }
-    // }
+    /// Detects a `&mut sui::clock::Clock` or `sui::clock::Clock` in the signature.
+    pub fn is_mutable(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> bool {
+        use SignatureToken as S;
+        match s {
+            S::MutableReference(inner) => Self::is_mutable(view, inner),
+            S::Struct(idx) => resolve_struct(view, *idx) == RESOLVED_SUI_CLOCK,
+            _ => false,
+        }
+    }
 }

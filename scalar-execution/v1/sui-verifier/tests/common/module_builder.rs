@@ -4,7 +4,7 @@
 
 use move_binary_format::file_format::*;
 use move_core_types::{account_address::AccountAddress, identifier::Identifier};
-use sui_types::SUI_FRAMEWORK_ADDRESS;
+use scalar_types::SUI_FRAMEWORK_ADDRESS;
 
 pub struct ModuleBuilder {
     module: CompiledModule,

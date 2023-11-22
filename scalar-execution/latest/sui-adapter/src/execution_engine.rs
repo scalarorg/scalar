@@ -17,6 +17,11 @@ mod checked {
     use scalar_types::metrics::LimitsMetrics;
     use scalar_types::object::OBJECT_START_VERSION;
     use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+    use scalar_types::randomness_state::{
+        RANDOMNESS_MODULE_NAME, RANDOMNESS_STATE_CREATE_FUNCTION_NAME,
+        RANDOMNESS_STATE_UPDATE_FUNCTION_NAME,
+    };
+    use scalar_types::SUI_RANDOMNESS_STATE_OBJECT_ID;
     use std::{collections::HashSet, sync::Arc};
     use tracing::{info, instrument, trace, warn};
 
@@ -44,12 +49,12 @@ mod checked {
     use scalar_types::sui_system_state::{
         AdvanceEpochParams, ADVANCE_EPOCH_SAFE_MODE_FUNCTION_NAME,
     };
-    use scalar_types::transaction::InputObjects;
     use scalar_types::transaction::{
         Argument, AuthenticatorStateExpire, AuthenticatorStateUpdate, CallArg, ChangeEpoch,
         Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg, ProgrammableTransaction,
         TransactionKind,
     };
+    use scalar_types::transaction::{CheckedInputObjects, RandomnessStateUpdate};
     use scalar_types::{
         base_types::{ObjectRef, SuiAddress, TransactionDigest, TxContext},
         object::Object,
@@ -62,7 +67,7 @@ mod checked {
     #[instrument(name = "tx_execute_to_effects", level = "debug", skip_all)]
     pub fn execute_transaction_to_effects<Mode: ExecutionMode>(
         store: &dyn BackingStore,
-        input_objects: InputObjects,
+        input_objects: CheckedInputObjects,
         gas_coins: Vec<ObjectRef>,
         gas_status: SuiGasStatus,
         transaction_kind: TransactionKind,
@@ -80,9 +85,12 @@ mod checked {
         TransactionEffects,
         Result<Mode::ExecutionResults, ExecutionError>,
     ) {
+        let input_objects = input_objects.into_inner();
         let shared_object_refs = input_objects.filter_shared_objects();
         let receiving_objects = transaction_kind.receiving_objects();
         let mut transaction_dependencies = input_objects.transaction_dependencies();
+        let contains_deleted_input = input_objects.contains_deleted_objects();
+
         let mut temporary_store = TemporaryStore::new(
             store,
             input_objects,
@@ -114,6 +122,7 @@ mod checked {
             metrics,
             enable_expensive_checks,
             deny_cert,
+            contains_deleted_input,
         );
 
         let status = if let Err(error) = &execution_result {
@@ -196,9 +205,10 @@ mod checked {
         metrics: Arc<LimitsMetrics>,
         move_vm: &Arc<MoveVM>,
         tx_context: &mut TxContext,
-        input_objects: InputObjects,
+        input_objects: CheckedInputObjects,
         pt: ProgrammableTransaction,
     ) -> Result<InnerTemporaryStore, ExecutionError> {
+        let input_objects = input_objects.into_inner();
         let mut temporary_store = TemporaryStore::new(
             store,
             input_objects,
@@ -231,6 +241,7 @@ mod checked {
         metrics: Arc<LimitsMetrics>,
         enable_expensive_checks: bool,
         deny_cert: bool,
+        contains_deleted_input: bool,
     ) -> (
         GasCostSummary,
         Result<Mode::ExecutionResults, ExecutionError>,
@@ -253,6 +264,11 @@ mod checked {
             let mut execution_result = if deny_cert {
                 Err(ExecutionError::new(
                     ExecutionErrorKind::CertificateDenied,
+                    None,
+                ))
+            } else if contains_deleted_input {
+                Err(ExecutionError::new(
+                    ExecutionErrorKind::InputObjectDeleted,
                     None,
                 ))
             } else {
@@ -574,6 +590,10 @@ mod checked {
                             // safe mode.
                             builder = setup_authenticator_state_expire(builder, expire);
                         }
+                        EndOfEpochTransactionKind::RandomnessStateCreate => {
+                            assert!(protocol_config.random_beacon());
+                            builder = setup_randomness_state_create(builder);
+                        }
                     }
                 }
                 unreachable!("EndOfEpochTransactionKind::ChangeEpoch should be the last transaction in the list")
@@ -581,6 +601,18 @@ mod checked {
             TransactionKind::AuthenticatorStateUpdate(auth_state_update) => {
                 setup_authenticator_state_update(
                     auth_state_update,
+                    temporary_store,
+                    tx_ctx,
+                    move_vm,
+                    gas_charger,
+                    protocol_config,
+                    metrics,
+                )?;
+                Ok(Mode::empty_results())
+            }
+            TransactionKind::RandomnessStateUpdate(randomness_state_update) => {
+                setup_randomness_state_update(
+                    randomness_state_update,
                     temporary_store,
                     tx_ctx,
                     move_vm,
@@ -914,6 +946,21 @@ mod checked {
         builder
     }
 
+    fn setup_randomness_state_create(
+        mut builder: ProgrammableTransactionBuilder,
+    ) -> ProgrammableTransactionBuilder {
+        builder
+            .move_call(
+                SUI_FRAMEWORK_ADDRESS.into(),
+                RANDOMNESS_MODULE_NAME.to_owned(),
+                RANDOMNESS_STATE_CREATE_FUNCTION_NAME.to_owned(),
+                vec![],
+                vec![],
+            )
+            .expect("Unable to generate randomness_state_create transaction!");
+        builder
+    }
+
     fn setup_authenticator_state_update(
         update: AuthenticatorStateUpdate,
         temporary_store: &mut TemporaryStore<'_>,
@@ -977,5 +1024,48 @@ mod checked {
             )
             .expect("Unable to generate authenticator_state_expire transaction!");
         builder
+    }
+
+    fn setup_randomness_state_update(
+        update: RandomnessStateUpdate,
+        temporary_store: &mut TemporaryStore<'_>,
+        tx_ctx: &mut TxContext,
+        move_vm: &Arc<MoveVM>,
+        gas_charger: &mut GasCharger,
+        protocol_config: &ProtocolConfig,
+        metrics: Arc<LimitsMetrics>,
+    ) -> Result<(), ExecutionError> {
+        let pt = {
+            let mut builder = ProgrammableTransactionBuilder::new();
+            let res = builder.move_call(
+                SUI_FRAMEWORK_ADDRESS.into(),
+                RANDOMNESS_MODULE_NAME.to_owned(),
+                RANDOMNESS_STATE_UPDATE_FUNCTION_NAME.to_owned(),
+                vec![],
+                vec![
+                    CallArg::Object(ObjectArg::SharedObject {
+                        id: SUI_RANDOMNESS_STATE_OBJECT_ID,
+                        initial_shared_version: update.randomness_obj_initial_shared_version,
+                        mutable: true,
+                    }),
+                    CallArg::Pure(bcs::to_bytes(&update.randomness_round).unwrap()),
+                    CallArg::Pure(bcs::to_bytes(&update.random_bytes).unwrap()),
+                ],
+            );
+            assert_invariant!(
+                res.is_ok(),
+                "Unable to generate randomness_state_update transaction!"
+            );
+            builder.finish()
+        };
+        programmable_transactions::execution::execute::<execution_mode::System>(
+            protocol_config,
+            metrics,
+            move_vm,
+            temporary_store,
+            tx_ctx,
+            gas_charger,
+            pt,
+        )
     }
 }

@@ -20,6 +20,7 @@ pub mod checked {
         object::Data,
         storage::{DeleteKindWithOldVersion, WriteKind},
     };
+    use std::ops::Deref;
     use sui_protocol_config::ProtocolConfig;
     use tracing::trace;
 
@@ -170,6 +171,7 @@ pub mod checked {
                         self.tx_digest
                     )
                 })
+                .deref()
                 .clone();
             // delete all gas objects except the primary_gas_object
             for (id, version, _digest) in &self.gas_coins[1..] {
