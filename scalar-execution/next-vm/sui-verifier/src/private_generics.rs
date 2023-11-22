@@ -12,7 +12,7 @@ use move_binary_format::{
 };
 use move_bytecode_utils::format_signature_token;
 use move_core_types::{account_address::AccountAddress, ident_str, identifier::IdentStr};
-use sui_types::{error::ExecutionError, SUI_FRAMEWORK_ADDRESS};
+use scalar_types::{error::ExecutionError, SUI_FRAMEWORK_ADDRESS};
 
 use crate::{verification_failure, TEST_SCENARIO_MODULE_NAME};
 

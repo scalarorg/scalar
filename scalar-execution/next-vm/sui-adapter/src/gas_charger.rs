@@ -7,15 +7,13 @@ pub use checked::*;
 #[sui_macros::with_checked_arithmetic]
 pub mod checked {
 
-    use crate::sui_types::gas::SuiGasStatusAPI;
+    use crate::scalar_types::gas::SuiGasStatusAPI;
     use crate::temporary_store::TemporaryStore;
-    use std::ops::Deref;
-    use sui_protocol_config::ProtocolConfig;
-    use sui_types::gas::{deduct_gas, GasCostSummary, SuiGasStatus};
-    use sui_types::gas_model::gas_predicates::{
+    use scalar_types::gas::{deduct_gas, GasCostSummary, SuiGasStatus};
+    use scalar_types::gas_model::gas_predicates::{
         charge_upgrades, dont_charge_budget_on_storage_oog,
     };
-    use sui_types::{
+    use scalar_types::{
         base_types::{ObjectID, ObjectRef},
         digests::TransactionDigest,
         error::ExecutionError,
@@ -23,6 +21,8 @@ pub mod checked {
         is_system_package,
         object::Data,
     };
+    use std::ops::Deref;
+    use sui_protocol_config::ProtocolConfig;
     use tracing::trace;
 
     /// Tracks all gas operations for a single transaction.

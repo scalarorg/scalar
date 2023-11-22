@@ -42,13 +42,17 @@ mod checked {
     use move_vm_types::gas::GasMeter;
     use move_vm_types::loaded_data::runtime_types::Type;
     use move_vm_types::values::{GlobalValue, Value as VMValue};
-    use sui_move_natives::object_runtime::{
-        self, get_all_uids, max_event_error, LoadedRuntimeObject, ObjectRuntime, RuntimeResults,
+    use scalar_types::execution::ExecutionResults;
+    use scalar_types::storage::PackageObjectArc;
+    use scalar_types::{
+        assert_invariant,
+        error::command_argument_error,
+        execution::{CommandKind, ObjectContents, TryFromValue, Value},
+        execution_mode::ExecutionMode,
+        execution_status::CommandArgumentError,
+        invariant_violation,
     };
-    use sui_protocol_config::ProtocolConfig;
-    use sui_types::execution::ExecutionResults;
-    use sui_types::storage::PackageObjectArc;
-    use sui_types::{
+    use scalar_types::{
         balance::Balance,
         base_types::{MoveObjectType, ObjectID, SuiAddress, TxContext},
         coin::Coin,
@@ -65,12 +69,10 @@ mod checked {
         transaction::{Argument, CallArg, ObjectArg},
         type_resolver::TypeTagResolver,
     };
-    use sui_types::{
-        error::command_argument_error,
-        execution::{CommandKind, ObjectContents, TryFromValue, Value},
-        execution_mode::ExecutionMode,
-        execution_status::CommandArgumentError,
+    use sui_move_natives::object_runtime::{
+        self, get_all_uids, max_event_error, LoadedRuntimeObject, ObjectRuntime, RuntimeResults,
     };
+    use sui_protocol_config::ProtocolConfig;
     use tracing::instrument;
 
     /// Maintains all runtime state specific to programmable transactions
@@ -843,7 +845,7 @@ mod checked {
         /// Special case errors for type arguments to Move functions
         pub fn convert_type_argument_error(&self, idx: usize, error: VMError) -> ExecutionError {
             use move_core_types::vm_status::StatusCode;
-            use sui_types::execution_status::TypeArgumentError;
+            use scalar_types::execution_status::TypeArgumentError;
             match error.major_status() {
                 StatusCode::NUMBER_OF_TYPE_ARGUMENTS_MISMATCH => {
                     ExecutionErrorKind::TypeArityMismatch.into()

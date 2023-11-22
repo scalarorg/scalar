@@ -8,11 +8,11 @@ use move_core_types::annotated_value as A;
 use move_core_types::language_storage::StructTag;
 use move_core_types::resolver::ResourceResolver;
 use move_vm_runtime::move_vm::MoveVM;
-use sui_types::base_types::ObjectID;
-use sui_types::error::SuiResult;
-use sui_types::execution::TypeLayoutStore;
-use sui_types::storage::{BackingPackageStore, PackageObjectArc};
-use sui_types::{error::SuiError, object::MoveObject, type_resolver::LayoutResolver};
+use scalar_types::base_types::ObjectID;
+use scalar_types::error::SuiResult;
+use scalar_types::execution::TypeLayoutStore;
+use scalar_types::storage::{BackingPackageStore, PackageObjectArc};
+use scalar_types::{error::SuiError, object::MoveObject, type_resolver::LayoutResolver};
 
 /// Retrieve a `MoveStructLayout` from a `Type`.
 /// Invocation into the `Session` to leverage the `LinkageView` implementation

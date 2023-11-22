@@ -28,8 +28,7 @@ use move_bytecode_verifier::{
 use move_core_types::{
     account_address::AccountAddress, ident_str, identifier::IdentStr, vm_status::StatusCode,
 };
-use std::{collections::BTreeMap, error::Error, num::NonZeroU64};
-use sui_types::{
+use scalar_types::{
     authenticator_state::AUTHENTICATOR_STATE_MODULE_NAME,
     clock::CLOCK_MODULE_NAME,
     error::{ExecutionError, VMMVerifierErrorSubStatusCode},
@@ -37,6 +36,7 @@ use sui_types::{
     sui_system_state::SUI_SYSTEM_MODULE_NAME,
     SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS,
 };
+use std::{collections::BTreeMap, error::Error, num::NonZeroU64};
 
 use crate::{
     check_for_verifier_timeout, to_verification_timeout_error, verification_failure,

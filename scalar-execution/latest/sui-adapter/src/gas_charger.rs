@@ -21,6 +21,7 @@ pub mod checked {
         is_system_package,
         object::Data,
     };
+    use std::ops::Deref;
     use sui_protocol_config::ProtocolConfig;
     use tracing::trace;
 
@@ -171,6 +172,7 @@ pub mod checked {
                         self.tx_digest
                     )
                 })
+                .deref()
                 .clone();
             // delete all gas objects except the primary_gas_object
             for (id, _version, _digest) in &self.gas_coins[1..] {

@@ -24,7 +24,7 @@ use move_binary_format::{
     },
 };
 use move_core_types::{ident_str, language_storage::ModuleId};
-use sui_types::{
+use scalar_types::{
     base_types::{TX_CONTEXT_MODULE_NAME, TX_CONTEXT_STRUCT_NAME},
     error::ExecutionError,
     move_package::{is_test_fun, FnInfoMap},

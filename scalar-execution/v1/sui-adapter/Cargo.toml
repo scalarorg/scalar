@@ -20,15 +20,20 @@ move-core-types.workspace = true
 move-vm-config.workspace = true
 move-vm-types.workspace = true
 
-move-bytecode-verifier = { path = "../../../external-crates/move/move-execution/v1/crates/move-bytecode-verifier", package = "move-bytecode-verifier-v1" }
-move-vm-runtime = { path = "../../../external-crates/move/move-execution/v1/crates/move-vm-runtime", package = "move-vm-runtime-v1" }
-move-vm-profiler = { path = "../../../external-crates/move/crates/move-vm-profiler" }
+
+move-vm-profiler.workspace = true
+move-vm-runtime = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime-v1" }
+move-bytecode-verifier = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier-v1" }
+
+# move-bytecode-verifier = { path = "../../../external-crates/move/move-execution/v1/crates/move-bytecode-verifier", package = "move-bytecode-verifier-v1" }
+# move-vm-runtime = { path = "../../../external-crates/move/move-execution/v1/crates/move-vm-runtime", package = "move-vm-runtime-v1" }
+# move-vm-profiler = { path = "../../../external-crates/move/crates/move-vm-profiler" }
 sui-move-natives = { path = "../sui-move-natives", package = "sui-move-natives-v1" }
 sui-verifier = { path = "../sui-verifier", package = "sui-verifier-v1" }
 
 sui-macros.workspace = true
 sui-protocol-config.workspace = true
-sui-types.workspace = true
+scalar-types.workspace = true
 parking_lot.workspace = true
 workspace-hack.workspace = true
 

@@ -24,16 +24,14 @@ mod checked {
         session::{LoadedFunctionInstantiation, SerializedReturnValues},
     };
     use move_vm_types::loaded_data::runtime_types::{StructType, Type};
-    use serde::{de::DeserializeSeed, Deserialize};
-    use std::{
-        collections::{BTreeMap, BTreeSet},
-        fmt,
-        sync::Arc,
+    use scalar_types::storage::{get_package_objects, PackageObjectArc};
+    use scalar_types::{
+        assert_invariant,
+        execution_mode::ExecutionMode,
+        execution_status::{CommandArgumentError, PackageUpgradeError},
+        invariant_violation,
     };
-    use sui_move_natives::object_runtime::ObjectRuntime;
-    use sui_protocol_config::ProtocolConfig;
-    use sui_types::storage::{get_package_objects, PackageObjectArc};
-    use sui_types::{
+    use scalar_types::{
         base_types::{
             MoveObjectType, ObjectID, SuiAddress, TxContext, TxContextKind, RESOLVED_ASCII_STR,
             RESOLVED_STD_OPTION, RESOLVED_UTF8_STR, TX_CONTEXT_MODULE_NAME, TX_CONTEXT_STRUCT_NAME,
@@ -53,10 +51,14 @@ mod checked {
         transfer::RESOLVED_RECEIVING_STRUCT,
         SUI_FRAMEWORK_ADDRESS,
     };
-    use sui_types::{
-        execution_mode::ExecutionMode,
-        execution_status::{CommandArgumentError, PackageUpgradeError},
+    use serde::{de::DeserializeSeed, Deserialize};
+    use std::{
+        collections::{BTreeMap, BTreeSet},
+        fmt,
+        sync::Arc,
     };
+    use sui_move_natives::object_runtime::ObjectRuntime;
+    use sui_protocol_config::ProtocolConfig;
     use sui_verifier::{
         private_generics::{EVENT_MODULE, PRIVATE_TRANSFER_FUNCTIONS, TRANSFER_MODULE},
         INIT_FN_NAME,

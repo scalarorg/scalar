@@ -1,14 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-02 TaiVV
- * copy and modify from sui-types/src/execution_mode.rs
- * cho phep thiet lap cac tham so khac nhau cho tung mode:
- * Normal, Genesis, System, DevInspect
- * Tags: SCALAR_EXECUTION
- */
-
 use move_core_types::language_storage::TypeTag;
 
 use crate::{

@@ -4,20 +4,15 @@
 use crate::programmable_transactions::context::load_type_from_struct;
 use crate::programmable_transactions::linkage_view::LinkageView;
 use move_core_types::account_address::AccountAddress;
+use move_core_types::annotated_value as A;
 use move_core_types::language_storage::StructTag;
 use move_core_types::resolver::ResourceResolver;
-use move_core_types::value::{MoveStructLayout, MoveTypeLayout};
 use move_vm_runtime::move_vm::MoveVM;
 use scalar_types::base_types::ObjectID;
 use scalar_types::error::SuiResult;
 use scalar_types::execution::TypeLayoutStore;
-use scalar_types::object::Object;
-use scalar_types::storage::BackingPackageStore;
-use scalar_types::{
-    error::SuiError,
-    object::{MoveObject, ObjectFormatOptions},
-    type_resolver::LayoutResolver,
-};
+use scalar_types::storage::{BackingPackageStore, PackageObjectArc};
+use scalar_types::{error::SuiError, object::MoveObject, type_resolver::LayoutResolver};
 
 /// Retrieve a `MoveStructLayout` from a `Type`.
 /// Invocation into the `Session` to leverage the `LinkageView` implementation
@@ -39,11 +34,10 @@ impl<'state, 'vm> TypeLayoutResolver<'state, 'vm> {
 }
 
 impl<'state, 'vm> LayoutResolver for TypeLayoutResolver<'state, 'vm> {
-    fn get_layout(
+    fn get_annotated_layout(
         &mut self,
         object: &MoveObject,
-        format: ObjectFormatOptions,
-    ) -> Result<MoveStructLayout, SuiError> {
+    ) -> Result<A::MoveStructLayout, SuiError> {
         let struct_tag: StructTag = object.type_().clone().into();
         let Ok(ty) = load_type_from_struct(self.vm, &mut self.linkage_view, &[], &struct_tag)
         else {
@@ -51,12 +45,8 @@ impl<'state, 'vm> LayoutResolver for TypeLayoutResolver<'state, 'vm> {
                 st: format!("{}", struct_tag),
             });
         };
-        let layout = if format.include_types() {
-            self.vm.get_runtime().type_to_fully_annotated_layout(&ty)
-        } else {
-            self.vm.get_runtime().type_to_type_layout(&ty)
-        };
-        let Ok(MoveTypeLayout::Struct(layout)) = layout else {
+        let layout = self.vm.get_runtime().type_to_fully_annotated_layout(&ty);
+        let Ok(A::MoveTypeLayout::Struct(layout)) = layout else {
             return Err(SuiError::FailObjectLayout {
                 st: format!("{}", struct_tag),
             });
@@ -66,7 +56,7 @@ impl<'state, 'vm> LayoutResolver for TypeLayoutResolver<'state, 'vm> {
 }
 
 impl<'state> BackingPackageStore for NullSuiResolver<'state> {
-    fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<Object>> {
+    fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<PackageObjectArc>> {
         self.0.get_package_object(package_id)
     }
 }

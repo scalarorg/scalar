@@ -22,9 +22,9 @@ use move_vm_types::{
     pop_arg,
     values::{StructRef, Value},
 };
+use scalar_types::{base_types::MoveObjectType, dynamic_field::derive_dynamic_field_id};
 use smallvec::smallvec;
 use std::collections::VecDeque;
-use sui_types::{base_types::MoveObjectType, dynamic_field::derive_dynamic_field_id};
 
 const E_KEY_DOES_NOT_EXIST: u64 = 1;
 const E_FIELD_TYPE_MISMATCH: u64 = 2;

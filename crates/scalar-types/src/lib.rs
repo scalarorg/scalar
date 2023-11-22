@@ -73,8 +73,10 @@ use move_bytecode_utils::resolve_struct;
 pub use move_core_types::{
     account_address::AccountAddress,
     ident_str, identifier,
+    identifier::Identifier,
     language_storage::{StructTag, TypeTag},
 };
+
 pub use mysten_network::multiaddr;
 use object::OBJECT_START_VERSION;
 
