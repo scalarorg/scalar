@@ -15069,7 +15069,7 @@ dependencies = [
  "move-abstract-stack",
  "move-binary-format",
  "move-bytecode-utils",
- "move-bytecode-verifier",
+ "move-bytecode-verifier-next-vm",
  "move-core-types",
  "move-vm-config",
  "scalar-types",
