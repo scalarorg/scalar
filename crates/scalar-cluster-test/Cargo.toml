@@ -1,0 +1,46 @@
+[package]
+name = "scalar-cluster-test"
+version = "0.1.0"
+authors = ["Mysten Labs <build@mystenlabs.com>"]
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+futures.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["full"] }
+jsonrpsee.workspace = true
+tracing.workspace = true
+clap.workspace = true
+reqwest.workspace = true
+async-trait.workspace = true
+anyhow = { workspace = true, features = ["backtrace"] }
+bcs.workspace = true
+uuid.workspace = true
+prometheus.workspace = true
+fastcrypto.workspace = true
+shared-crypto.workspace = true
+mysten-metrics.workspace = true
+
+# sui-indexer = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-indexer" }
+# sui-faucet = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-faucet" }
+# sui-swarm = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-swarm" }
+# sui = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui" }
+scalar-swarm-config.workspace = true
+scalar-json-rpc-types.workspace = true
+sui-move-build = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-move-build" }
+# sui-sdk = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-sdk" }
+scalar-keys.workspace = true
+scalar-types.workspace = true
+# scalar-core.workspace = true
+scalar-json.workspace = true
+scalar-config.workspace = true
+# sui-test-transaction-builder = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-test-transaction-builder" }
+telemetry-subscribers.workspace = true
+
+# test-cluster = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "test-cluster" }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+move-core-types.workspace = true

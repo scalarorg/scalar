@@ -12706,6 +12706,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-cluster-test"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bcs",
+ "clap",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=802c1ac98061687d6ce024849c747a250dbeea52)",
+ "futures",
+ "jsonrpsee 0.20.3",
+ "move-core-types",
+ "mysten-metrics",
+ "prometheus",
+ "reqwest",
+ "scalar-config",
+ "scalar-json",
+ "scalar-json-rpc-types",
+ "scalar-keys",
+ "scalar-swarm-config",
+ "scalar-types",
+ "serde",
+ "serde_json",
+ "shared-crypto 0.0.0",
+ "sui-move-build",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "uuid 1.5.0",
+ "workspace-hack 0.1.0",
+]
+
+[[package]]
 name = "scalar-config"
 version = "0.0.1"
 dependencies = [

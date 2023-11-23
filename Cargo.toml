@@ -25,6 +25,7 @@ members = [
   # "crates/scalar-tss",
   "crates/shared-crypto",
   "crates/workspace-hack",
+  "crates/scalar-cluster-test",
 
   #    "narwhal/config",
   #    "narwhal/consensus",
