@@ -13,10 +13,10 @@ use crate::committee::EpochId;
 use crate::error::SuiError;
 use crate::gas_coin::MIST_PER_SUI;
 use crate::id::{ID, UID};
-use crate::move_types::language_storage::StructTag;
 use crate::object::{Data, Object};
 use crate::SUI_SYSTEM_ADDRESS;
-use crate::{ident_str, identifier::IdentStr};
+use move_core_types::language_storage::StructTag;
+use move_core_types::{ident_str, identifier::IdentStr};
 use serde::Deserialize;
 use serde::Serialize;
 

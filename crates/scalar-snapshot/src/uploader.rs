@@ -7,10 +7,6 @@ use bytes::Bytes;
 use object_store::DynObjectStore;
 use oneshot::channel;
 use prometheus::{register_int_gauge_with_registry, IntGauge, Registry};
-use std::num::NonZeroUsize;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::db_checkpoint_handler::{
     STATE_SNAPSHOT_COMPLETED_MARKER, SUCCESS_MARKER, UPLOAD_COMPLETED_MARKER,
@@ -20,6 +16,10 @@ use scalar_storage::object_store::util::{
 };
 use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
 use scalar_storage::FileCompression;
+use std::num::NonZeroUsize;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::sync::oneshot::Sender;
 use tracing::{debug, error, info};
@@ -147,14 +147,14 @@ impl StateSnapshotUploader {
                 // Drop marker in the output directory that upload completed successfully
                 let bytes = Bytes::from_static(b"success");
                 let success_marker = db_path.child(SUCCESS_MARKER);
-                put(&success_marker, bytes.clone(), self.snapshot_store.clone()).await?;
+                put(&self.snapshot_store, &success_marker, bytes.clone()).await?;
                 let bytes = Bytes::from_static(b"success");
                 let state_snapshot_completed_marker =
                     db_path.child(STATE_SNAPSHOT_COMPLETED_MARKER);
                 put(
+                    &self.db_checkpoint_store.clone(),
                     &state_snapshot_completed_marker,
                     bytes.clone(),
-                    self.db_checkpoint_store.clone(),
                 )
                 .await?;
                 info!("State snapshot completed for epoch: {epoch}");

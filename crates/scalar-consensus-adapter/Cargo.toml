@@ -26,7 +26,7 @@ reth-tokio-util.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 tokio-stream.workspace = true
 futures.workspace = true
-
+jsonrpsee.workspace = true
 # metrics
 reth-metrics.workspace = true
 metrics.workspace = true
@@ -36,7 +36,20 @@ tracing.workspace = true
 thiserror.workspace = true
 schnellru = "0.2"
 cfg-if = "1.0.0"
-
+scalar-core.workspace = true
+scalar-storage.workspace = true
+scalar-types.workspace = true
+scalar-json.workspace = true
+sui-open-rpc.workspace = true
+sui-open-rpc-macros.workspace = true
+sui-protocol-config.workspace = true
+scalar-json-rpc-types.workspace = true
+scalar-transaction-builder.workspace = true
+mysten-metrics.workspace = true
+shared-crypto.workspace = true
+typed-store.workspace = true
+cached.workspace = true
+workspace-hack.workspace = true
 [dev-dependencies]
 # reth
 reth-payload-builder = { workspace = true, features = ["test-utils"] }

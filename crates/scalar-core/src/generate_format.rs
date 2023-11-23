@@ -44,7 +44,7 @@ use scalar_types::{
 use serde_reflection::{Registry, Result, Samples, Tracer, TracerConfig};
 use shared_crypto::intent::{Intent, IntentMessage, PersonalMessage};
 use std::{fs::File, io::Write};
-use typed_store::rocks::TypedStoreError;
+use typed_store::TypedStoreError;
 
 fn get_registry() -> Result<Registry> {
     let config = TracerConfig::default()

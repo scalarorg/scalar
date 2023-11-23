@@ -42,6 +42,7 @@ services:
     container_name: scalar-runner
     restart: unless-stopped
     volumes:
+      - ../configs/scalar:/scalar
       - ../scripts/entry.sh:/entry.sh
     ports:
       - "30303:30303"         # Peering ports

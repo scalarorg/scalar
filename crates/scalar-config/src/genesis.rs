@@ -17,6 +17,7 @@ use scalar_types::gas_coin::TOTAL_SUPPLY_MIST;
 use scalar_types::messages_checkpoint::{
     CertifiedCheckpointSummary, CheckpointContents, CheckpointSummary, VerifiedCheckpoint,
 };
+use scalar_types::randomness_state::get_randomness_state_obj_initial_shared_version;
 use scalar_types::sui_system_state::{
     get_sui_system_state, get_sui_system_state_wrapper, SuiSystemState, SuiSystemStateTrait,
     SuiSystemStateWrapper, SuiValidatorGenesis,
@@ -156,6 +157,11 @@ impl Genesis {
 
     pub fn authenticator_state_obj_initial_shared_version(&self) -> Option<SequenceNumber> {
         get_authenticator_state_obj_initial_shared_version(&self.objects())
+            .expect("Read from genesis cannot fail")
+    }
+
+    pub fn randomness_state_obj_initial_shared_version(&self) -> Option<SequenceNumber> {
+        get_randomness_state_obj_initial_shared_version(&self.objects())
             .expect("Read from genesis cannot fail")
     }
 

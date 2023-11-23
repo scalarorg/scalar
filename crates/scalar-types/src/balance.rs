@@ -9,11 +9,11 @@
 
 use crate::error::{ExecutionError, ExecutionErrorKind};
 use crate::identifier::IdentStr;
-use crate::move_types::language_storage::{StructTag, TypeTag};
-use crate::move_types::value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout};
 use crate::scalar_serde::{BigInt, Readable};
 use crate::SUI_FRAMEWORK_ADDRESS;
 use crate::{fp_ensure, ident_str};
+use move_core_types::annotated_value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout};
+use move_core_types::language_storage::{StructTag, TypeTag};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -81,7 +81,7 @@ impl Balance {
     }
 
     pub fn layout(type_param: TypeTag) -> MoveStructLayout {
-        MoveStructLayout::WithTypes {
+        MoveStructLayout {
             type_: Self::type_(type_param),
             fields: vec![MoveFieldLayout::new(
                 ident_str!("value").to_owned(),

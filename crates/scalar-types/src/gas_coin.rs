@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{ident_str, identifier::IdentStr};
-use crate::move_types::{
+use move_core_types::{
+    annotated_value::MoveStructLayout,
     language_storage::{StructTag, TypeTag},
-    value::MoveStructLayout,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};

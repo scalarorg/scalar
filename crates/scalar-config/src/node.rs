@@ -59,6 +59,9 @@ pub struct NodeConfig {
     #[serde(default = "default_json_rpc_address")]
     pub json_rpc_address: SocketAddr,
 
+    #[serde(default = "default_consensus_rpc_address")]
+    pub consensus_rpc_address: SocketAddr,
+
     #[serde(default)]
     pub enable_experimental_rest_api: bool,
 
@@ -238,6 +241,11 @@ pub fn default_json_rpc_address() -> SocketAddr {
     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 9000)
 }
 
+pub fn default_consensus_rpc_address() -> SocketAddr {
+    use std::net::{IpAddr, Ipv4Addr};
+    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 9090)
+}
+
 pub fn default_concurrency_limit() -> Option<usize> {
     Some(DEFAULT_GRPC_CONCURRENCY_LIMIT)
 }
@@ -332,6 +340,14 @@ impl NodeConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub enum ConsensusProtocol {
+    #[serde(rename = "narwhal")]
+    Narwhal,
+    #[serde(rename = "mysticeti")]
+    Mysticeti,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ConsensusConfig {
     pub address: Multiaddr,
@@ -357,6 +373,11 @@ pub struct ConsensusConfig {
     pub submit_delay_step_override_millis: Option<u64>,
 
     pub narwhal_config: ConsensusParameters,
+
+    /// The choice of consensus protocol to run. We default to Narwhal.
+    #[serde(skip)]
+    #[serde(default = "default_consensus_protocol")]
+    pub protocol: ConsensusProtocol,
 }
 
 impl ConsensusConfig {
@@ -380,6 +401,10 @@ impl ConsensusConfig {
     pub fn narwhal_config(&self) -> &ConsensusParameters {
         &self.narwhal_config
     }
+}
+
+pub fn default_consensus_protocol() -> ConsensusProtocol {
+    ConsensusProtocol::Narwhal
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -543,6 +568,9 @@ pub struct AuthorityStorePruningConfig {
     /// number of epochs to keep the latest version of transactions and effects for
     #[serde(skip_serializing_if = "Option::is_none")]
     pub num_epochs_to_retain_for_checkpoints: Option<u64>,
+    /// enables pruner to prune no longer needed object tombstones. We don't serialize it if it is the default value, false.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub enable_pruning_tombstones: bool,
 }
 
 impl Default for AuthorityStorePruningConfig {
@@ -559,6 +587,7 @@ impl Default for AuthorityStorePruningConfig {
             max_transactions_in_batch: 1000,
             periodic_compaction_threshold_days: None,
             num_epochs_to_retain_for_checkpoints: None,
+            enable_pruning_tombstones: false,
         }
     }
 }
@@ -578,6 +607,7 @@ impl AuthorityStorePruningConfig {
             max_transactions_in_batch: 1000,
             periodic_compaction_threshold_days: None,
             num_epochs_to_retain_for_checkpoints,
+            enable_pruning_tombstones: false,
         }
     }
     pub fn fullnode_config() -> Self {
@@ -594,6 +624,7 @@ impl AuthorityStorePruningConfig {
             max_transactions_in_batch: 1000,
             periodic_compaction_threshold_days: None,
             num_epochs_to_retain_for_checkpoints,
+            enable_pruning_tombstones: true,
         }
     }
 
@@ -612,6 +643,10 @@ impl AuthorityStorePruningConfig {
                     n
                 }
             })
+    }
+
+    pub fn set_enable_pruning_tombstones(&mut self, enable_pruning_tombstones: bool) {
+        self.enable_pruning_tombstones = enable_pruning_tombstones;
     }
 }
 
@@ -890,10 +925,10 @@ mod tests {
 
     use fastcrypto::traits::KeyPair;
     use rand::{rngs::StdRng, SeedableRng};
-    use scalar_keys::keypair_file::{write_authority_keypair_to_file, write_keypair_to_file};
     use scalar_types::crypto::{
         get_key_pair_from_rng, AuthorityKeyPair, NetworkKeyPair, SuiKeyPair,
     };
+    use sui_keys::keypair_file::{write_authority_keypair_to_file, write_keypair_to_file};
 
     use super::Genesis;
     use crate::NodeConfig;
