@@ -25,22 +25,23 @@ fastcrypto.workspace = true
 shared-crypto.workspace = true
 mysten-metrics.workspace = true
 
-# sui-indexer = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-indexer" }
-# sui-faucet = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-faucet" }
-# sui-swarm = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-swarm" }
-# sui = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui" }
+sui-indexer = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-indexer" }
+sui-faucet = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-faucet" }
+sui-swarm = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-swarm" }
+sui = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui" }
+sui-sdk = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-sdk" }
+sui-test-transaction-builder = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-test-transaction-builder" }
+test-cluster = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "test-cluster" }
+scalar-core.workspace = true
+
 scalar-swarm-config.workspace = true
 scalar-json-rpc-types.workspace = true
-sui-move-build = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-move-build" }
-# sui-sdk = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-sdk" }
+sui-move-build = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-move-build" }
 scalar-keys.workspace = true
 scalar-types.workspace = true
-# scalar-core.workspace = true
 scalar-json.workspace = true
 scalar-config.workspace = true
-# sui-test-transaction-builder = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-test-transaction-builder" }
 telemetry-subscribers.workspace = true
 
-# test-cluster = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "test-cluster" }
-workspace-hack = { version = "0.1", path = "../workspace-hack" }
+workspace-hack.workspace = true
 move-core-types.workspace = true

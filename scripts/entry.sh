@@ -16,4 +16,8 @@ scalar() {
     RUST_LOG=debug /usr/local/bin/scalar-node --config-path /scalar/fullnode.yaml
 }
 
+scalar_cluster_test() {
+    RUST_LOG=debug /usr/local/bin/scalar-cluster-test
+}
+
 $@

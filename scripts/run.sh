@@ -10,6 +10,10 @@ scalar() {
   docker exec -it ${RUNNER} /entry.sh scalar
 }
 
+scalar_cluster_test() {
+  docker exec -it ${RUNNER} /entry.sh scalar_cluster_test
+}
+
 tss() {
   docker exec -it ${RUNNER} /entry.sh tss
 }
