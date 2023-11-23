@@ -1,2 +1,2 @@
 mod consensus;
-pub use consensus::ConsensusAddTransactionResponse;
+pub use consensus::*;

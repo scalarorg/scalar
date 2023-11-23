@@ -23,6 +23,7 @@ use fastcrypto_zkp::bn254::zk_login::OIDCProvider;
 use futures::TryFutureExt;
 use jsonrpsee::RpcModule;
 use prometheus::Registry;
+use scalar_consensus_adapter::grpc::ConsensusNode;
 use scalar_core::authority::CHAIN_IDENTIFIER;
 use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
 use scalar_json_rpc::api::JsonRpcMetrics;
@@ -666,6 +667,11 @@ impl SuiNode {
             &prometheus_registry,
             consensus_runtime,
         )?;
+        /*
+         * 231123 - Taivv
+         * Try using grpc server
+         */
+        let grpc_handle = build_grpc_server()?;
 
         let accumulator = Arc::new(StateAccumulator::new(store));
 
@@ -1804,7 +1810,18 @@ pub fn build_http_server(
 
     Ok(Some(handle))
 }
-
+/*
+ * 231123-TaiVV
+ * Add consensus grpc server
+ */
+pub async fn build_grpc_server(
+    state: Arc<AuthorityState>,
+    transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+    config: &NodeConfig,
+    consensus_runtime: Option<Handle>,
+) -> Result<Option<tokio::task::JoinHandle<()>>> {
+    ConsensusNode::spawn(&config.consensus_rpc_address).await
+}
 /*
  * 231121-TaiVV
  * Add consensus server
