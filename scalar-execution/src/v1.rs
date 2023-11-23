@@ -31,8 +31,8 @@ use sui_adapter_v1::execution_engine::{
     execute_genesis_state_update, execute_transaction_to_effects,
 };
 use sui_adapter_v1::type_layout_resolver::TypeLayoutResolver;
-// use sui_move_natives_v1::all_natives;
-// use sui_verifier_v1::meter::SuiVerifierMeter;
+use sui_move_natives_v1::all_natives;
+use sui_verifier_v1::meter::SuiVerifierMeter;
 
 use crate::executor;
 use crate::verifier;
