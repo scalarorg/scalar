@@ -1,6 +1,11 @@
-mod adapters;
+// mod adapters;
 
-pub use adapters::*;
+// pub use adapters::*;
 
-pub mod api;
-pub mod types;
+mod api;
+mod consensus_api;
+mod types;
+
+pub use api::*;
+pub use consensus_api::*;
+pub use types::*;
