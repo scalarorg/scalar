@@ -508,6 +508,7 @@ move-bytecode-verifier = { git = "https://github.com/MystenLabs/sui", rev = "01a
 move-vm-runtime = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime" }
 move-stdlib = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-stdlib" }
 move-abstract-stack = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-abstract-stack" }
+
 # 23-11-08 TaiVV
 # For Reth itegration
 # Copy from Reth repository = "https://github.com/paradigmxyz/reth"
