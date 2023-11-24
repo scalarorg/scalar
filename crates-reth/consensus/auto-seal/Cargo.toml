@@ -26,7 +26,7 @@ tracing.workspace = true
 
 [dev-dependencies]
 reth-interfaces = { workspace = true, features = ["test-utils"] }
-reth = { workspace = true }
+# reth = { workspace = true } -> Cyclic deps
 tempfile = { workspace = true }
 clap = { workspace = true }
 jsonrpsee = { workspace = true }
