@@ -925,10 +925,10 @@ mod tests {
 
     use fastcrypto::traits::KeyPair;
     use rand::{rngs::StdRng, SeedableRng};
+    use scalar_keys::keypair_file::{write_authority_keypair_to_file, write_keypair_to_file};
     use scalar_types::crypto::{
         get_key_pair_from_rng, AuthorityKeyPair, NetworkKeyPair, SuiKeyPair,
     };
-    use sui_keys::keypair_file::{write_authority_keypair_to_file, write_keypair_to_file};
 
     use super::Genesis;
     use crate::NodeConfig;
