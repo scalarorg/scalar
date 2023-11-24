@@ -17,15 +17,15 @@ const DOCS_DIR: &str = "docs";
 /// Save revision info to environment variable
 fn main() {
     //move_package::package_hooks::register_package_hooks(Box::new(SuiPackageHooks));
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    // let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let packages_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("packages");
 
     let deepbook_path = packages_path.join("deepbook");
     let sui_system_path = packages_path.join("sui-system");
     let sui_framework_path = packages_path.join("sui-framework");
-    let deepbook_path_clone = deepbook_path.clone();
-    let sui_system_path_clone = sui_system_path.clone();
-    let sui_framework_path_clone = sui_framework_path.clone();
+    // let deepbook_path_clone = deepbook_path.clone();
+    // let sui_system_path_clone = sui_system_path.clone();
+    // let sui_framework_path_clone = sui_framework_path.clone();
     let move_stdlib_path = packages_path.join("move-stdlib");
 
     // Builder::new()
