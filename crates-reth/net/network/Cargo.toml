@@ -37,7 +37,13 @@ alloy-rlp.workspace = true
 # async/futures
 futures.workspace = true
 pin-project.workspace = true
-tokio = { workspace = true, features = ["io-util", "net", "macros", "rt-multi-thread", "time"] }
+tokio = { workspace = true, features = [
+    "io-util",
+    "net",
+    "macros",
+    "rt-multi-thread",
+    "time",
+] }
 tokio-stream.workspace = true
 tokio-util = { workspace = true, features = ["codec"] }
 
@@ -61,7 +67,11 @@ async-trait.workspace = true
 linked_hash_set = "0.1"
 linked-hash-map = "0.5.6"
 rand.workspace = true
-secp256k1 = { workspace = true, features = ["global-context", "rand-std", "recovery"] }
+secp256k1 = { workspace = true, features = [
+    "global-context",
+    "rand-std",
+    "recovery",
+] }
 
 enr = { workspace = true, features = ["rust-secp256k1"], optional = true }
 tempfile = { workspace = true, optional = true }
@@ -74,14 +84,16 @@ reth-primitives = { workspace = true, features = ["test-utils"] }
 
 # we need to enable the test-utils feature in our own crate to use utils in
 # integration tests
-reth-network = { path = ".", features = ["test-utils"] }
+# reth-network = { path = ".", features = ["test-utils"] } # -> cyclic deps
 
 reth-provider = { workspace = true, features = ["test-utils"] }
 reth-tracing.workspace = true
 reth-transaction-pool = { workspace = true, features = ["test-utils"] }
 
 ethers-core = { workspace = true, default-features = false }
-ethers-providers = { workspace = true, default-features = false, features = ["ws"] }
+ethers-providers = { workspace = true, default-features = false, features = [
+    "ws",
+] }
 ethers-signers = { workspace = true, default-features = false }
 ethers-middleware = { workspace = true, default-features = false }
 
@@ -93,7 +105,19 @@ tempfile.workspace = true
 
 [features]
 default = ["serde"]
-serde = ["dep:serde", "dep:humantime-serde", "secp256k1/serde", "enr?/serde", "dep:serde_json"]
+serde = [
+    "dep:serde",
+    "dep:humantime-serde",
+    "secp256k1/serde",
+    "enr?/serde",
+    "dep:serde_json",
+]
 test-utils = ["reth-provider/test-utils", "dep:enr", "dep:tempfile"]
 geth-tests = []
-optimism = ["reth-primitives/optimism", "reth-transaction-pool/optimism", "reth-provider/optimism", "reth-network-api/optimism", "reth-rpc-types/optimism"]
+optimism = [
+    "reth-primitives/optimism",
+    "reth-transaction-pool/optimism",
+    "reth-provider/optimism",
+    "reth-network-api/optimism",
+    "reth-rpc-types/optimism",
+]
