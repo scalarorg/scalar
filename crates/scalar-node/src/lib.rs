@@ -55,7 +55,7 @@ use scalar_archival::writer::ArchiveWriter;
 use scalar_config::node::{ConsensusProtocol, DBCheckpointConfig};
 use scalar_config::node_config_metrics::NodeConfigMetrics;
 use scalar_config::{ConsensusConfig, NodeConfig};
-use scalar_consensus_adapter::{ConsensusApi, ConsensusMetrics};
+use scalar_consensus_adapter::{api::ConsensusMetrics, consensus_api::ConsensusApi};
 use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
@@ -659,19 +659,26 @@ impl SuiNode {
          * 231123 - Taivv
          * Using new registry
          */
-        let prometheus_registry = registry_service.default_registry();
-        let consensus_server = build_consensus_server(
+        // let prometheus_registry = registry_service.default_registry();
+        // let consensus_server = build_consensus_server(
+        //     state.clone(),
+        //     &transaction_orchestrator.clone(),
+        //     &config,
+        //     &prometheus_registry,
+        //     consensus_runtime,
+        // )?;
+        /*
+         * 231123 - Taivv
+         * Try using grpc server
+         */
+        let grpc_handle = build_grpc_server(
             state.clone(),
             &transaction_orchestrator.clone(),
             &config,
             &prometheus_registry,
             consensus_runtime,
-        )?;
-        /*
-         * 231123 - Taivv
-         * Try using grpc server
-         */
-        let grpc_handle = build_grpc_server()?;
+        )
+        .await?;
 
         let accumulator = Arc::new(StateAccumulator::new(store));
 
@@ -1818,9 +1825,15 @@ pub async fn build_grpc_server(
     state: Arc<AuthorityState>,
     transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
     config: &NodeConfig,
+    prometheus_registry: &Registry,
     consensus_runtime: Option<Handle>,
 ) -> Result<Option<tokio::task::JoinHandle<()>>> {
-    ConsensusNode::spawn(&config.consensus_rpc_address).await
+    let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
+    let consensus_node =
+        ConsensusNode::new(state, transaction_orchestrator.clone(), metrics.clone());
+    let grpc_address = config.consensus_rpc_address.clone();
+    let handle = tokio::spawn(async move { consensus_node.start(grpc_address).await.unwrap() });
+    Ok(Some(handle))
 }
 /*
  * 231121-TaiVV

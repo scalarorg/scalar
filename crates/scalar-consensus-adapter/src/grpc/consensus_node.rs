@@ -1,9 +1,13 @@
 use std::net::SocketAddr;
 
 use super::ConsensusService;
+use crate::api::ConsensusMetrics;
 use crate::proto::consensus_api_server::{ConsensusApi, ConsensusApiServer};
 use crate::types::EthTransaction;
 use anyhow::{Error, Result};
+use scalar_core::authority::AuthorityState;
+use scalar_core::authority_client::NetworkAuthorityClient;
+use scalar_core::transaction_orchestrator::TransactiondOrchestrator;
 use std::sync::Arc;
 use tokio::{
     sync::{mpsc, watch, Mutex, RwLock},
@@ -11,46 +15,48 @@ use tokio::{
 };
 use tonic::transport::Server;
 pub struct ConsensusNodeInner {
-    tx_eth_transaction: mpsc::UnboundedSender<EthTransaction>,
+    state: Arc<AuthorityState>,
+    transaction_orchestrator: Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+    metrics: Arc<ConsensusMetrics>,
 }
 
 impl ConsensusNodeInner {
-    async fn start(&mut self, addr: SocketAddr) -> Result<Option<JoinHandle<()>>> {
-        self.spawn(addr).await
-    }
-    async fn spawn(&mut self, addr: SocketAddr) -> Result<Option<JoinHandle<()>>> {
-        let consensus_service = ConsensusService::new(self.tx_eth_transaction.clone());
-        let handle = tokio::spawn(async move {
-            Server::builder()
-                .add_service(ConsensusApiServer::new(consensus_service))
-                .serve(addr)
-                // .serve_with_shutdown(
-                //     grpc_addr.to_socket_addrs().unwrap().next().unwrap(),
-                //     async {
-                //         let _ = rx_shutdown.receiver.recv().await;
-                //     },
-                // )
-                .await
-                .unwrap();
-        });
-        Ok(Some(handle))
+    async fn start(&mut self, addr: SocketAddr) -> Result<()> {
+        let (tx_eth_transaction, rx_eth_transaction) = mpsc::unbounded_channel();
+        let consensus_service = ConsensusService::new(tx_eth_transaction);
+        Server::builder()
+            .add_service(ConsensusApiServer::new(consensus_service))
+            .serve(addr)
+            // .serve_with_shutdown(
+            //     grpc_addr.to_socket_addrs().unwrap().next().unwrap(),
+            //     async {
+            //         let _ = rx_shutdown.receiver.recv().await;
+            //     },
+            // )
+            .await
+            .unwrap();
+        Ok(())
     }
 }
 pub struct ConsensusNode {
     internal: Arc<RwLock<ConsensusNodeInner>>,
 }
 impl ConsensusNode {
-    pub fn new(tx_eth_transaction: mpsc::UnboundedSender<EthTransaction>) -> Self {
-        let internal = ConsensusNodeInner { tx_eth_transaction };
+    pub fn new(
+        state: Arc<AuthorityState>,
+        transaction_orchestrator: Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+        metrics: Arc<ConsensusMetrics>,
+    ) -> Self {
+        let internal = ConsensusNodeInner {
+            state,
+            transaction_orchestrator,
+            metrics,
+        };
         let internal = Arc::new(RwLock::new(internal));
         ConsensusNode { internal }
     }
-    pub async fn spawn(
-        grpc_address: &SocketAddr,
-        tx_eth_transaction: mpsc::UnboundedSender<EthTransaction>,
-    ) -> Result<Option<tokio::task::JoinHandle<()>>> {
-        let consensus = Self::new(tx_eth_transaction);
-        let mut guard = consensus.internal.write().await;
-        guard.start(grpc_address.clone()).await
+    pub async fn start(&self, grpc_address: SocketAddr) -> Result<()> {
+        let mut guard = self.internal.write().await;
+        guard.start(grpc_address).await
     }
 }
