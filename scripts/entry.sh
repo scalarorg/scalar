@@ -13,7 +13,12 @@ reth() {
 }
 
 scalar() {
-    RUST_LOG=debug /usr/local/bin/scalar-node --config-path /scalar/fullnode.yaml
+    RUST_LOG=info /usr/local/bin/scalar-node \
+        --config-path /scalar/fullnode.yaml \
+        #--epoch-duration-ms 3600000 \
+        --fullnode-rpc-port 9000 \
+        --faucet-port 9123 \
+        --indexer-rpc-port 9124
 }
 
 $@

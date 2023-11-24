@@ -3,15 +3,9 @@
 // Author Vu Viet Tai
 // Created: 2023, Nov 21
 
+use crate::types::ConsensusAddTransactionResponse;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
-
-use scalar_json_rpc_types::{
-    Checkpoint, CheckpointId, CheckpointPage, SuiEvent, SuiGetPastObjectRequest,
-    SuiObjectDataOptions, SuiObjectResponse, SuiPastObjectResponse, SuiTransactionBlockResponse,
-    SuiTransactionBlockResponseOptions,
-};
-use scalar_json_rpc_types::{ProtocolConfigResponse, SuiLoadedChildObjectsResponse};
 use scalar_types::base_types::{ObjectID, SequenceNumber, TransactionDigest};
 use scalar_types::scalar_serde::BigInt;
 use sui_open_rpc_macros::open_rpc;
@@ -25,7 +19,7 @@ pub trait ConsensusApi {
         &self,
         /// the digest of the queried transaction
         digest: TransactionDigest,
-        /// options for specifying the content to be returned
-        options: Option<SuiTransactionBlockResponseOptions>,
-    ) -> RpcResult<SuiTransactionBlockResponse>;
+        // /// options for specifying the content to be returned
+        // options: Option<SuiTransactionBlockResponseOptions>,
+    ) -> RpcResult<ConsensusAddTransactionResponse>;
 }

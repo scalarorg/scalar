@@ -9,33 +9,41 @@ repository.workspace = true
 
 [dependencies]
 # reth
-scalar-consensus-adapter-common = { path = "./common" }
-reth-primitives.workspace = true
-reth-interfaces.workspace = true
-reth-stages.workspace = true
-reth-db.workspace = true
-reth-provider.workspace = true
-reth-rpc-types.workspace = true
-reth-tasks.workspace = true
-reth-payload-builder.workspace = true
-#reth-prune.workspace = true
-reth-snapshot.workspace = true
-reth-rpc-types-compat.workspace = true
-reth-tokio-util.workspace = true
+# scalar-consensus-adapter-common = { path = "./common" }
+# reth-primitives.workspace = true
+# reth-interfaces.workspace = true
+# reth-stages.workspace = true
+# reth-db.workspace = true
+# reth-provider.workspace = true
+# reth-rpc-types.workspace = true
+# reth-tasks.workspace = true
+# reth-payload-builder.workspace = true
+# #reth-prune.workspace = true
+# reth-snapshot.workspace = true
+# reth-rpc-types-compat.workspace = true
+# reth-tokio-util.workspace = true
 # async
+async-trait.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 tokio-stream.workspace = true
+prost.workspace = true
+tonic.workspace = true
 futures.workspace = true
 jsonrpsee.workspace = true
 # metrics
-reth-metrics.workspace = true
+# reth-metrics.workspace = true
 metrics.workspace = true
 
 # misc
+anyhow.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_with.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
 schnellru = "0.2"
 cfg-if = "1.0.0"
+prometheus.workspace = true
 scalar-core.workspace = true
 scalar-storage.workspace = true
 scalar-types.workspace = true
@@ -43,6 +51,7 @@ scalar-json.workspace = true
 sui-open-rpc.workspace = true
 sui-open-rpc-macros.workspace = true
 sui-protocol-config.workspace = true
+scalar-json-rpc.workspace = true
 scalar-json-rpc-types.workspace = true
 scalar-transaction-builder.workspace = true
 mysten-metrics.workspace = true
@@ -50,25 +59,29 @@ shared-crypto.workspace = true
 typed-store.workspace = true
 cached.workspace = true
 workspace-hack.workspace = true
+
 [dev-dependencies]
 # reth
-reth-payload-builder = { workspace = true, features = ["test-utils"] }
-reth-interfaces = { workspace = true, features = ["test-utils"] }
-reth-stages = { workspace = true, features = ["test-utils"] }
-reth-blockchain-tree = { workspace = true, features = ["test-utils"] }
-reth-db = { workspace = true, features = ["test-utils"] }
-reth-provider = { workspace = true, features = ["test-utils"] }
-reth-tracing.workspace = true
-reth-revm.workspace = true
-reth-downloaders.workspace = true
+# reth-payload-builder = { workspace = true, features = ["test-utils"] }
+# reth-interfaces = { workspace = true, features = ["test-utils"] }
+# reth-stages = { workspace = true, features = ["test-utils"] }
+# reth-blockchain-tree = { workspace = true, features = ["test-utils"] }
+# reth-db = { workspace = true, features = ["test-utils"] }
+# reth-provider = { workspace = true, features = ["test-utils"] }
+# reth-tracing.workspace = true
+# reth-revm.workspace = true
+# reth-downloaders.workspace = true
 
-assert_matches.workspace = true
+# assert_matches.workspace = true
 
-[features]
-optimism = [
-    #"reth-consensus-common/optimism",
-    "reth-primitives/optimism",
-    "reth-interfaces/optimism",
-    "reth-provider/optimism",
-    "reth-rpc-types/optimism",
-]
+# [features]
+# optimism = [
+#     #"reth-consensus-common/optimism",
+#     "reth-primitives/optimism",
+#     "reth-interfaces/optimism",
+#     "reth-provider/optimism",
+#     "reth-rpc-types/optimism",
+# ]
+
+[build-dependencies]
+tonic-build.workspace = true

@@ -21,7 +21,9 @@ use arc_swap::ArcSwap;
 use fastcrypto_zkp::bn254::zk_login::JwkId;
 use fastcrypto_zkp::bn254::zk_login::OIDCProvider;
 use futures::TryFutureExt;
+use jsonrpsee::RpcModule;
 use prometheus::Registry;
+use scalar_consensus_adapter::grpc::ConsensusNode;
 use scalar_core::authority::CHAIN_IDENTIFIER;
 use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
 use scalar_json_rpc::api::JsonRpcMetrics;
@@ -40,6 +42,7 @@ use tower::ServiceBuilder;
 use tracing::{debug, error, warn};
 use tracing::{error_span, info, Instrument};
 
+use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
 use checkpoint_executor::CheckpointExecutor;
 use fastcrypto_zkp::bn254::zk_login::JWK;
 pub use handle::SuiNodeHandle;
@@ -52,6 +55,7 @@ use scalar_archival::writer::ArchiveWriter;
 use scalar_config::node::{ConsensusProtocol, DBCheckpointConfig};
 use scalar_config::node_config_metrics::NodeConfigMetrics;
 use scalar_config::{ConsensusConfig, NodeConfig};
+use scalar_consensus_adapter::{api::ConsensusMetrics, consensus_api::ConsensusApi};
 use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
@@ -121,8 +125,6 @@ use sui_macros::fail_point_async;
 use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
 use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
-
-use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
 
 pub mod admin;
 mod handle;
@@ -653,14 +655,30 @@ impl SuiNode {
             &prometheus_registry,
             custom_rpc_runtime,
         )?;
-
-        let consensus_server = build_consensus_server(
+        /*
+         * 231123 - Taivv
+         * Using new registry
+         */
+        // let prometheus_registry = registry_service.default_registry();
+        // let consensus_server = build_consensus_server(
+        //     state.clone(),
+        //     &transaction_orchestrator.clone(),
+        //     &config,
+        //     &prometheus_registry,
+        //     consensus_runtime,
+        // )?;
+        /*
+         * 231123 - Taivv
+         * Try using grpc server
+         */
+        let grpc_handle = build_grpc_server(
             state.clone(),
             &transaction_orchestrator.clone(),
             &config,
             &prometheus_registry,
             consensus_runtime,
-        )?;
+        )
+        .await?;
 
         let accumulator = Arc::new(StateAccumulator::new(store));
 
@@ -1799,7 +1817,24 @@ pub fn build_http_server(
 
     Ok(Some(handle))
 }
-
+/*
+ * 231123-TaiVV
+ * Add consensus grpc server
+ */
+pub async fn build_grpc_server(
+    state: Arc<AuthorityState>,
+    transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+    config: &NodeConfig,
+    prometheus_registry: &Registry,
+    consensus_runtime: Option<Handle>,
+) -> Result<Option<tokio::task::JoinHandle<()>>> {
+    let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
+    let consensus_node =
+        ConsensusNode::new(state, transaction_orchestrator.clone(), metrics.clone());
+    let grpc_address = config.consensus_rpc_address.clone();
+    let handle = tokio::spawn(async move { consensus_node.start(grpc_address).await.unwrap() });
+    Ok(Some(handle))
+}
 /*
  * 231121-TaiVV
  * Add consensus server
@@ -1812,67 +1847,19 @@ pub fn build_consensus_server(
     consensus_runtime: Option<Handle>,
 ) -> Result<Option<tokio::task::JoinHandle<()>>> {
     // Validators do not expose these APIs
-    if config.consensus_config().is_some() {
-        return Ok(None);
-    }
-
+    // if config.consensus_config().is_some() {
+    //     return Ok(None);
+    // }
+    let prometheus_registry = &Registry::new();
     let mut router = axum::Router::new();
 
     let consensus_router = {
         let mut server = JsonRpcServerBuilder::new(env!("CARGO_PKG_VERSION"), prometheus_registry);
 
-        let kv_store = build_kv_store(&state, config, prometheus_registry)?;
-
-        let metrics = Arc::new(JsonRpcMetrics::new(prometheus_registry));
-        server.register_module(ReadApi::new(
-            state.clone(),
-            kv_store.clone(),
-            metrics.clone(),
-        ))?;
-        server.register_module(CoinReadApi::new(
-            state.clone(),
-            kv_store.clone(),
-            metrics.clone(),
-        ))?;
-        server.register_module(TransactionBuilderApi::new(state.clone()))?;
-        server.register_module(GovernanceReadApi::new(state.clone(), metrics.clone()))?;
-
-        if let Some(transaction_orchestrator) = transaction_orchestrator {
-            server.register_module(TransactionExecutionApi::new(
-                state.clone(),
-                transaction_orchestrator.clone(),
-                metrics.clone(),
-            ))?;
-        }
-
-        let name_service_config =
-            if let (Some(package_address), Some(registry_id), Some(reverse_registry_id)) = (
-                config.name_service_package_address,
-                config.name_service_registry_id,
-                config.name_service_reverse_registry_id,
-            ) {
-                scalar_json_rpc::name_service::NameServiceConfig::new(
-                    package_address,
-                    registry_id,
-                    reverse_registry_id,
-                )
-            } else {
-                scalar_json_rpc::name_service::NameServiceConfig::default()
-            };
-
-        server.register_module(IndexerApi::new(
-            state.clone(),
-            ReadApi::new(state.clone(), kv_store.clone(), metrics.clone()),
-            kv_store,
-            name_service_config,
-            metrics,
-            config.indexer_max_subscriptions,
-        ))?;
-        server.register_module(MoveUtils::new(state.clone()))?;
-
+        let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
+        server.register_module(ConsensusApi::new(metrics.clone()))?;
         server.to_router(None)?
     };
-
     router = router.merge(consensus_router);
 
     let server =
@@ -1884,7 +1871,7 @@ pub fn build_consensus_server(
     } else {
         tokio::spawn(async move { server.await.unwrap() })
     };
-    info!(local_addr =? addr, "Sui JSON-RPC server listening on {addr}");
+    info!(local_addr =? addr, "Scalar consensus JSON-RPC server listening on {addr}");
 
     Ok(Some(handle))
 }
