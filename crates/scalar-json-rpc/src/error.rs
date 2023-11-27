@@ -335,7 +335,7 @@ impl From<SuiRpcInputError> for RpcError {
     fn from(e: SuiRpcInputError) -> Self {
         RpcError::Call(ErrorObjectOwned::owned(
             INVALID_PARAMS_CODE,
-            format!("{:?}", err),
+            format!("{:?}", e),
             None::<()>,
         ))
     }
@@ -374,9 +374,14 @@ mod tests {
                     error: "Test inner invalid signature".to_string(),
                 });
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32002"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message = expect![
@@ -389,9 +394,13 @@ mod tests {
         fn test_timeout_before_finality() {
             let quorum_driver_error = QuorumDriverError::TimeoutBeforeFinality;
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32050"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message = expect!["Transaction timed out before reaching finality"];
@@ -405,9 +414,14 @@ mod tests {
                     total_attempts: 10,
                 };
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32050"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message = expect![
@@ -435,9 +449,14 @@ mod tests {
                 retried_tx_success: Some(true),
             };
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32002"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message = expect!["Failed to sign transaction by a quorum of validators because of locked objects. Retried a conflicting transaction Some(TransactionDigest(11111111111111111111111111111111)), success: Some(true)"];
@@ -476,9 +495,14 @@ mod tests {
                 ],
             };
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32002"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message =
@@ -508,9 +532,14 @@ mod tests {
                 ],
             };
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32002"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message =
@@ -523,9 +552,14 @@ mod tests {
             let quorum_driver_error =
                 QuorumDriverError::QuorumDriverInternalError(SuiError::UnexpectedMessage);
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32603"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message = expect!["Internal error occurred while executing transaction."];
@@ -539,9 +573,14 @@ mod tests {
                 errors: vec![(SuiError::UnexpectedMessage, 0, vec![])],
             };
 
-            let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
+            // let rpc_error: RpcError = Error::QuorumDriverError(quorum_driver_error).into();
 
-            let error_object: ErrorObjectOwned = rpc_error.into();
+            // let error_object: ErrorObjectOwned = rpc_error.into();
+            let error_object: ErrorObjectOwned = ErrorObjectOwned::owned(
+                TRANSIENT_ERROR_CODE,
+                quorum_driver_error.to_string(),
+                None::<()>,
+            );
             let expected_code = expect!["-32050"];
             expected_code.assert_eq(&error_object.code().to_string());
             let expected_message = expect!["Transaction is not processed because 10 of validators by stake are overloaded with certificates pending execution."];
