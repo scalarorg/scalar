@@ -20,7 +20,7 @@ pub struct ConsensusService {
 }
 impl ConsensusService {
     pub fn new(state: Arc<AuthorityState>, metrics: Arc<ConsensusMetrics>) -> Self {
-        let transaction_orchestrator = TransactionOrchestrator::new();
+        let transaction_orchestrator = TransactionOrchestrator::new(state.clone(), metrics.clone());
         Self {
             state,
             metrics,
