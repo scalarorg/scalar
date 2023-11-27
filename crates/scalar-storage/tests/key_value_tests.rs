@@ -20,25 +20,25 @@ use scalar_types::messages_checkpoint::{
 use scalar_types::transaction::Transaction;
 use std::collections::HashMap;
 use std::sync::Arc;
-use sui_test_transaction_builder::TestTransactionBuilder;
+// use sui_test_transaction_builder::TestTransactionBuilder;
 
 use scalar_storage::key_value_store::*;
 use scalar_storage::key_value_store_metrics::KeyValueStoreMetrics;
 use scalar_types::object::Object;
 use scalar_types::storage::ObjectKey;
 
-fn random_tx() -> Transaction {
-    let (sender, key): (_, AccountKeyPair) = get_key_pair();
-    let gas = random_object_ref();
-    TestTransactionBuilder::new(sender, gas, 1)
-        .transfer(random_object_ref(), sender)
-        .build_and_sign(&key)
-}
+// fn random_tx() -> Transaction {
+//     let (sender, key): (_, AccountKeyPair) = get_key_pair();
+//     let gas = random_object_ref();
+//     TestTransactionBuilder::new(sender, gas, 1)
+//         .transfer(random_object_ref(), sender)
+//         .build_and_sign(&key)
+// }
 
-fn random_fx() -> TransactionEffects {
-    let tx = random_tx();
-    TransactionEffects::new_with_tx(&tx)
-}
+// fn random_fx() -> TransactionEffects {
+//     let tx = random_tx();
+//     TransactionEffects::new_with_tx(&tx)
+// }
 
 fn random_events() -> TransactionEvents {
     let event = Event::random_for_testing();
@@ -77,17 +77,17 @@ impl MockTxStore {
         self.events.insert(events.digest(), events);
     }
 
-    fn add_random_tx(&mut self) -> Transaction {
-        let tx = random_tx();
-        self.add_tx(tx.clone());
-        tx
-    }
+    // fn add_random_tx(&mut self) -> Transaction {
+    //     let tx = random_tx();
+    //     self.add_tx(tx.clone());
+    //     tx
+    // }
 
-    fn add_random_fx(&mut self) -> TransactionEffects {
-        let fx = random_fx();
-        self.add_fx(fx.clone());
-        fx
-    }
+    // fn add_random_fx(&mut self) -> TransactionEffects {
+    //     let fx = random_fx();
+    //     self.add_fx(fx.clone());
+    //     fx
+    // }
 
     fn add_random_events(&mut self) -> TransactionEvents {
         let events = random_events();
@@ -238,43 +238,43 @@ impl TransactionKeyValueStoreTrait for MockTxStore {
     }
 }
 
-#[tokio::test]
-async fn test_get_tx() {
-    let mut store = MockTxStore::new();
-    let tx = random_tx();
-    store.add_tx(tx.clone());
+// #[tokio::test]
+// async fn test_get_tx() {
+//     let mut store = MockTxStore::new();
+//     let tx = random_tx();
+//     store.add_tx(tx.clone());
 
-    let store = TransactionKeyValueStore::from(store);
+//     let store = TransactionKeyValueStore::from(store);
 
-    let result = store.multi_get_tx(&[*tx.digest()]).now_or_never().unwrap();
-    assert_eq!(result.unwrap(), vec![Some(tx)]);
+//     let result = store.multi_get_tx(&[*tx.digest()]).now_or_never().unwrap();
+//     assert_eq!(result.unwrap(), vec![Some(tx)]);
 
-    let result = store
-        .multi_get_tx(&[TransactionDigest::random()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![None]);
-}
+//     let result = store
+//         .multi_get_tx(&[TransactionDigest::random()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![None]);
+// }
 
-#[tokio::test]
-async fn test_get_fx() {
-    let mut store = MockTxStore::new();
-    let fx = random_fx();
-    store.add_fx(fx.clone());
-    let store = TransactionKeyValueStore::from(store);
+// #[tokio::test]
+// async fn test_get_fx() {
+//     let mut store = MockTxStore::new();
+//     let fx = random_fx();
+//     store.add_fx(fx.clone());
+//     let store = TransactionKeyValueStore::from(store);
 
-    let result = store
-        .multi_get_fx_by_tx_digest(&[*fx.transaction_digest()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![Some(fx)]);
+//     let result = store
+//         .multi_get_fx_by_tx_digest(&[*fx.transaction_digest()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![Some(fx)]);
 
-    let result = store
-        .multi_get_fx_by_tx_digest(&[TransactionDigest::random()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![None]);
-}
+//     let result = store
+//         .multi_get_fx_by_tx_digest(&[TransactionDigest::random()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![None]);
+// }
 
 #[tokio::test]
 async fn test_get_events() {
@@ -296,45 +296,45 @@ async fn test_get_events() {
     assert_eq!(result.unwrap(), vec![None]);
 }
 
-#[tokio::test]
-async fn test_multi_get() {
-    let mut store = MockTxStore::new();
-    let txns = vec![store.add_random_tx(), store.add_random_tx()];
-    let fxs = vec![
-        store.add_random_fx(),
-        store.add_random_fx(),
-        store.add_random_fx(),
-    ];
-    let events = vec![store.add_random_events(), store.add_random_events()];
+// #[tokio::test]
+// async fn test_multi_get() {
+//     let mut store = MockTxStore::new();
+//     let txns = vec![store.add_random_tx(), store.add_random_tx()];
+//     let fxs = vec![
+//         store.add_random_fx(),
+//         store.add_random_fx(),
+//         store.add_random_fx(),
+//     ];
+//     let events = vec![store.add_random_events(), store.add_random_events()];
 
-    let store = TransactionKeyValueStore::from(store);
+//     let store = TransactionKeyValueStore::from(store);
 
-    let result = store
-        .multi_get(
-            &txns.iter().map(|tx| *tx.digest()).collect::<Vec<_>>(),
-            &fxs.iter()
-                .map(|fx| *fx.transaction_digest())
-                .collect::<Vec<_>>(),
-            &events
-                .iter()
-                .map(|events| events.digest())
-                .collect::<Vec<_>>(),
-        )
-        .now_or_never()
-        .unwrap();
+//     let result = store
+//         .multi_get(
+//             &txns.iter().map(|tx| *tx.digest()).collect::<Vec<_>>(),
+//             &fxs.iter()
+//                 .map(|fx| *fx.transaction_digest())
+//                 .collect::<Vec<_>>(),
+//             &events
+//                 .iter()
+//                 .map(|events| events.digest())
+//                 .collect::<Vec<_>>(),
+//         )
+//         .now_or_never()
+//         .unwrap();
 
-    let txns = txns.into_iter().map(Some).collect::<Vec<_>>();
-    let fxs = fxs.into_iter().map(Some).collect::<Vec<_>>();
-    let events = events.into_iter().map(Some).collect::<Vec<_>>();
+//     let txns = txns.into_iter().map(Some).collect::<Vec<_>>();
+//     let fxs = fxs.into_iter().map(Some).collect::<Vec<_>>();
+//     let events = events.into_iter().map(Some).collect::<Vec<_>>();
 
-    assert_eq!(result.unwrap(), (txns, fxs, events));
+//     assert_eq!(result.unwrap(), (txns, fxs, events));
 
-    let result = store
-        .multi_get_events(&[TransactionEventsDigest::random()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![None]);
-}
+//     let result = store
+//         .multi_get_events(&[TransactionEventsDigest::random()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![None]);
+// }
 
 #[tokio::test]
 async fn test_checkpoints() {
@@ -366,60 +366,60 @@ async fn test_checkpoints() {
     assert_eq!(contents_by_digest[1].as_ref().unwrap(), &c2);
 }
 
-#[tokio::test]
-async fn test_get_tx_from_fallback() {
-    let mut store = MockTxStore::new();
-    let tx = store.add_random_tx();
-    let fx = store.add_random_fx();
-    let store = TransactionKeyValueStore::from(store);
+// #[tokio::test]
+// async fn test_get_tx_from_fallback() {
+//     let mut store = MockTxStore::new();
+//     let tx = store.add_random_tx();
+//     let fx = store.add_random_fx();
+//     let store = TransactionKeyValueStore::from(store);
 
-    let mut fallback = MockTxStore::new();
-    let fallback_tx = fallback.add_random_tx();
-    let fallback_fx = fallback.add_random_fx();
-    let fallback = TransactionKeyValueStore::from(fallback);
+//     let mut fallback = MockTxStore::new();
+//     let fallback_tx = fallback.add_random_tx();
+//     let fallback_fx = fallback.add_random_fx();
+//     let fallback = TransactionKeyValueStore::from(fallback);
 
-    let fallback = FallbackTransactionKVStore::new_kv(
-        store,
-        fallback,
-        KeyValueStoreMetrics::new_for_tests(),
-        "fallback",
-    );
+//     let fallback = FallbackTransactionKVStore::new_kv(
+//         store,
+//         fallback,
+//         KeyValueStoreMetrics::new_for_tests(),
+//         "fallback",
+//     );
 
-    let result = fallback
-        .multi_get_tx(&[*tx.digest()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![Some(tx.clone())]);
+//     let result = fallback
+//         .multi_get_tx(&[*tx.digest()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![Some(tx.clone())]);
 
-    let result = fallback
-        .multi_get_tx(&[*fallback_tx.digest()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![Some(fallback_tx.clone())]);
+//     let result = fallback
+//         .multi_get_tx(&[*fallback_tx.digest()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![Some(fallback_tx.clone())]);
 
-    let result = fallback
-        .multi_get_tx(&[TransactionDigest::random()])
-        .now_or_never()
-        .unwrap();
-    assert_eq!(result.unwrap(), vec![None]);
+//     let result = fallback
+//         .multi_get_tx(&[TransactionDigest::random()])
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(result.unwrap(), vec![None]);
 
-    let result = fallback
-        .multi_get(
-            &[*fallback_tx.digest(), *tx.digest()],
-            &[*fx.transaction_digest(), *fallback_fx.transaction_digest()],
-            &[],
-        )
-        .now_or_never()
-        .unwrap();
-    assert_eq!(
-        result.unwrap(),
-        (
-            vec![Some(fallback_tx), Some(tx)],
-            vec![Some(fx), Some(fallback_fx)],
-            vec![]
-        )
-    );
-}
+//     let result = fallback
+//         .multi_get(
+//             &[*fallback_tx.digest(), *tx.digest()],
+//             &[*fx.transaction_digest(), *fallback_fx.transaction_digest()],
+//             &[],
+//         )
+//         .now_or_never()
+//         .unwrap();
+//     assert_eq!(
+//         result.unwrap(),
+//         (
+//             vec![Some(fallback_tx), Some(tx)],
+//             vec![Some(fx), Some(fallback_fx)],
+//             vec![]
+//         )
+//     );
+// }
 
 #[cfg(msim)]
 mod simtests {

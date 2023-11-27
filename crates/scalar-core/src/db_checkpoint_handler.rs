@@ -350,11 +350,11 @@ mod tests {
         DBCheckpointHandler, SUCCESS_MARKER, TEST_MARKER, UPLOAD_COMPLETED_MARKER,
     };
     use itertools::Itertools;
-    use std::fs;
-    use sui_storage::object_store::util::{
+    use scalar_storage::object_store::util::{
         find_all_dirs_with_epoch_prefix, find_missing_epochs_dirs, path_to_filesystem,
     };
-    use sui_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
+    use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
+    use std::fs;
     use tempfile::TempDir;
 
     #[tokio::test]

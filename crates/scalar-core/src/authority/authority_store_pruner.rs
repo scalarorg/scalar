@@ -637,6 +637,7 @@ mod tests {
         StoreObjectWrapper,
     };
     use prometheus::Registry;
+    use scalar_storage::mutex_table::RwLockTable;
     use scalar_types::base_types::ObjectDigest;
     use scalar_types::effects::TransactionEffects;
     use scalar_types::effects::TransactionEffectsAPI;
@@ -645,7 +646,6 @@ mod tests {
         object::Object,
         storage::ObjectKey,
     };
-    use sui_storage::mutex_table::RwLockTable;
     use typed_store::rocks::util::reference_count_merge_operator;
     use typed_store::rocks::{DBMap, MetricConf, ReadWriteOptions};
     use typed_store::Map;

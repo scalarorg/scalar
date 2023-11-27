@@ -359,7 +359,7 @@ dependencies = [
  "anemo",
  "anemo-tower",
  "bytes",
- "clap",
+ "clap 4.4.7",
  "dashmap",
  "rand 0.8.5",
  "tokio",
@@ -1097,6 +1097,17 @@ dependencies = [
  "log",
  "url",
  "wildmatch",
+]
+
+[[package]]
+name = "atty"
+version = "0.2.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
+dependencies = [
+ "hermit-abi 0.1.19",
+ "libc",
+ "winapi",
 ]
 
 [[package]]
@@ -2710,6 +2721,18 @@ dependencies = [
 
 [[package]]
 name = "clap"
+version = "3.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
+dependencies = [
+ "bitflags 1.3.2",
+ "clap_lex 0.2.4",
+ "indexmap 1.9.3",
+ "textwrap",
+]
+
+[[package]]
+name = "clap"
 version = "4.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac495e00dcec98c83465d5ad66c5c4fabd652fd6686e7c6269b117e729a6f17b"
@@ -2741,6 +2764,15 @@ dependencies = [
  "proc-macro2 1.0.69",
  "quote 1.0.33",
  "syn 2.0.38",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
+dependencies = [
+ "os_str_bytes",
 ]
 
 [[package]]
@@ -3154,6 +3186,32 @@ dependencies = [
 
 [[package]]
 name = "criterion"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7c76e09c1aae2bc52b3d2f29e13c6572553b30c4aa1b8a49fd70de6412654cb"
+dependencies = [
+ "anes",
+ "atty",
+ "cast",
+ "ciborium",
+ "clap 3.2.25",
+ "criterion-plot",
+ "itertools 0.10.5",
+ "lazy_static",
+ "num-traits",
+ "oorandom",
+ "plotters",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tinytemplate",
+ "walkdir",
+]
+
+[[package]]
+name = "criterion"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2b12d017a929603d80db1831cd3a24082f8137ce19c69e6447f54f5fc8d692f"
@@ -3161,7 +3219,7 @@ dependencies = [
  "anes",
  "cast",
  "ciborium",
- "clap",
+ "clap 4.4.7",
  "criterion-plot",
  "futures",
  "is-terminal",
@@ -5862,6 +5920,15 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
+version = "0.1.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
+dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "hermit-abi"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
@@ -6560,7 +6627,7 @@ version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eae7b9aee968036d54dce06cebaefd919e4472e753296daccd6d344e3e2df0c2"
 dependencies = [
- "hermit-abi",
+ "hermit-abi 0.3.3",
  "libc",
  "windows-sys 0.48.0",
 ]
@@ -6608,7 +6675,7 @@ version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
- "hermit-abi",
+ "hermit-abi 0.3.3",
  "rustix 0.38.21",
  "windows-sys 0.48.0",
 ]
@@ -7129,7 +7196,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d8de370f98a6cb8a4606618e53e802f93b094ddec0f96988eaec2c27e6e9ce7"
 dependencies = [
- "clap",
+ "clap 4.4.7",
  "termcolor",
  "threadpool",
 ]
@@ -7779,7 +7846,7 @@ source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a11
 dependencies = [
  "anyhow",
  "bcs",
- "clap",
+ "clap 4.4.7",
  "codespan-reporting",
  "hex",
  "move-binary-format",
@@ -7826,7 +7893,7 @@ source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a11
 dependencies = [
  "anyhow",
  "bcs",
- "clap",
+ "clap 4.4.7",
  "codespan",
  "colored",
  "move-binary-format",
@@ -7845,7 +7912,7 @@ source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a11
 dependencies = [
  "anyhow",
  "bcs",
- "clap",
+ "clap 4.4.7",
  "colored",
  "hex",
  "move-binary-format",
@@ -7962,7 +8029,7 @@ version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
 dependencies = [
  "anyhow",
- "clap",
+ "clap 4.4.7",
  "colored",
  "move-binary-format",
  "move-bytecode-source-map",
@@ -8004,7 +8071,7 @@ version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
 dependencies = [
  "anyhow",
- "clap",
+ "clap 4.4.7",
  "codespan-reporting",
  "itertools 0.10.5",
  "log",
@@ -8668,7 +8735,7 @@ dependencies = [
  "axum",
  "bytes",
  "cfg-if",
- "clap",
+ "clap 4.4.7",
  "eyre",
  "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
  "futures",
@@ -9196,7 +9263,7 @@ version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
 dependencies = [
- "hermit-abi",
+ "hermit-abi 0.3.3",
  "libc",
 ]
 
@@ -9508,6 +9575,12 @@ checksum = "f1e1c390732d15f1d48471625cd92d154e66db2c56645e29a9cd26f4699f72dc"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "os_str_bytes"
+version = "6.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
 
 [[package]]
 name = "ouroboros"
@@ -10156,7 +10229,9 @@ checksum = "196ded5d4be535690899a4631cc9f18cdc41b7ebf24a79400f46f48e49a11059"
 dependencies = [
  "backtrace",
  "cfg-if",
+ "criterion 0.4.0",
  "findshlibs",
+ "inferno",
  "libc",
  "log",
  "nix 0.26.4",
@@ -10176,7 +10251,7 @@ checksum = "978385d59daf9269189d052ca8a84c1acfd0715c0599a5d5188d4acc078ca46a"
 dependencies = [
  "backtrace",
  "cfg-if",
- "criterion",
+ "criterion 0.5.1",
  "findshlibs",
  "inferno",
  "libc",
@@ -11109,7 +11184,7 @@ dependencies = [
  "aquamarine",
  "backon",
  "boyer-moore-magiclen",
- "clap",
+ "clap 4.4.7",
  "comfy-table 7.1.0",
  "confy",
  "const-str",
@@ -11183,10 +11258,11 @@ dependencies = [
 name = "reth-auto-seal-consensus"
 version = "1.5.0"
 dependencies = [
- "clap",
+ "clap 4.4.7",
  "eyre",
  "futures-util",
  "jsonrpsee 0.20.3",
+ "reth",
  "reth-beacon-consensus",
  "reth-interfaces",
  "reth-primitives",
@@ -11327,7 +11403,7 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "bytes",
- "criterion",
+ "criterion 0.5.1",
  "derive_more",
  "eyre",
  "futures",
@@ -11506,7 +11582,7 @@ dependencies = [
  "arbitrary",
  "async-trait",
  "auto_impl",
- "clap",
+ "clap 4.4.7",
  "futures",
  "modular-bitfield",
  "parking_lot 0.12.1",
@@ -11550,7 +11626,7 @@ version = "1.5.0"
 dependencies = [
  "bitflags 2.4.1",
  "byteorder",
- "criterion",
+ "criterion 0.5.1",
  "derive_more",
  "indexmap 2.1.0",
  "libc",
@@ -11650,6 +11726,7 @@ dependencies = [
  "reth-interfaces",
  "reth-metrics",
  "reth-net-common",
+ "reth-network",
  "reth-network-api",
  "reth-primitives",
  "reth-provider",
@@ -11737,9 +11814,9 @@ dependencies = [
  "byteorder",
  "bytes",
  "c-kzg",
- "clap",
+ "clap 4.4.7",
  "crc",
- "criterion",
+ "criterion 0.5.1",
  "derive_more",
  "ethers-core",
  "hash-db",
@@ -12025,7 +12102,7 @@ name = "reth-snapshot"
 version = "1.5.0"
 dependencies = [
  "assert_matches",
- "clap",
+ "clap 4.4.7",
  "reth-db",
  "reth-interfaces",
  "reth-nippy-jar",
@@ -12045,7 +12122,7 @@ dependencies = [
  "aquamarine",
  "assert_matches",
  "async-trait",
- "criterion",
+ "criterion 0.5.1",
  "futures-util",
  "itertools 0.11.0",
  "metrics",
@@ -12118,7 +12195,7 @@ dependencies = [
  "async-trait",
  "auto_impl",
  "bitflags 2.4.1",
- "criterion",
+ "criterion 0.5.1",
  "fnv",
  "futures-util",
  "metrics",
@@ -12146,7 +12223,7 @@ version = "1.5.0"
 dependencies = [
  "alloy-rlp",
  "auto_impl",
- "criterion",
+ "criterion 0.5.1",
  "derive_more",
  "once_cell",
  "pretty_assertions",
@@ -12154,6 +12231,7 @@ dependencies = [
  "reth-db",
  "reth-interfaces",
  "reth-primitives",
+ "reth-provider",
  "serde_json",
  "thiserror",
  "tokio",
@@ -12960,8 +13038,8 @@ dependencies = [
  "bcs",
  "bytes",
  "chrono",
- "clap",
- "criterion",
+ "clap 4.4.7",
+ "criterion 0.5.1",
  "dashmap",
  "either",
  "enum_dispatch",
@@ -12980,6 +13058,7 @@ dependencies = [
  "move-bytecode-utils",
  "move-core-types",
  "move-package",
+ "move-symbol-pool",
  "mysten-common",
  "mysten-metrics",
  "mysten-network",
@@ -12996,6 +13075,7 @@ dependencies = [
  "object_store",
  "once_cell",
  "parking_lot 0.12.1",
+ "pprof 0.11.1",
  "pretty_assertions",
  "prometheus",
  "rand 0.8.5",
@@ -13018,12 +13098,16 @@ dependencies = [
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
  "signature 1.6.4",
+ "sui-genesis-builder",
  "sui-macros",
+ "sui-move-build 0.0.0",
  "sui-protocol-config",
  "sui-simulator",
+ "sui-test-transaction-builder",
  "tap",
  "telemetry-subscribers",
  "tempfile",
+ "test-fuzz 3.1.0",
  "thiserror",
  "tokio",
  "tokio-retry",
@@ -13337,7 +13421,7 @@ dependencies = [
  "anyhow",
  "arc-swap",
  "axum",
- "clap",
+ "clap 4.4.7",
  "const-str",
  "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
  "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
@@ -13416,8 +13500,8 @@ dependencies = [
  "byteorder",
  "bytes",
  "chrono",
- "clap",
- "criterion",
+ "clap 4.4.7",
+ "criterion 0.5.1",
  "eyre",
  "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
  "futures",
@@ -13542,6 +13626,7 @@ dependencies = [
  "enum-compat-util",
  "enum_dispatch",
  "ethnum",
+ "expect-test",
  "eyre",
  "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
  "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
@@ -14729,8 +14814,36 @@ dependencies = [
  "move-package",
  "once_cell",
  "serde",
- "sui-move-build",
+ "sui-move-build 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "sui-types",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-genesis-builder"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "camino",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "insta",
+ "move-binary-format",
+ "move-core-types",
+ "prometheus",
+ "rand 0.8.5",
+ "scalar-config",
+ "scalar-execution",
+ "scalar-framework",
+ "scalar-types",
+ "serde",
+ "serde_with 2.3.3",
+ "serde_yaml 0.8.26",
+ "shared-crypto 0.0.0",
+ "sui-protocol-config",
+ "sui-simulator",
+ "tempfile",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -14763,6 +14876,29 @@ dependencies = [
  "once_cell",
  "sui-proc-macros",
  "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-move-build"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "datatest-stable",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier",
+ "move-command-line-common",
+ "move-compiler",
+ "move-core-types",
+ "move-ir-types",
+ "move-package",
+ "move-symbol-pool",
+ "scalar-types",
+ "serde-reflection",
+ "sui-verifier-latest 0.1.0",
+ "tempfile",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -14914,7 +15050,7 @@ name = "sui-protocol-config"
 version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
 dependencies = [
- "clap",
+ "clap 4.4.7",
  "insta",
  "schemars",
  "serde",
@@ -14949,12 +15085,25 @@ dependencies = [
  "narwhal-network",
  "rand 0.8.5",
  "sui-framework",
- "sui-move-build",
+ "sui-move-build 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "sui-types",
  "telemetry-subscribers",
  "tempfile",
  "tower",
  "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-test-transaction-builder"
+version = "0.1.0"
+dependencies = [
+ "bcs",
+ "move-core-types",
+ "scalar-types",
+ "shared-crypto 0.0.0",
+ "sui-genesis-builder",
+ "sui-move-build 0.0.0",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15334,7 +15483,7 @@ dependencies = [
  "atomic_float",
  "bytes",
  "bytes-varint",
- "clap",
+ "clap 4.4.7",
  "crossterm 0.25.0",
  "futures",
  "once_cell",
@@ -15543,6 +15692,12 @@ dependencies = [
  "sha-1 0.10.1",
  "test-fuzz-internal 4.0.3",
 ]
+
+[[package]]
+name = "textwrap"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 
 [[package]]
 name = "thin-vec"
@@ -17496,7 +17651,7 @@ dependencies = [
  "ciborium-ll",
  "cipher 0.4.4",
  "clang-sys",
- "clap",
+ "clap 4.4.7",
  "clap_builder",
  "clap_derive",
  "clap_lex 0.5.1",
@@ -17527,7 +17682,7 @@ dependencies = [
  "cpufeatures",
  "crc32c",
  "crc32fast",
- "criterion",
+ "criterion 0.5.1",
  "criterion-plot",
  "crossbeam-channel",
  "crossbeam-deque",

@@ -84,7 +84,7 @@ reth-primitives = { workspace = true, features = ["test-utils"] }
 
 # we need to enable the test-utils feature in our own crate to use utils in
 # integration tests
-# reth-network = { path = ".", features = ["test-utils"] } # -> cyclic deps
+reth-network = { path = ".", features = ["test-utils"] } # -> cyclic deps
 
 reth-provider = { workspace = true, features = ["test-utils"] }
 reth-tracing.workspace = true

@@ -229,7 +229,8 @@ where
 {
     if let Ok(VerifiedObjectInfoResponse { object }) = authority
         .handle_object_info_request(ObjectInfoRequest::latest_object_info_request(
-            object_id, None,
+            object_id,
+            LayoutGenerationOption::None,
         ))
         .await
     {
@@ -305,10 +306,6 @@ fn effects_with_tx(digest: TransactionDigest) -> TransactionEffects {
     *effects.transaction_digest_mut_for_testing() = digest;
     effects
 }
-/*
- * 23-11-07 TaiVV
- * Comment out related Move Package test
- */
 
 /// The intent of this is to test whether client side timeouts
 /// have any impact on the server execution. Turns out because

@@ -22,8 +22,8 @@ pub struct ConsensusNodeInner {
 
 impl ConsensusNodeInner {
     async fn start(&mut self, addr: SocketAddr) -> Result<()> {
-        let (tx_eth_transaction, rx_eth_transaction) = mpsc::unbounded_channel();
-        let consensus_service = ConsensusService::new(tx_eth_transaction);
+        // let (tx_eth_transaction, rx_eth_transaction) = mpsc::unbounded_channel();
+        let consensus_service = ConsensusService::new(self.state.clone(), self.metrics.clone());
         Server::builder()
             .add_service(ConsensusApiServer::new(consensus_service))
             .serve(addr)

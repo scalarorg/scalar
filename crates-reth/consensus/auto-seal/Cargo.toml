@@ -25,8 +25,8 @@ tokio-stream.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+reth = { workspace = true }                                       # -> Cyclic deps
 reth-interfaces = { workspace = true, features = ["test-utils"] }
-# reth = { workspace = true } -> Cyclic deps
 tempfile = { workspace = true }
 clap = { workspace = true }
 jsonrpsee = { workspace = true }
