@@ -11107,6 +11107,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "reth-cluster-test"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clap",
+ "derivative",
+ "ethers",
+ "futures",
+ "serde_json",
+ "telemetry-subscribers",
+ "tempfile",
+ "test-cluster",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "reth-codecs"
 version = "1.5.0"
 dependencies = [
@@ -15065,6 +15083,22 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
+
+[[package]]
+name = "test-cluster"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "eyre",
+ "futures",
+ "jsonrpsee 0.20.3",
+ "rand 0.8.5",
+ "reth",
+ "reth-tasks",
+ "tokio",
+ "tracing",
+]
 
 [[package]]
 name = "test-fuzz"

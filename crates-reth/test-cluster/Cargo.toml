@@ -1,0 +1,20 @@
+[package]
+name = "test-cluster"
+authors = ["Mysten Labs <build@mystenlabs.com>"]
+version = "0.1.0"
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+futures.workspace = true
+tracing.workspace = true
+jsonrpsee.workspace = true
+tokio = { workspace = true, features = ["full", "tracing", "test-util"] }
+rand.workspace = true
+
+reth.workspace = true
+reth-tasks.workspace = true
+eyre.workspace = true
+clap.workspace = true
