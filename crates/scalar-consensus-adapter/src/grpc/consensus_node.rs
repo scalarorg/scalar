@@ -16,14 +16,23 @@ use tokio::{
 use tonic::transport::Server;
 pub struct ConsensusNodeInner {
     state: Arc<AuthorityState>,
-    transaction_orchestrator: Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+    transaction_orchestrator: Arc<TransactiondOrchestrator<NetworkAuthorityClient>>,
     metrics: Arc<ConsensusMetrics>,
 }
 
 impl ConsensusNodeInner {
-    async fn start(&mut self, addr: SocketAddr) -> Result<()> {
+    async fn start(
+        &mut self,
+        addr: SocketAddr,
+        rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
+    ) -> Result<()> {
         // let (tx_eth_transaction, rx_eth_transaction) = mpsc::unbounded_channel();
-        let consensus_service = ConsensusService::new(self.state.clone(), self.metrics.clone());
+        let consensus_service = ConsensusService::new(
+            self.state.clone(),
+            self.transaction_orchestrator.clone(),
+            rx_ready_certificates,
+            self.metrics.clone(),
+        );
         Server::builder()
             .add_service(ConsensusApiServer::new(consensus_service))
             .serve(addr)
@@ -44,7 +53,7 @@ pub struct ConsensusNode {
 impl ConsensusNode {
     pub fn new(
         state: Arc<AuthorityState>,
-        transaction_orchestrator: Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+        transaction_orchestrator: Arc<TransactiondOrchestrator<NetworkAuthorityClient>>,
         metrics: Arc<ConsensusMetrics>,
     ) -> Self {
         let internal = ConsensusNodeInner {
@@ -55,8 +64,12 @@ impl ConsensusNode {
         let internal = Arc::new(RwLock::new(internal));
         ConsensusNode { internal }
     }
-    pub async fn start(&self, grpc_address: SocketAddr) -> Result<()> {
+    pub async fn start(
+        &self,
+        grpc_address: SocketAddr,
+        rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
+    ) -> Result<()> {
         let mut guard = self.internal.write().await;
-        guard.start(grpc_address).await
+        guard.start(grpc_address, rx_ready_certificates).await
     }
 }

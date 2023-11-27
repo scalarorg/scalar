@@ -24,7 +24,7 @@ use futures::TryFutureExt;
 use jsonrpsee::RpcModule;
 use prometheus::Registry;
 use scalar_consensus_adapter::grpc::ConsensusNode;
-use scalar_core::authority::CHAIN_IDENTIFIER;
+use scalar_core::authority::{CommitedCertificates, CHAIN_IDENTIFIER};
 use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
 use scalar_json_rpc::api::JsonRpcMetrics;
 use scalar_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
@@ -35,8 +35,9 @@ use scalar_types::sui_system_state::SuiSystemState;
 use tap::tap::TapFallible;
 use tokio::runtime::Handle;
 use tokio::sync::broadcast;
+use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::oneshot;
-use tokio::sync::{watch, Mutex};
+use tokio::sync::{mpsc, watch, Mutex};
 use tokio::task::JoinHandle;
 use tower::ServiceBuilder;
 use tracing::{debug, error, warn};
@@ -581,7 +582,13 @@ impl SuiNode {
         {
             pruning_config.set_enable_pruning_tombstones(false);
         }
-
+        /*
+         * 231127 - Taivv
+         * Output from consensus commit được xử lý trong struct AuthorityState.
+         * Modify struct này để thêm vào kênh trao đổi dữ liệu giữa Consensus với Reth
+         * Tags CONSENSUS COMMIT
+         */
+        let (tx_ready_certificates, rx_ready_certificates) = mpsc::unbounded_channel();
         let state = AuthorityState::new(
             config.protocol_public_key(),
             secret,
@@ -602,6 +609,8 @@ impl SuiNode {
             config.state_debug_dump_config.clone(),
             config.overload_threshold_config.clone(),
             archive_readers,
+            //For receiving commited transactions from Consensus layer
+            tx_ready_certificates,
         )
         .await;
         // ensure genesis txn was executed
@@ -671,9 +680,11 @@ impl SuiNode {
          * 231123 - Taivv
          * Try using grpc server
          */
+
         let grpc_handle = build_grpc_server(
             state.clone(),
-            &transaction_orchestrator.clone(),
+            &transaction_orchestrator,
+            rx_ready_certificates,
             &config,
             &prometheus_registry,
             consensus_runtime,
@@ -1824,16 +1835,24 @@ pub fn build_http_server(
 pub async fn build_grpc_server(
     state: Arc<AuthorityState>,
     transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
+    rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
     config: &NodeConfig,
     prometheus_registry: &Registry,
     consensus_runtime: Option<Handle>,
 ) -> Result<Option<tokio::task::JoinHandle<()>>> {
-    let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
-    let consensus_node =
-        ConsensusNode::new(state, transaction_orchestrator.clone(), metrics.clone());
-    let grpc_address = config.consensus_rpc_address.clone();
-    let handle = tokio::spawn(async move { consensus_node.start(grpc_address).await.unwrap() });
-    Ok(Some(handle))
+    Ok(transaction_orchestrator.as_ref().map(|trans_orches| {
+        let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
+        let consensus_node = ConsensusNode::new(state, trans_orches.clone(), metrics.clone());
+        let grpc_address = config.consensus_rpc_address.clone();
+        let handle = tokio::spawn(async move {
+            consensus_node
+                .start(grpc_address, rx_ready_certificates)
+                .await
+                .unwrap()
+        });
+        handle
+    }))
+    //Ok(Some(handle))
 }
 /*
  * 231121-TaiVV

@@ -12987,6 +12987,7 @@ dependencies = [
  "futures",
  "jsonrpsee 0.20.3",
  "metrics",
+ "mysten-common",
  "mysten-metrics",
  "prometheus",
  "prost 0.12.1",

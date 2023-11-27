@@ -11,6 +11,7 @@ use chrono::prelude::*;
 use fastcrypto::encoding::Base58;
 use fastcrypto::encoding::Encoding;
 use fastcrypto::hash::MultisetHash;
+use futures::channel::mpsc::UnboundedReceiver;
 use futures::stream::FuturesUnordered;
 use itertools::Itertools;
 use move_binary_format::CompiledModule;
@@ -89,7 +90,7 @@ use scalar_types::gas::{GasCostSummary, SuiGasStatus};
 use scalar_types::inner_temporary_store::{
     InnerTemporaryStore, ObjectMap, TemporaryModuleResolver, TxCoins, WrittenObjects,
 };
-use scalar_types::message_envelope::Message;
+use scalar_types::message_envelope::{Message, VerifiedEnvelope};
 use scalar_types::messages_checkpoint::{
     CertifiedCheckpointSummary, CheckpointCommitment, CheckpointContents, CheckpointContentsDigest,
     CheckpointDigest, CheckpointSequenceNumber, CheckpointSummary, CheckpointTimestamp,
@@ -177,7 +178,10 @@ pub(crate) mod authority_notify_read;
 pub(crate) mod authority_store;
 
 pub static CHAIN_IDENTIFIER: OnceCell<ChainIdentifier> = OnceCell::new();
-
+pub type CommitedCertificates = (
+    VerifiedExecutableTransaction,
+    Option<TransactionEffectsDigest>,
+);
 /// Prometheus metrics which can be displayed in Grafana, queried and alerted on
 pub struct AuthorityMetrics {
     tx_orders: IntCounter,
@@ -2145,6 +2149,7 @@ impl AuthorityState {
         debug_dump_config: StateDebugDumpConfig,
         overload_threshold_config: OverloadThresholdConfig,
         archive_readers: ArchiveReaderBalancer,
+        sender_ready_certificates: UnboundedReceiver<CommitedCertificates>,
     ) -> Arc<Self> {
         Self::check_protocol_version(supported_protocol_versions, epoch_store.protocol_version());
 
@@ -2193,7 +2198,12 @@ impl AuthorityState {
             debug_dump_config,
             overload_threshold_config,
         });
-
+        /*
+         * 231127 Taivv
+         * Xử lý các transaction + certificates được commit sau consensus.
+         * Modify this code to send commited transaction to the Reth
+         * Tags: CONSENSUS COMMIT
+         */
         // Start a task to execute ready certificates.
         let authority_state = Arc::downgrade(&state);
         spawn_monitored_task!(execution_process(
