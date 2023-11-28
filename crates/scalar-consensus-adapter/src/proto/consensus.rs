@@ -2,8 +2,10 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConsensusTransactionIn {
-    #[prost(bytes = "vec", tag = "1")]
-    pub payload: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub tx_bytes: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "2")]
+    pub signatures: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// ScalarAbciResponse is the response for ScalarAbci.
 #[allow(clippy::derive_partial_eq_without_eq)]

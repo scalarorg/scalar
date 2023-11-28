@@ -25,7 +25,6 @@ impl ConsensusNodeInner {
         addr: SocketAddr,
         rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
     ) -> Result<()> {
-        // let (tx_eth_transaction, rx_eth_transaction) = mpsc::unbounded_channel();
         let listeners = Arc::new(RwLock::new(vec![]));
         let consensus_service = ConsensusService::new(
             self.state.clone(),
@@ -64,7 +63,7 @@ impl ConsensusNodeInner {
                 let guard = listener.write().await;
                 for sender in guard.iter() {
                     // 231128 - TaiVV
-                    // Scalar Todo: Add converter here
+                    // Scalar TODO: Add converter here
                     let consensus_out = ConsensusTransactionOut {
                         payload: vec![0; 32],
                     };

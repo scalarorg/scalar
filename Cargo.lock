@@ -12982,8 +12982,10 @@ version = "1.5.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bcs",
  "cached",
  "cfg-if",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
  "futures",
  "jsonrpsee 0.20.3",
  "metrics",
