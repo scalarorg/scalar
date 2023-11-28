@@ -75,10 +75,6 @@ impl Cluster for LocalNewCluster {
             handles.push(handle);
         }
 
-        // Sleep for a bit to allow the cluster to start up
-        // TODO: Use a better way to check if the cluster is up and running
-        tokio::time::sleep(std::time::Duration::from_secs(15)).await;
-
         Ok(Self {
             test_cluster,
             // TODO: Get the fullnode url from the cluster

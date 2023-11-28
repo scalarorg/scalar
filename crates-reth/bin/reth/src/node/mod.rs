@@ -255,15 +255,21 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         // always store reth.toml in the data dir, not the chain specific data dir
         info!(target: "reth::cli", path = ?config_path, "Configuration loaded");
 
-        let prometheus_handle = self.install_prometheus_recorder()?;
+        // 23-11-27 HuongND
+        // Temporarily comment out the metrics endpoint
+
+        // let prometheus_handle = self.install_prometheus_recorder()?;
 
         let db_path = data_dir.db_path();
         info!(target: "reth::cli", path = ?db_path, "Opening database");
         let db = Arc::new(init_db(&db_path, self.db.log_level)?.with_metrics());
         info!(target: "reth::cli", "Database opened");
 
-        self.start_metrics_endpoint(prometheus_handle, Arc::clone(&db))
-            .await?;
+        // 23-11-27 HuongND
+        // Temporarily comment out the metrics endpoint
+
+        // self.start_metrics_endpoint(prometheus_handle, Arc::clone(&db))
+        //     .await?;
 
         debug!(target: "reth::cli", chain=%self.chain.chain, genesis=?self.chain.genesis_hash(), "Initializing genesis");
 

@@ -30,6 +30,10 @@ impl ClusterTest {
             .await
             .unwrap_or_else(|e| panic!("Failed to setup test context: {e}"));
 
+        // Sleep for a bit to allow the cluster to start up
+        // TODO: Use a better way to check if the cluster is up and running
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+
         let tests = vec![TestCase::new(SendRawTransactionTest {})];
 
         // TODO: improve the runner parallelism for efficiency
