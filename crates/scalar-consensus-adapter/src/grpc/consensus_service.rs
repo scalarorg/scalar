@@ -4,17 +4,19 @@ use crate::types::EthTransaction;
 use scalar_core::authority::AuthorityState;
 use scalar_core::authority_client::NetworkAuthorityClient;
 use scalar_core::transaction_orchestrator::TransactiondOrchestrator;
-use scalar_types::quorum_driver_types::{ExecuteTransactionRequest, ExecuteTransactionRequestType};
 use std::pin::Pin;
 use std::sync::Arc;
-use tokio::sync::mpsc;
+use tokio::sync::mpsc::{self, UnboundedSender};
+use tokio::sync::RwLock;
 use tokio_stream::{wrappers::UnboundedReceiverStream, Stream, StreamExt};
 use tonic::{Response, Status};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{info, instrument};
 
 // use super::{transaction_orchestrator, TransactionOrchestrator};
-type ConsensusServiceResult<T> = Result<Response<T>, Status>;
-type ResponseStream = Pin<Box<dyn Stream<Item = Result<ConsensusTransactionOut, Status>> + Send>>;
+pub type ConsensusServiceResult<T> = Result<Response<T>, Status>;
+pub type ListenerCollection = Vec<UnboundedSender<Result<ConsensusTransactionOut, Status>>>;
+pub type ResponseStream =
+    Pin<Box<dyn Stream<Item = Result<ConsensusTransactionOut, Status>> + Send>>;
 
 #[derive(Clone)]
 pub struct EthTransactionHandler {
@@ -53,27 +55,32 @@ impl EthTransactionHandler {
 }
 pub struct ConsensusService {
     state: Arc<AuthorityState>,
-    transaction_orchestrator: Arc<TransactiondOrchestrator<NetworkAuthorityClient>>,
     transaction_handler: Arc<EthTransactionHandler>,
-    rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
+    consensus_listeners: Arc<RwLock<ListenerCollection>>,
     metrics: Arc<ConsensusMetrics>,
 }
 impl ConsensusService {
     pub fn new(
         state: Arc<AuthorityState>,
         transaction_orchestrator: Arc<TransactiondOrchestrator<NetworkAuthorityClient>>,
-        rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
+        consensus_listeners: Arc<RwLock<ListenerCollection>>,
         metrics: Arc<ConsensusMetrics>,
     ) -> Self {
         let transaction_handler =
             Arc::new(EthTransactionHandler::new(transaction_orchestrator.clone()));
         Self {
             state,
-            transaction_orchestrator,
             transaction_handler,
-            rx_ready_certificates,
+            consensus_listeners,
             metrics,
         }
+    }
+    pub async fn add_consensus_listener(
+        &self,
+        listener: UnboundedSender<Result<ConsensusTransactionOut, Status>>,
+    ) {
+        let mut quard = self.consensus_listeners.write().await;
+        quard.push(listener);
     }
 }
 
@@ -88,9 +95,10 @@ impl ConsensusApi for ConsensusService {
         info!("ConsensusServiceServer::send_transactions");
         let mut in_stream = request.into_inner();
         let (tx_consensus, rx_consensus) = mpsc::unbounded_channel();
+        self.add_consensus_listener(tx_consensus).await;
         //let tx_eth_transaction = self.tx_eth_transaction.clone();
         let transaction_handler = self.transaction_handler.clone();
-        let handle = tokio::spawn(async move {
+        let _handle = tokio::spawn(async move {
             while let Some(Ok(transaction_in)) = in_stream.next().await {
                 //Todo: Convert incomming message to EthMessage
                 transaction_handler

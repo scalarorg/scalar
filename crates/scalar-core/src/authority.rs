@@ -11,7 +11,6 @@ use chrono::prelude::*;
 use fastcrypto::encoding::Base58;
 use fastcrypto::encoding::Encoding;
 use fastcrypto::hash::MultisetHash;
-use futures::channel::mpsc::UnboundedReceiver;
 use futures::stream::FuturesUnordered;
 use itertools::Itertools;
 use move_binary_format::CompiledModule;
@@ -44,7 +43,7 @@ use std::{
     thread, vec,
 };
 use tap::{TapFallible, TapOptional};
-use tokio::sync::mpsc::unbounded_channel;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use tokio::sync::oneshot;
 use tokio_retry::strategy::{jitter, ExponentialBackoff};
 use tracing::{debug, error, info, instrument, trace, warn, Instrument};
@@ -2149,7 +2148,7 @@ impl AuthorityState {
         debug_dump_config: StateDebugDumpConfig,
         overload_threshold_config: OverloadThresholdConfig,
         archive_readers: ArchiveReaderBalancer,
-        sender_ready_certificates: UnboundedReceiver<CommitedCertificates>,
+        sender_ready_certificates: UnboundedSender<CommitedCertificates>,
     ) -> Arc<Self> {
         Self::check_protocol_version(supported_protocol_versions, epoch_store.protocol_version());
 
@@ -2209,6 +2208,7 @@ impl AuthorityState {
         spawn_monitored_task!(execution_process(
             authority_state,
             rx_ready_certificates,
+            sender_ready_certificates,
             rx_execution_shutdown
         ));
 

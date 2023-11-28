@@ -12,7 +12,10 @@ use scalar_types::{
 };
 use sui_macros::fail_point_async;
 use tokio::{
-    sync::{mpsc::UnboundedReceiver, oneshot, Semaphore},
+    sync::{
+        mpsc::{UnboundedReceiver, UnboundedSender},
+        oneshot, Semaphore,
+    },
     time::sleep,
 };
 use tracing::{error, error_span, info, trace, Instrument};
@@ -36,6 +39,11 @@ pub async fn execution_process(
         VerifiedExecutableTransaction,
         Option<TransactionEffectsDigest>,
     )>,
+    // 231128 TaiVV Add 1 channel's sender để gửi tơi thread tương tác với Reth
+    sender_ready_certificates: UnboundedSender<(
+        VerifiedExecutableTransaction,
+        Option<TransactionEffectsDigest>,
+    )>,
     mut rx_execution_shutdown: oneshot::Receiver<()>,
 ) {
     info!("Starting pending certificates execution process.");
@@ -52,8 +60,10 @@ pub async fn execution_process(
         tokio::select! {
             result = rx_ready_certificates.recv() => {
                 if let Some((cert, fx_digest)) = result {
+                    sender_ready_certificates.send((cert.clone(), fx_digest.clone()));
                     certificate = cert;
                     expected_effects_digest = fx_digest;
+
                 } else {
                     // Should only happen after the AuthorityState has shut down and tx_ready_certificate
                     // has been dropped by TransactionManager.
