@@ -35,6 +35,7 @@ use std::sync::Arc;
 use sui_macros::nondeterministic;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
 use tempfile::tempdir;
+use tokio::sync::mpsc;
 
 #[derive(Default, Clone)]
 pub struct TestAuthorityBuilder<'a> {
@@ -255,6 +256,7 @@ impl<'a> TestAuthorityBuilder<'a> {
         {
             pruning_config.set_enable_pruning_tombstones(false);
         }
+        let (tx_ready_certificates, rx_ready_certificates) = mpsc::unbounded_channel();
         let state = AuthorityState::new(
             name,
             secret,
@@ -277,6 +279,7 @@ impl<'a> TestAuthorityBuilder<'a> {
             },
             overload_threshold_config,
             ArchiveReaderBalancer::default(),
+            tx_ready_certificates,
         )
         .await;
         // For any type of local testing that does not actually spawn a node, the checkpoint executor

@@ -33,9 +33,11 @@ jsonrpsee.workspace = true
 # metrics
 # reth-metrics.workspace = true
 metrics.workspace = true
-
+mysten-common.workspace = true
 # misc
 anyhow.workspace = true
+bcs.workspace = true
+fastcrypto.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_with.workspace = true
