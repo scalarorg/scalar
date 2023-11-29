@@ -1,9 +1,11 @@
 use crate::api::ConsensusMetrics;
-use crate::proto::{ConsensusApi, ConsensusTransactionIn, ConsensusTransactionOut};
 use crate::types::{ConsensusAddTransactionResponse, EthTransaction};
 use fastcrypto::encoding::Base64;
 use fastcrypto::traits::ToFromBytes;
 use mysten_metrics::spawn_monitored_task;
+use scalar_consensus_adapter_common::proto::{
+    ConsensusApi, ConsensusTransactionIn, ConsensusTransactionOut,
+};
 use scalar_core::authority::AuthorityState;
 use scalar_core::authority_client::NetworkAuthorityClient;
 use scalar_core::transaction_orchestrator::TransactiondOrchestrator;
@@ -210,13 +212,13 @@ impl ConsensusService {
 
 #[tonic::async_trait]
 impl ConsensusApi for ConsensusService {
-    type SendTransactionsStream = ResponseStream;
+    type InitTransactionStreamStream = ResponseStream;
 
-    async fn send_transactions(
+    async fn init_transaction_stream(
         &self,
         request: tonic::Request<tonic::Streaming<ConsensusTransactionIn>>,
-    ) -> ConsensusServiceResult<Self::SendTransactionsStream> {
-        info!("ConsensusServiceServer::send_transactions");
+    ) -> ConsensusServiceResult<Self::InitTransactionStreamStream> {
+        info!("ConsensusServiceServer::init_transaction_stream");
         let mut in_stream = request.into_inner();
         let (tx_consensus, rx_consensus) = mpsc::unbounded_channel();
         self.add_consensus_listener(tx_consensus).await;
@@ -233,7 +235,7 @@ impl ConsensusApi for ConsensusService {
         let out_stream = UnboundedReceiverStream::new(rx_consensus);
 
         Ok(Response::new(
-            Box::pin(out_stream) as Self::SendTransactionsStream
+            Box::pin(out_stream) as Self::InitTransactionStreamStream
         ))
     }
 }
