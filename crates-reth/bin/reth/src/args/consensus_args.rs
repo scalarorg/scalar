@@ -38,7 +38,7 @@ impl ConsensusArgs {
     #[allow(clippy::too_many_arguments)]
     pub async fn start_client<Reth, Conf>(
         &self,
-        components: &'static Reth,
+        components: &Reth,
         jwt_secret: JwtSecret,
         _conf: &mut Conf,
     ) -> eyre::Result<ScalarConsensusHandles>
