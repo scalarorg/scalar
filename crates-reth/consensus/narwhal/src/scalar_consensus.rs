@@ -1,3 +1,4 @@
+use futures::{pin_mut, Stream};
 use hyper::body::Bytes;
 use jsonrpsee::client_transport::ws::{Url, WsTransportClientBuilder};
 use jsonrpsee::core::client::{Client, ClientBuilder, ClientT};
@@ -6,15 +7,16 @@ use jsonrpsee::rpc_params;
 use jsonrpsee::server::{RpcModule, Server};
 use reth_rpc::JwtSecret;
 use reth_transaction_pool::{
-    PoolConfig, PriceBumpConfig, SubPoolLimit, TransactionListenerKind, TransactionPool,
-    DEFAULT_PRICE_BUMP, REPLACE_BLOB_PRICE_BUMP, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER,
-    TXPOOL_SUBPOOL_MAX_SIZE_MB_DEFAULT, TXPOOL_SUBPOOL_MAX_TXS_DEFAULT,
+    NewTransactionEvent, PoolConfig, PoolTransaction, PriceBumpConfig, SubPoolLimit,
+    TransactionListenerKind, TransactionPool, DEFAULT_PRICE_BUMP, REPLACE_BLOB_PRICE_BUMP,
+    TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER, TXPOOL_SUBPOOL_MAX_SIZE_MB_DEFAULT,
+    TXPOOL_SUBPOOL_MAX_TXS_DEFAULT,
 };
+use scalar_consensus_adapter_common::proto::{ConsensusApiClient, ConsensusTransactionIn};
 use std::net::SocketAddr;
-use std::time::Duration;
+use tokio_stream::StreamExt;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
-use tower_http::LatencyUnit;
-use tracing_subscriber::util::SubscriberInitExt;
+use tracing::info;
 #[derive(Debug, Clone)]
 pub struct ScalarConsensusHandles {}
 /// Scalar N&B consensus
@@ -30,33 +32,57 @@ impl ScalarConsensus {
         jwt_secret: JwtSecret,
     ) -> eyre::Result<ScalarConsensusHandles>
     where
-        Pool: TransactionPool,
+        Pool: TransactionPool + 'static,
     {
-        let transaction_rx =
-            pool.new_transactions_listener_for(TransactionListenerKind::PropagateOnly);
+        let handles = ScalarConsensusHandles {};
         let pending_transaction_rx =
             pool.pending_transactions_listener_for(TransactionListenerKind::PropagateOnly);
+        let mut transaction_rx =
+            pool.new_transactions_listener_for(TransactionListenerKind::PropagateOnly);
+        tokio::spawn(async move {
+            let url = format!("http://{}", socket_addr);
+            let mut client = ConsensusApiClient::connect(url).await.unwrap();
 
-        let url = format!("http://{}", socket_addr);
+            //let in_stream = tokio_stream::wrappers::ReceiverStream::new(transaction_rx)
+            let stream = async_stream::stream! {
+                while let Some(NewTransactionEvent { subpool, transaction }) = transaction_rx.recv().await {
+                    /*
+                     * 231129 TaiVV
+                     * Scalar TODO: convert transaction to ConsensusTransactionIn
+                     */
+                    info!("Receive message from external, send it into narwhal consensus");
+                    yield ConsensusTransactionIn{tx_bytes: todo!(), signatures: todo!() };
+                }
+            };
+            //pin_mut!(stream);
+            let response = client.init_transaction_stream(stream).await.unwrap();
+            let mut resp_stream = response.into_inner();
 
-        let middleware = tower::ServiceBuilder::new()
-            .layer(
-                TraceLayer::new_for_http()
-                    .on_request(
-                        |request: &hyper::Request<hyper::Body>, _span: &tracing::Span| tracing::info!(request = ?request, "on_request"),
-                    )
-                    .on_body_chunk(|chunk: &Bytes, latency: Duration, _: &tracing::Span| {
-                        tracing::info!(size_bytes = chunk.len(), latency = ?latency, "sending body chunk")
-                    })
-                    .make_span_with(DefaultMakeSpan::new().include_headers(true))
-                    .on_response(DefaultOnResponse::new().include_headers(true).latency_unit(LatencyUnit::Micros)),
-            );
-
-        let client = HttpClientBuilder::default()
-            .set_middleware(middleware)
-            .build(url)?;
-
-        let handles = ScalarConsensusHandles {};
+            while let Some(received) = resp_stream.next().await {
+                let received = received.unwrap();
+                println!("\treceived message: `{:?}`", received.payload);
+            }
+        });
         Ok(handles)
+    }
+
+    // Start jsonrpsee client
+    async fn start_json_rpc_client() {
+        // let middleware = tower::ServiceBuilder::new()
+        //     .layer(
+        //         TraceLayer::new_for_http()
+        //             .on_request(
+        //                 |request: &hyper::Request<hyper::Body>, _span: &tracing::Span| tracing::info!(request = ?request, "on_request"),
+        //             )
+        //             .on_body_chunk(|chunk: &Bytes, latency: Duration, _: &tracing::Span| {
+        //                 tracing::info!(size_bytes = chunk.len(), latency = ?latency, "sending body chunk")
+        //             })
+        //             .make_span_with(DefaultMakeSpan::new().include_headers(true))
+        //             .on_response(DefaultOnResponse::new().include_headers(true).latency_unit(LatencyUnit::Micros)),
+        //     );
+
+        // let client = HttpClientBuilder::default()
+        //     .set_middleware(middleware)
+        //     .build(url)?;
     }
 }

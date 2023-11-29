@@ -113,7 +113,7 @@ pub mod consensus_api_client {
         /// ClientStreamingEcho is client side streaming.
         /// rpc ClientStreamingScalarAbci(stream ScalarAbciRequest) returns (ScalarAbciResponse) {}
         /// BidirectionalStreamingScalarAbci is bidi streaming.
-        pub async fn send_transactions(
+        pub async fn init_transaction_stream(
             &mut self,
             request: impl tonic::IntoStreamingRequest<
                 Message = super::ConsensusTransactionIn,
@@ -133,11 +133,13 @@ pub mod consensus_api_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/consensus.ConsensusApi/SendTransactions",
+                "/consensus.ConsensusApi/InitTransactionStream",
             );
             let mut req = request.into_streaming_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("consensus.ConsensusApi", "SendTransactions"));
+                .insert(
+                    GrpcMethod::new("consensus.ConsensusApi", "InitTransactionStream"),
+                );
             self.inner.streaming(req, path, codec).await
         }
     }
@@ -149,8 +151,8 @@ pub mod consensus_api_server {
     /// Generated trait containing gRPC methods that should be implemented for use with ConsensusApiServer.
     #[async_trait]
     pub trait ConsensusApi: Send + Sync + 'static {
-        /// Server streaming response type for the SendTransactions method.
-        type SendTransactionsStream: tonic::codegen::tokio_stream::Stream<
+        /// Server streaming response type for the InitTransactionStream method.
+        type InitTransactionStreamStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<super::ConsensusTransactionOut, tonic::Status>,
             >
             + Send
@@ -162,11 +164,11 @@ pub mod consensus_api_server {
         /// ClientStreamingEcho is client side streaming.
         /// rpc ClientStreamingScalarAbci(stream ScalarAbciRequest) returns (ScalarAbciResponse) {}
         /// BidirectionalStreamingScalarAbci is bidi streaming.
-        async fn send_transactions(
+        async fn init_transaction_stream(
             &self,
             request: tonic::Request<tonic::Streaming<super::ConsensusTransactionIn>>,
         ) -> std::result::Result<
-            tonic::Response<Self::SendTransactionsStream>,
+            tonic::Response<Self::InitTransactionStreamStream>,
             tonic::Status,
         >;
     }
@@ -250,15 +252,15 @@ pub mod consensus_api_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/consensus.ConsensusApi/SendTransactions" => {
+                "/consensus.ConsensusApi/InitTransactionStream" => {
                     #[allow(non_camel_case_types)]
-                    struct SendTransactionsSvc<T: ConsensusApi>(pub Arc<T>);
+                    struct InitTransactionStreamSvc<T: ConsensusApi>(pub Arc<T>);
                     impl<
                         T: ConsensusApi,
                     > tonic::server::StreamingService<super::ConsensusTransactionIn>
-                    for SendTransactionsSvc<T> {
+                    for InitTransactionStreamSvc<T> {
                         type Response = super::ConsensusTransactionOut;
-                        type ResponseStream = T::SendTransactionsStream;
+                        type ResponseStream = T::InitTransactionStreamStream;
                         type Future = BoxFuture<
                             tonic::Response<Self::ResponseStream>,
                             tonic::Status,
@@ -271,7 +273,10 @@ pub mod consensus_api_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ConsensusApi>::send_transactions(&inner, request)
+                                <T as ConsensusApi>::init_transaction_stream(
+                                        &inner,
+                                        request,
+                                    )
                                     .await
                             };
                             Box::pin(fut)
@@ -284,7 +289,7 @@ pub mod consensus_api_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = SendTransactionsSvc(inner);
+                        let method = InitTransactionStreamSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

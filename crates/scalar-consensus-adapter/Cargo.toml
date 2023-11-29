@@ -9,7 +9,7 @@ repository.workspace = true
 
 [dependencies]
 # reth
-# scalar-consensus-adapter-common = { path = "./common" }
+scalar-consensus-adapter-common = { path = "./common" }
 # reth-primitives.workspace = true
 # reth-interfaces.workspace = true
 # reth-stages.workspace = true
@@ -84,6 +84,3 @@ workspace-hack.workspace = true
 #     "reth-provider/optimism",
 #     "reth-rpc-types/optimism",
 # ]
-
-[build-dependencies]
-tonic-build.workspace = true

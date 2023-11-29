@@ -9,6 +9,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use jsonrpsee::core::RpcResult as Result;
+use reth_consensus_common::calc::{base_block_reward, block_reward};
 use reth_primitives::{
     revm::env::tx_env_with_recovered, BlockId, BlockNumberOrTag, Bytes, SealedHeader, B256, U256,
 };
@@ -25,7 +26,6 @@ use reth_rpc_types::{
 };
 use revm::{db::CacheDB, primitives::Env};
 use revm_primitives::db::DatabaseCommit;
-use scalar_consensus_adapter_common::calc::{base_block_reward, block_reward};
 use std::{collections::HashSet, sync::Arc};
 use tokio::sync::{AcquireError, OwnedSemaphorePermit};
 

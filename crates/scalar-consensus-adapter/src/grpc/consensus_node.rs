@@ -2,9 +2,9 @@ use std::net::SocketAddr;
 
 use super::{ConsensusService, ListenerCollection};
 use crate::api::ConsensusMetrics;
-use crate::proto::consensus_api_server::ConsensusApiServer;
-use crate::proto::ConsensusTransactionOut;
 use anyhow::{Error, Result};
+use scalar_consensus_adapter_common::proto::consensus_api_server::ConsensusApiServer;
+use scalar_consensus_adapter_common::proto::ConsensusTransactionOut;
 use scalar_core::authority::{AuthorityState, CommitedCertificates};
 use scalar_core::authority_client::NetworkAuthorityClient;
 use scalar_core::transaction_orchestrator::TransactiondOrchestrator;

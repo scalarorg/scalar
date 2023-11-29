@@ -27,11 +27,13 @@ reth-snapshot = { path = "../../snapshot" }
 reth-rpc-types-compat.workspace = true
 reth-tokio-util.workspace = true
 reth-transaction-pool.workspace = true
-
+scalar-consensus-adapter-common = { path = "../../../crates/scalar-consensus-adapter/common" }
 # async
+async-stream.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 tokio-stream.workspace = true
 futures.workspace = true
+
 tower.workspace = true
 tower-http.workspace = true
 # metrics

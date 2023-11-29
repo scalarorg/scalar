@@ -11904,12 +11904,12 @@ dependencies = [
 name = "reth-revm"
 version = "1.5.0"
 dependencies = [
+ "reth-consensus-common",
  "reth-interfaces",
  "reth-primitives",
  "reth-provider",
  "reth-revm-inspectors",
  "revm",
- "scalar-consensus-adapter-common",
  "tracing",
 ]
 
@@ -11953,6 +11953,7 @@ dependencies = [
  "rand 0.8.5",
  "rayon",
  "reqwest",
+ "reth-consensus-common",
  "reth-interfaces",
  "reth-metrics",
  "reth-network-api",
@@ -11967,7 +11968,6 @@ dependencies = [
  "reth-transaction-pool",
  "revm",
  "revm-primitives",
- "scalar-consensus-adapter-common",
  "schnellru",
  "secp256k1 0.27.0",
  "serde",
@@ -12993,6 +12993,7 @@ dependencies = [
  "mysten-metrics",
  "prometheus",
  "prost 0.12.1",
+ "scalar-consensus-adapter-common",
  "scalar-core",
  "scalar-json",
  "scalar-json-rpc",
@@ -13012,7 +13013,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic 0.10.2",
- "tonic-build",
  "tracing",
  "typed-store",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -13022,12 +13022,12 @@ dependencies = [
 name = "scalar-consensus-adapter-common"
 version = "1.5.0"
 dependencies = [
- "assert_matches",
- "cfg-if",
- "mockall",
- "reth-interfaces",
- "reth-primitives",
- "reth-provider",
+ "async-trait",
+ "prost 0.12.1",
+ "tokio",
+ "tokio-stream",
+ "tonic 0.10.2",
+ "tonic-build",
 ]
 
 [[package]]
@@ -13345,6 +13345,7 @@ name = "scalar-narwhal-consensus"
 version = "1.5.0"
 dependencies = [
  "assert_matches",
+ "async-stream",
  "cfg-if",
  "eyre",
  "futures",
@@ -13371,6 +13372,7 @@ dependencies = [
  "reth-tokio-util",
  "reth-tracing",
  "reth-transaction-pool",
+ "scalar-consensus-adapter-common",
  "schnellru",
  "thiserror",
  "tokio",
