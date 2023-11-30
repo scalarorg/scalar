@@ -13,6 +13,11 @@ use scalar_json_rpc_types::{
     Coin as SuiCoin, DevInspectResults, DryRunTransactionBlockResponse, EventFilter, SuiEvent,
     SuiObjectDataFilter, TransactionFilter,
 };
+use scalar_storage::indexes::TotalBalance;
+use scalar_storage::key_value_store::{
+    KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStore,
+    TransactionKeyValueStoreTrait,
+};
 use scalar_types::base_types::{
     MoveObjectType, ObjectID, ObjectInfo, ObjectRef, SequenceNumber, SuiAddress,
 };
@@ -28,17 +33,12 @@ use scalar_types::messages_checkpoint::{
     VerifiedCheckpoint,
 };
 use scalar_types::object::{Object, ObjectRead, PastObjectRead};
-use scalar_types::scalar_serde::BigInt;
 use scalar_types::storage::WriteKind;
+use scalar_types::sui_serde::BigInt;
 use scalar_types::sui_system_state::SuiSystemState;
 use scalar_types::transaction::{Transaction, TransactionData, TransactionKind};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use scalar_storage::indexes::TotalBalance;
-use scalar_storage::key_value_store::{
-    KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStore,
-    TransactionKeyValueStoreTrait,
-};
 use thiserror::Error;
 use tokio::task::JoinError;
 

@@ -3,7 +3,7 @@
 
 use scalar_types::base_types::{AuthorityName, EpochId, ObjectID, SuiAddress};
 use scalar_types::committee::{Committee, StakeUnit};
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

@@ -8,7 +8,7 @@ use scalar_json_rpc_types::{
     AddressMetrics, CheckpointedObjectID, EpochInfo, EpochPage, MoveCallMetrics, NetworkMetrics,
     QueryObjectsPage, SuiObjectResponseQuery,
 };
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use sui_open_rpc_macros::open_rpc;
 
 #[open_rpc(namespace = "suix", tag = "Extended API")]

@@ -32,9 +32,9 @@ use scalar_types::gas_coin::GasCoin;
 use scalar_types::messages_checkpoint::CheckpointSequenceNumber;
 use scalar_types::move_package::{MovePackage, TypeOrigin, UpgradeInfo};
 use scalar_types::object::{Data, MoveObject, Object, ObjectRead, Owner};
-use scalar_types::scalar_serde::BigInt;
-use scalar_types::scalar_serde::SequenceNumber as AsSequenceNumber;
-use scalar_types::scalar_serde::SuiStructTag;
+use scalar_types::sui_serde::BigInt;
+use scalar_types::sui_serde::SequenceNumber as AsSequenceNumber;
+use scalar_types::sui_serde::SuiStructTag;
 use sui_protocol_config::ProtocolConfig;
 
 use crate::{Page, SuiMoveStruct, SuiMoveValue};

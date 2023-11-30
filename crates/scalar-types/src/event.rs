@@ -20,8 +20,8 @@ use serde_with::Bytes;
 use crate::base_types::{ObjectID, SuiAddress, TransactionDigest};
 use crate::error::{SuiError, SuiResult};
 use crate::object::MoveObject;
-use crate::scalar_serde::BigInt;
-use crate::scalar_serde::Readable;
+use crate::sui_serde::BigInt;
+use crate::sui_serde::Readable;
 use crate::SUI_SYSTEM_ADDRESS;
 
 /// A universal Sui event type encapsulating different types of events

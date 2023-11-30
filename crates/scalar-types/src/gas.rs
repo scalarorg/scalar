@@ -13,7 +13,7 @@ pub mod checked {
         error::{ExecutionError, SuiResult, UserInputError, UserInputResult},
         gas_model::{gas_v2::SuiGasStatus as SuiGasStatusV2, tables::GasStatus},
         object::Object,
-        scalar_serde::{BigInt, Readable},
+        sui_serde::{BigInt, Readable},
         transaction::ObjectReadResult,
     };
     use enum_dispatch::enum_dispatch;

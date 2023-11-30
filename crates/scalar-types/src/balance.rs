@@ -9,7 +9,7 @@
 
 use crate::error::{ExecutionError, ExecutionErrorKind};
 use crate::identifier::IdentStr;
-use crate::scalar_serde::{BigInt, Readable};
+use crate::sui_serde::{BigInt, Readable};
 use crate::SUI_FRAMEWORK_ADDRESS;
 use crate::{fp_ensure, ident_str};
 use move_core_types::annotated_value::{MoveFieldLayout, MoveStructLayout, MoveTypeLayout};

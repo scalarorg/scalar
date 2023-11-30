@@ -14,8 +14,8 @@ use scalar_types::base_types::{
 use scalar_types::coin::CoinMetadata;
 use scalar_types::error::SuiError;
 use scalar_types::object::Object;
-use scalar_types::scalar_serde::BigInt;
-use scalar_types::scalar_serde::SequenceNumber as AsSequenceNumber;
+use scalar_types::sui_serde::BigInt;
+use scalar_types::sui_serde::SequenceNumber as AsSequenceNumber;
 
 pub type CoinPage = Page<Coin, ObjectID>;
 

@@ -13,7 +13,7 @@ use scalar_types::messages_checkpoint::{
     CheckpointCommitment, CheckpointContents, CheckpointSequenceNumber, CheckpointSummary,
     CheckpointTimestamp, EndOfEpochData,
 };
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

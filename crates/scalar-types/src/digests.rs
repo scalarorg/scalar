@@ -3,7 +3,7 @@
 
 use std::fmt;
 
-use crate::{error::SuiError, scalar_serde::Readable};
+use crate::{error::SuiError, sui_serde::Readable};
 use anyhow::Error;
 use fastcrypto::encoding::{Base58, Encoding};
 use once_cell::sync::OnceCell;

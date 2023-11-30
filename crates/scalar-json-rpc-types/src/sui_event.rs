@@ -9,7 +9,7 @@ use mysten_metrics::monitored_scope;
 use scalar_types::base_types::{ObjectID, SuiAddress, TransactionDigest};
 use scalar_types::error::SuiResult;
 use scalar_types::event::{Event, EventEnvelope, EventID};
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -21,7 +21,7 @@ use json_to_table::json_to_table;
 use tabled::settings::Style as TableStyle;
 
 use crate::{type_and_fields_from_move_struct, Page};
-use scalar_types::scalar_serde::SuiStructTag;
+use scalar_types::sui_serde::SuiStructTag;
 pub type EventPage = Page<SuiEvent, EventID>;
 
 #[serde_as]

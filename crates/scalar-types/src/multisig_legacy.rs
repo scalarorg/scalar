@@ -4,7 +4,7 @@
 use crate::{
     crypto::{CompressedSignature, SignatureScheme},
     multisig::{MultiSig, MultiSigPublicKey},
-    scalar_serde::SuiBitmap,
+    sui_serde::SuiBitmap,
     signature::{AuthenticatorTrait, GenericSignature, VerifyParams},
 };
 pub use enum_dispatch::enum_dispatch;

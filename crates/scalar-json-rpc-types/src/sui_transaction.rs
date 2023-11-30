@@ -30,12 +30,12 @@ use scalar_types::messages_checkpoint::CheckpointSequenceNumber;
 use scalar_types::object::Owner;
 use scalar_types::parse_sui_type_tag;
 use scalar_types::quorum_driver_types::ExecuteTransactionRequestType;
-use scalar_types::scalar_serde::Readable;
-use scalar_types::scalar_serde::{
-    BigInt, SequenceNumber as AsSequenceNumber, SuiTypeTag as AsSuiTypeTag,
-};
 use scalar_types::signature::GenericSignature;
 use scalar_types::storage::{DeleteKind, WriteKind};
+use scalar_types::sui_serde::Readable;
+use scalar_types::sui_serde::{
+    BigInt, SequenceNumber as AsSequenceNumber, SuiTypeTag as AsSuiTypeTag,
+};
 use scalar_types::transaction::{
     Argument, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisObject,
     InputObjectKind, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, SenderSignedData,

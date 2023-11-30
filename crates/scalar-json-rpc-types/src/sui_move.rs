@@ -17,7 +17,7 @@ use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::StructTag;
 use scalar_types::base_types::{ObjectID, SuiAddress};
 use scalar_types::gas_coin::GasCoin;
-use scalar_types::scalar_serde::SuiStructTag;
+use scalar_types::sui_serde::SuiStructTag;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};

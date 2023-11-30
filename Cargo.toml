@@ -23,6 +23,16 @@ members = [
   "crates/sui-move-build",
   "crates/sui-genesis-builder",
   "crates/sui-test-transaction-builder",
+  "crates/sui-test-validator",
+  # For integration testing
+  # "crates/sui",
+  "crates/sui-cluster-test",
+  # "crates/sui-indexer",
+  "crates/test-cluster",
+  "crates/sui-faucet",
+  "crates/sui-sdk",
+  "crates/sui-swarm",
+  "crates/sui-swarm-config",
   # "crates/sui-protocol-config",
   # "crates/sui-protocol-config-macros",
   # "crates/scalar-move",
@@ -246,6 +256,17 @@ datatest-stable = { git = "https://github.com/nextest-rs/datatest-stable.git", r
 derivative = "2.2.0"
 derive_builder = "0.12.0"
 derive_more = "0.99.17"
+diesel = { version = "2.1.0", features = [
+  "chrono",
+  "postgres",
+  "r2d2",
+  "serde_json",
+  "64-column-tables",
+  "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+  "postgres_backend",
+] }
+diesel-derive-enum = { version = "2.0.1", features = ["postgres"] }
+diesel_migrations = { version = "2.0.0" }
 dirs = "4.0.0"
 ed25519 = { version = "1.5.0", features = ["pkcs8", "alloc", "zeroize"] }
 ed25519-consensus = { version = "2.0.1", features = ["serde"] }
@@ -266,6 +287,7 @@ humantime = "2.1.0"
 hyper = "0.14.20"
 hyper-rustls = { version = "0.24", features = ["rustls-native-certs", "http2"] }
 indicatif = "0.17.2"
+inquire = "0.6.0"
 im = "15"
 indexmap = { version = "1.9.2", features = ["serde"] }
 
@@ -279,6 +301,7 @@ lru = "0.12"
 mockall = "0.11.4"
 more-asserts = "0.3.1"
 match_opt = "0.1.2"
+ntest = "0.9.0"
 num_cpus = "1.15.0"
 num_enum = "0.6.1"
 object_store = { version = "0.7", features = ["aws", "gcp", "azure"] }
@@ -318,7 +341,15 @@ rocksdb = { version = "0.21.0", features = [
   "multi-threaded-cf",
 ], default-features = false }
 rustversion = "1.0.9"
-
+rusoto_core = { version = "0.48.0", default_features = false, features = [
+  "rustls",
+] }
+rusoto_kms = { version = "0.48.0", default_features = false, features = [
+  "rustls",
+] }
+rustyline = "9.1.2"
+rustyline-derive = "0.7.0"
+shell-words = "1.1.0"
 schemars = { version = "0.8.10", features = ["either"] }
 scopeguard = "1.1"
 
@@ -387,6 +418,10 @@ zeroize = "1.6.0"
 url = "2.3.1"
 uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 
+# For scalar testing
+ttl_cache = "0.5.1"
+# End scalar testing
+
 #narwhal-config = { path = "narwhal/config" }
 #narwhal-consensus = { path = "narwhal/consensus" }
 #narwhal-crypto = { path = "narwhal/crypto" }
@@ -402,7 +437,6 @@ uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 #narwhal-worker = { path = "narwhal/worker" }
 
 scalar-execution = { path = "scalar-execution" }
-
 scalar-config = { path = "crates/scalar-config" }
 scalar-core = { path = "crates/scalar-core" }
 scalar-keys = { path = "crates/scalar-keys" }
@@ -428,6 +462,29 @@ scalar-consensus-adapter-common = { path = "crates/scalar-consensus-adapter/comm
 sui-move-build = { path = "crates/sui-move-build" }
 sui-genesis-builder = { path = "crates/sui-genesis-builder" }
 sui-test-transaction-builder = { path = "crates/sui-test-transaction-builder" }
+# For sui compatible
+sui-execution = { path = "scalar-execution", package = "scalar-execution" }
+sui-config = { path = "crates/scalar-config", package = "scalar-config" }
+sui-core = { path = "crates/scalar-core", package = "scalar-core" }
+sui-node = { path = "crates/scalar-node", package = "scalar-node" }
+sui-json = { path = "crates/scalar-json", package = "scalar-json" }
+sui-json-rpc = { path = "crates/scalar-json-rpc", package = "scalar-json-rpc" }
+sui-json-rpc-types = { path = "crates/scalar-json-rpc-types", package = "scalar-json-rpc-types" }
+sui-keys = { path = "crates/scalar-keys", package = "scalar-keys" }
+sui-types = { path = "crates/scalar-types", package = "scalar-types" }
+sui-transaction-builder = { path = "crates/scalar-transaction-builder", package = "scalar-transaction-builder" }
+sui-framework = { path = "crates/scalar-framework", package = "scalar-framework" }
+# For integration testing
+# sui = { path = "crates/sui" }
+sui-cluster-test = { path = "crates/sui-cluster-test" }
+# sui-indexer = { path = "crates/sui-indexer" }
+sui-test-validator = { path = "crates/sui-test-validator" }
+test-cluster = { path = "crates/test-cluster" }
+sui-faucet = { path = "crates/sui-faucet" }
+sui-sdk = { path = "crates/sui-sdk" }
+sui-swarm = { path = "crates/sui-swarm" }
+sui-swarm-config = { path = "crates/sui-swarm-config" }
+# End integration testing
 # sui-protocol-config = { path = "crates/sui-protocol-config" }
 # sui-protocol-config-macros = { path = "crates/sui-protocol-config-macros" }
 # scalar-move = { path = "crates/scalar-move" }

@@ -15,7 +15,7 @@ use scalar_types::base_types::AuthorityName;
 use scalar_types::base_types::{EpochId, ObjectID};
 use scalar_types::committee::Committee;
 use scalar_types::messages_checkpoint::CheckpointSequenceNumber;
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use scalar_types::sui_system_state::sui_system_state_summary::SuiValidatorSummary;
 
 use crate::Page;

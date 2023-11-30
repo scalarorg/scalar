@@ -22,6 +22,22 @@ scalar() {
     rm ${SCRIPT_DIR}/scalar-node
 }
 
+scalar_test_validator() {
+    BIN_NAME=sui-test-validator
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
+sui_cluster_test() {
+    BIN_NAME=sui-cluster-test
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
 relayer() {
     BUILDER=scalar-relayer
     docker exec -it ${BUILDER} cargo build --manifest-path /scalar-relayer/Cargo.toml --profile dev

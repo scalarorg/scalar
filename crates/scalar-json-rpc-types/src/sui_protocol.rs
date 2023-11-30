@@ -3,8 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use scalar_types::scalar_serde::Readable;
-use scalar_types::scalar_serde::{AsProtocolVersion, BigInt};
+use scalar_types::sui_serde::Readable;
+use scalar_types::sui_serde::{AsProtocolVersion, BigInt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

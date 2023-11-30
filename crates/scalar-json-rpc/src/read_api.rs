@@ -40,7 +40,7 @@ use scalar_types::messages_checkpoint::{
     CheckpointTimestamp,
 };
 use scalar_types::object::{Object, ObjectRead, PastObjectRead};
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use scalar_types::transaction::Transaction;
 use scalar_types::transaction::TransactionDataAPI;
 use sui_open_rpc::Module;

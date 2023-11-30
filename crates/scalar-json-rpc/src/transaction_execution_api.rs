@@ -25,8 +25,8 @@ use scalar_types::effects::TransactionEffectsAPI;
 use scalar_types::quorum_driver_types::{
     ExecuteTransactionRequest, ExecuteTransactionRequestType, ExecuteTransactionResponse,
 };
-use scalar_types::scalar_serde::BigInt;
 use scalar_types::signature::GenericSignature;
+use scalar_types::sui_serde::BigInt;
 use scalar_types::transaction::{
     InputObjectKind, Transaction, TransactionData, TransactionDataAPI, TransactionKind,
 };

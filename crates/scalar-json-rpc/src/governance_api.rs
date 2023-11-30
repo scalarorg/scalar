@@ -26,7 +26,7 @@ use scalar_types::error::{SuiError, UserInputError};
 use scalar_types::governance::StakedSui;
 use scalar_types::id::ID;
 use scalar_types::object::ObjectRead;
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use scalar_types::sui_system_state::sui_system_state_summary::SuiSystemStateSummary;
 use scalar_types::sui_system_state::PoolTokenExchangeRate;
 use scalar_types::sui_system_state::SuiSystemStateTrait;

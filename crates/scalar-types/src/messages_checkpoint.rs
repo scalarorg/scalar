@@ -24,9 +24,9 @@ use crate::gas::GasCostSummary;
 use crate::message_envelope::{
     Envelope, Message, TrustedEnvelope, UnauthenticatedMessage, VerifiedEnvelope,
 };
-use crate::scalar_serde::{AsProtocolVersion, BigInt, Readable};
 use crate::signature::GenericSignature;
 use crate::storage::ReadStore;
+use crate::sui_serde::{AsProtocolVersion, BigInt, Readable};
 use crate::transaction::{Transaction, TransactionData};
 use crate::{base_types::AuthorityName, committee::Committee, error::SuiError};
 use anyhow::Result;

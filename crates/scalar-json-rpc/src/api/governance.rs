@@ -6,7 +6,7 @@ use jsonrpsee::proc_macros::rpc;
 
 use scalar_json_rpc_types::{DelegatedStake, SuiCommittee, ValidatorApys};
 use scalar_types::base_types::{ObjectID, SuiAddress};
-use scalar_types::scalar_serde::BigInt;
+use scalar_types::sui_serde::BigInt;
 use scalar_types::sui_system_state::sui_system_state_summary::SuiSystemStateSummary;
 use sui_open_rpc_macros::open_rpc;
 
