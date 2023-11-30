@@ -21,4 +21,13 @@ scalar() {
         --indexer-rpc-port 9124
 }
 
+test_validator() {
+    RUST_LOG=info /usr/local/bin/sui-test-validator \
+        # --config-path /scalar/fullnode.yaml \
+        --epoch-duration-ms 3600000 \
+        --fullnode-rpc-port 9000 \
+        --faucet-port 9123 \
+        --indexer-rpc-port 9124
+}
+
 $@
