@@ -727,6 +727,7 @@ mod checked {
                 mut created_object_ids,
                 deleted_object_ids,
             } = object_runtime.finish()?;
+            tracing::debug!("Scalar Debug. ExecutionFinished");
             assert_invariant!(
                 remaining_events.is_empty(),
                 "Events should be taken after every Move call"

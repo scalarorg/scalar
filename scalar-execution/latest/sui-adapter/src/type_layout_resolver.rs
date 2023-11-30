@@ -28,6 +28,7 @@ struct NullSuiResolver<'state>(Box<dyn TypeLayoutStore + 'state>);
 
 impl<'state, 'vm> TypeLayoutResolver<'state, 'vm> {
     pub fn new(vm: &'vm MoveVM, state_view: Box<dyn TypeLayoutStore + 'state>) -> Self {
+        tracing::debug!("Scalar Debug. TypeLayoutResolver");
         let linkage_view = LinkageView::new(Box::new(NullSuiResolver(state_view)));
         Self { vm, linkage_view }
     }
@@ -57,7 +58,13 @@ impl<'state, 'vm> LayoutResolver for TypeLayoutResolver<'state, 'vm> {
 
 impl<'state> BackingPackageStore for NullSuiResolver<'state> {
     fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<PackageObjectArc>> {
-        self.0.get_package_object(package_id)
+        let package_object = self.0.get_package_object(package_id);
+        tracing::debug!(
+            "Scalar Debug. Package Object {:?} for package_id {:?}",
+            &package_object,
+            &package_id
+        );
+        package_object
     }
 }
 

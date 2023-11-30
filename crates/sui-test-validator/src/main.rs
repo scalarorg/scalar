@@ -161,7 +161,7 @@ async fn main() -> Result<()> {
         );
     }
 
-    start_faucet(&cluster, faucet_port).await?;
+    // start_faucet(&cluster, faucet_port).await?;
 
     Ok(())
 }

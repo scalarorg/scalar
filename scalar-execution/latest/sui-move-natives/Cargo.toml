@@ -12,7 +12,7 @@ better_any.workspace = true
 bcs.workspace = true
 linked-hash-map.workspace = true
 smallvec.workspace = true
-
+tracing.workspace = true
 fastcrypto-zkp.workspace = true
 fastcrypto.workspace = true
 move-binary-format.workspace = true

@@ -1032,24 +1032,32 @@ pub fn generate_genesis_system_object(
         );
 
         // Step 2: Create and share the Clock.
-        builder.move_call(
+        let res = builder.move_call(
             SUI_FRAMEWORK_ADDRESS.into(),
             ident_str!("clock").to_owned(),
             ident_str!("create").to_owned(),
             vec![],
             vec![],
-        )?;
+        );
+        if res.is_err() {
+            panic!("Scalar Debug. Create and share the Clock")
+        }
+        res?;
 
         // Step 3: Create the AuthenticatorState object, unless it has been disabled (which only
         // happens in tests).
         if protocol_config.create_authenticator_state_in_genesis() {
-            builder.move_call(
+            let res = builder.move_call(
                 SUI_FRAMEWORK_ADDRESS.into(),
                 ident_str!("authenticator_state").to_owned(),
                 ident_str!("create").to_owned(),
                 vec![],
                 vec![],
-            )?;
+            );
+            if res.is_err() {
+                panic!("Scalar Debug. create_authenticator_state_in_genesis")
+            }
+            res?
         }
 
         // Step 4: Mint the supply of SUI.
@@ -1084,15 +1092,18 @@ pub fn generate_genesis_system_object(
         builder.finish()
     };
 
-    let InnerTemporaryStore { mut written, .. } = executor.update_genesis_state(
+    let res = executor.update_genesis_state(
         &*store,
         &protocol_config,
         metrics,
         genesis_ctx,
         CheckedInputObjects::new_for_genesis(vec![]),
         pt,
-    )?;
-
+    );
+    if res.is_err() {
+        panic!("Scalar Debug. Update_genesis_state with error {:?}", res)
+    }
+    let InnerTemporaryStore { mut written, .. } = res?;
     // update the value of the clock to match the chain start time
     {
         let object = written.get_mut(&scalar_types::SUI_CLOCK_OBJECT_ID).unwrap();

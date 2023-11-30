@@ -61,7 +61,7 @@ mod checked {
         private_generics::{EVENT_MODULE, PRIVATE_TRANSFER_FUNCTIONS, TRANSFER_MODULE},
         INIT_FN_NAME,
     };
-    use tracing::instrument;
+    use tracing::{debug, instrument};
 
     use crate::adapter::substitute_package_id;
     use crate::programmable_transactions::context::*;
@@ -85,6 +85,7 @@ mod checked {
             gas_charger,
             inputs,
         )?;
+        debug!("Scalar debug. ExecutionContext created");
         // execute commands
         let mut mode_results = Mode::empty_results();
         for (idx, command) in commands.into_iter().enumerate() {

@@ -21,7 +21,6 @@ members = [
   "crates/scalar-kvstore",
   "crates/scalar-telemetry",
   "crates/sui-move-build",
-  "crates/sui-genesis-builder",
   "crates/sui-test-transaction-builder",
   "crates/sui-test-validator",
   # For integration testing
@@ -460,7 +459,6 @@ scalar-telemetry = { path = "crates/scalar-telemetry" }
 scalar-consensus-adapter = { path = "crates/scalar-consensus-adapter" }
 scalar-consensus-adapter-common = { path = "crates/scalar-consensus-adapter/common" }
 sui-move-build = { path = "crates/sui-move-build" }
-sui-genesis-builder = { path = "crates/sui-genesis-builder" }
 sui-test-transaction-builder = { path = "crates/sui-test-transaction-builder" }
 # For sui compatible
 sui-execution = { path = "scalar-execution", package = "scalar-execution" }
@@ -474,6 +472,7 @@ sui-keys = { path = "crates/scalar-keys", package = "scalar-keys" }
 sui-types = { path = "crates/scalar-types", package = "scalar-types" }
 sui-transaction-builder = { path = "crates/scalar-transaction-builder", package = "scalar-transaction-builder" }
 sui-framework = { path = "crates/scalar-framework", package = "scalar-framework" }
+sui-genesis-builder = { path = "crates/scalar-genesis-builder", package = "scalar-genesis-builder" }
 # For integration testing
 # sui = { path = "crates/sui" }
 sui-cluster-test = { path = "crates/sui-cluster-test" }

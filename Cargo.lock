@@ -13088,6 +13088,7 @@ dependencies = [
  "scalar-config",
  "scalar-execution",
  "scalar-framework",
+ "scalar-genesis-builder",
  "scalar-json-rpc-types",
  "scalar-network",
  "scalar-storage",
@@ -13102,7 +13103,6 @@ dependencies = [
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
  "signature 1.6.4",
- "sui-genesis-builder",
  "sui-macros",
  "sui-move-build 0.0.0",
  "sui-protocol-config",
@@ -13154,6 +13154,7 @@ dependencies = [
  "sui-verifier-next-vm",
  "sui-verifier-v0",
  "sui-verifier-v1",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -14905,34 +14906,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui-genesis-builder"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "bcs",
- "camino",
- "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
- "insta",
- "move-binary-format",
- "move-core-types",
- "prometheus",
- "rand 0.8.5",
- "scalar-config",
- "scalar-execution",
- "scalar-framework",
- "scalar-types",
- "serde",
- "serde_with 2.3.3",
- "serde_yaml 0.8.26",
- "shared-crypto 0.0.0",
- "sui-protocol-config",
- "sui-simulator",
- "tempfile",
- "tracing",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "sui-keys"
 version = "0.0.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
@@ -15026,6 +14999,7 @@ dependencies = [
  "scalar-types",
  "smallvec",
  "sui-protocol-config",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15252,12 +15226,12 @@ dependencies = [
  "rand 0.8.5",
  "scalar-config",
  "scalar-execution",
+ "scalar-genesis-builder",
  "scalar-types",
  "serde",
  "serde_with 2.3.3",
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
- "sui-genesis-builder",
  "sui-protocol-config",
  "sui-simulator",
  "tempfile",
@@ -15271,9 +15245,9 @@ version = "0.1.0"
 dependencies = [
  "bcs",
  "move-core-types",
+ "scalar-genesis-builder",
  "scalar-types",
  "shared-crypto 0.0.0",
- "sui-genesis-builder",
  "sui-move-build 0.0.0",
  "sui-sdk",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

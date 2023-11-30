@@ -512,6 +512,7 @@ impl ObjectRuntimeState {
         loaded_child_objects: BTreeMap<ObjectID, DynamicallyLoadedObjectMetadata>,
         child_object_effects: BTreeMap<ObjectID, ChildObjectEffect>,
     ) -> Result<RuntimeResults, ExecutionError> {
+        tracing::debug!("Scalar debug. ObjectRuntimeState.finish");
         let mut loaded_child_objects: BTreeMap<_, _> = loaded_child_objects
             .into_iter()
             .map(|(id, metadata)| {

@@ -5,10 +5,10 @@
 
 use std::sync::Arc;
 
+pub use executor::Executor;
 use scalar_types::{error::SuiResult, metrics::BytecodeVerifierMetrics};
 use sui_protocol_config::ProtocolConfig;
-
-pub use executor::Executor;
+use tracing::debug;
 pub use verifier::Verifier;
 
 pub mod executor;
@@ -29,6 +29,7 @@ pub fn executor(
     silent: bool,
 ) -> SuiResult<Arc<dyn Executor + Send + Sync>> {
     let version = protocol_config.execution_version_as_option().unwrap_or(0);
+    debug!("Execution version {}", &version);
     Ok(match version {
         0 => Arc::new(v0::Executor::new(
             protocol_config,

@@ -22,7 +22,7 @@ scalar() {
 }
 
 test_validator() {
-    RUST_LOG=info /usr/local/bin/sui-test-validator \
+    RUST_LOG=debug /usr/local/bin/sui-test-validator \
         # --config-path /scalar/fullnode.yaml \
         --epoch-duration-ms 3600000 \
         --fullnode-rpc-port 9000 \
