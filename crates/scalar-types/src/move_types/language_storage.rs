@@ -346,7 +346,7 @@ impl From<StructTag> for TypeTag {
 #[cfg(test)]
 mod tests {
     use super::{StructTag, TypeTag};
-    use crate::move_types::{account_address::AccountAddress, identifier::Identifier};
+    use move_core_types::{account_address::AccountAddress, identifier::Identifier};
     use std::mem;
 
     #[test]

@@ -1,23 +1,20 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-/*
- * 2023-11-06 TaiVV
- * copy and modify from sui-types/src/in_memory_storage.rs
- * Tags: SCALAR_STORAGE
- */
 
 use crate::base_types::VersionNumber;
 use crate::committee::EpochId;
 use crate::inner_temporary_store::WrittenObjects;
-//use crate::storage::get_module_by_id;
+use crate::storage::{
+    get_module, get_module_by_id, load_package_object_from_object_store, PackageObjectArc,
+};
 use crate::{
     base_types::{ObjectID, ObjectRef, SequenceNumber},
     error::{SuiError, SuiResult},
     object::{Object, Owner},
     storage::{BackingPackageStore, ChildObjectResolver, ObjectStore, ParentSync},
 };
-//use move_binary_format::CompiledModule;
-//use move_bytecode_utils::module_cache::GetModule;
+use move_binary_format::CompiledModule;
+use move_bytecode_utils::module_cache::GetModule;
 use move_core_types::{language_storage::ModuleId, resolver::ModuleResolver};
 use std::collections::BTreeMap;
 
@@ -29,8 +26,8 @@ pub struct InMemoryStorage {
 }
 
 impl BackingPackageStore for InMemoryStorage {
-    fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<Object>> {
-        Ok(self.persistent.get(package_id).cloned())
+    fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<PackageObjectArc>> {
+        load_package_object_from_object_store(self, package_id)
     }
 }
 
@@ -97,14 +94,7 @@ impl ModuleResolver for InMemoryStorage {
     type Error = SuiError;
 
     fn get_module(&self, module_id: &ModuleId) -> Result<Option<Vec<u8>>, Self::Error> {
-        Ok(self
-            .get_package(&ObjectID::from(*module_id.address()))?
-            .and_then(|package| {
-                package
-                    .serialized_module_map()
-                    .get(module_id.name().as_str())
-                    .cloned()
-            }))
+        get_module(self, module_id)
     }
 }
 
@@ -164,20 +154,14 @@ impl ObjectStore for &mut InMemoryStorage {
     }
 }
 
-/*
- * 2023-11-06 TaiVV
- * Move move logic ra component doc lap
- * Tags: SCALAR_STORAGE
- */
+impl GetModule for InMemoryStorage {
+    type Error = SuiError;
+    type Item = CompiledModule;
 
-// impl GetModule for InMemoryStorage {
-//     type Error = SuiError;
-//     type Item = CompiledModule;
-
-//     fn get_module_by_id(&self, id: &ModuleId) -> anyhow::Result<Option<Self::Item>, Self::Error> {
-//         get_module_by_id(self, id)
-//     }
-// }
+    fn get_module_by_id(&self, id: &ModuleId) -> anyhow::Result<Option<Self::Item>, Self::Error> {
+        get_module_by_id(self, id)
+    }
+}
 
 impl InMemoryStorage {
     pub fn new(objects: Vec<Object>) -> Self {

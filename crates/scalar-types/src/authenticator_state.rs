@@ -9,8 +9,8 @@
  */
 
 use crate::ident_str;
-use crate::move_types::{account_address::AccountAddress, identifier::IdentStr};
 use fastcrypto_zkp::bn254::zk_login::{JwkId, JWK};
+use move_core_types::{account_address::AccountAddress, identifier::IdentStr};
 use serde::{Deserialize, Serialize};
 
 use crate::base_types::SequenceNumber;

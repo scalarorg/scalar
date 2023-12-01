@@ -404,7 +404,7 @@ mod test {
     use scalar_types::in_memory_storage::InMemoryStorage;
     use scalar_types::metrics::LimitsMetrics;
     use scalar_types::sui_system_state::SuiSystemStateTrait;
-    use scalar_types::transaction::InputObjects;
+    use scalar_types::transaction::CheckedInputObjects;
     use std::collections::HashSet;
     use std::sync::Arc;
     use sui_protocol_config::{Chain, ProtocolConfig, ProtocolVersion};
@@ -447,7 +447,7 @@ mod test {
         let epoch = EpochData::new_test();
         let transaction_data = &genesis_transaction.data().intent_message().value;
         let (kind, signer, _) = transaction_data.execution_parts();
-        let input_objects = InputObjects::new(vec![]);
+        let input_objects = CheckedInputObjects::new_for_genesis(vec![]);
 
         let (_inner_temp_store, effects, _execution_error) = executor
             .execute_transaction_to_effects(

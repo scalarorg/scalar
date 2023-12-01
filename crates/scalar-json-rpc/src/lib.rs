@@ -10,6 +10,7 @@ use hyper::header::HeaderValue;
 use hyper::Body;
 use hyper::Method;
 use hyper::Request;
+use jsonrpsee::types::ErrorObjectOwned;
 use jsonrpsee::RpcModule;
 use prometheus::Registry;
 use tokio::runtime::Handle;
@@ -165,7 +166,8 @@ impl JsonRpcServerBuilder {
         let rpc_docs = self.rpc_doc.clone();
         let mut module = self.module.clone();
         module.register_method("rpc.discover", move |_, _| {
-            Ok::<Project, Error>(rpc_docs.clone())
+            let docs = rpc_docs.clone();
+            Ok::<Project, ErrorObjectOwned>(docs)
         })?;
         let methods_names = module.method_names().collect::<Vec<_>>();
 

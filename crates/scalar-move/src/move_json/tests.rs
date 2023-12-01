@@ -22,7 +22,7 @@ use scalar_types::dynamic_field::derive_dynamic_field_id;
 use scalar_types::gas_coin::GasCoin;
 use scalar_types::object::Object;
 use scalar_types::{parse_sui_type_tag, MOVE_STDLIB_ADDRESS};
-//use sui_framework::BuiltInFramework;
+//use scalar_framework::BuiltInFramework;
 //use sui_move_build::BuildConfig;
 
 use crate::ResolvedCallArg;

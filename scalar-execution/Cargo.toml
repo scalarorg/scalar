@@ -12,17 +12,33 @@ sui-protocol-config.workspace = true
 scalar-types.workspace = true
 
 move-binary-format.workspace = true
-# move-vm-config.workspace = true
+move-vm-config.workspace = true
 
-# sui-adapter-latest = { path = "latest/sui-adapter" }
-# sui-adapter-v0 = { path = "v0/sui-adapter" }
-# # sui-adapter-$CUT = { path = "$CUT/sui-adapter" }
-# sui-move-natives-latest = { path = "latest/sui-move-natives" }
-# sui-move-natives-v0 = { path = "v0/sui-move-natives" }
-# # sui-move-natives-$CUT = { path = "$CUT/sui-move-natives" }
-# sui-verifier-latest = { path = "latest/sui-verifier" }
-# sui-verifier-v0 = { path = "v0/sui-verifier" }
-# # sui-verifier-$CUT = { path = "$CUT/sui-verifier" }
+sui-adapter-latest = { path = "latest/sui-adapter" }
+sui-adapter-v0 = { path = "v0/sui-adapter" }
+sui-adapter-v1 = { path = "v1/sui-adapter" }
+sui-adapter-next-vm = { path = "next-vm/sui-adapter" }
+# sui-adapter-$CUT = { path = "$CUT/sui-adapter" }
+sui-move-natives-latest = { path = "latest/sui-move-natives" }
+sui-move-natives-v0 = { path = "v0/sui-move-natives" }
+sui-move-natives-v1 = { path = "v1/sui-move-natives" }
+sui-move-natives-next-vm = { path = "next-vm/sui-move-natives" }
+# sui-move-natives-$CUT = { path = "$CUT/sui-move-natives" }
+sui-verifier-latest = { path = "latest/sui-verifier" }
+sui-verifier-v0 = { path = "v0/sui-verifier" }
+sui-verifier-v1 = { path = "v1/sui-verifier" }
+sui-verifier-next-vm = { path = "next-vm/sui-verifier" }
+# sui-verifier-$CUT = { path = "$CUT/sui-verifier" }
+
+move-bytecode-verifier-latest = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier" }
+move-bytecode-verifier-v0 = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier-v0" }
+move-bytecode-verifier-v1 = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier-v1" }
+move-bytecode-verifier-next-vm = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier-next-vm" }
+
+move-vm-runtime-latest = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime" }
+move-vm-runtime-v0 = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime-v0" }
+move-vm-runtime-v1 = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime-v1" }
+move-vm-runtime-next-vm = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime-next-vm" }
 
 # move-bytecode-verifier-latest = { path = "../external-crates/move/move-bytecode-verifier", package = "move-bytecode-verifier" }
 # move-bytecode-verifier-v0 = { path = "../external-crates/move/move-execution/v0/move-bytecode-verifier" }

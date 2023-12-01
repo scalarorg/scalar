@@ -11,6 +11,8 @@ use tracing::warn;
 pub struct SuiRuntimes {
     // Order in this struct is the order in which runtimes are stopped
     pub json_rpc: Runtime,
+    // Run consensus in separated runtime
+    pub consensus_rpc: Runtime,
     pub scalar_node: Runtime,
     pub metrics: Runtime,
 }
@@ -44,10 +46,31 @@ impl SuiRuntimes {
             .enable_all()
             .build()
             .unwrap();
+        /*
+         * 231121 - TaiVV
+         * Use 2 consensus thread for default.
+         * Turning this parameter in more complicate architecture
+         */
+
+        let consensus_thread = env::var("RPC_CONSENSUS_THREAD")
+            .ok()
+            .and_then(|o| {
+                usize::from_str(&o)
+                    .tap_err(|e| warn!("Cannot parse RPC_CONSENSUS_THREAD to usize: {e}"))
+                    .ok()
+            })
+            .unwrap_or(2);
+        let consensus_rpc = tokio::runtime::Builder::new_multi_thread()
+            .thread_name("consensus-runtime")
+            .worker_threads(consensus_thread)
+            .enable_all()
+            .build()
+            .unwrap();
         Self {
             scalar_node,
             metrics,
             json_rpc,
+            consensus_rpc,
         }
     }
 }

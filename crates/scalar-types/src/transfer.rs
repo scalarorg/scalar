@@ -8,13 +8,13 @@
  */
 
 use crate::ident_str;
-use crate::move_types::{
+use move_binary_format::{binary_views::BinaryIndexedView, file_format::SignatureToken};
+use move_bytecode_utils::resolve_struct;
+use move_core_types::{
     account_address::AccountAddress,
     identifier::IdentStr,
     language_storage::{StructTag, TypeTag},
 };
-//use move_binary_format::{binary_views::BinaryIndexedView, file_format::SignatureToken};
-//use move_bytecode_utils::resolve_struct;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -71,15 +71,15 @@ impl Receiving {
      * Tags: SCALAR_RECEIVING, SCALAR_MOVE_LANGUAGE
      */
 
-    // pub fn is_receiving(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> bool {
-    //     use SignatureToken as S;
-    //     match s {
-    //         S::MutableReference(inner) | S::Reference(inner) => Self::is_receiving(view, inner),
-    //         S::StructInstantiation(idx, type_args) => {
-    //             let struct_tag = resolve_struct(view, *idx);
-    //             struct_tag == RESOLVED_RECEIVING_STRUCT && type_args.len() == 1
-    //         }
-    //         _ => false,
-    //     }
-    // }
+    pub fn is_receiving(view: &BinaryIndexedView<'_>, s: &SignatureToken) -> bool {
+        use SignatureToken as S;
+        match s {
+            S::MutableReference(inner) | S::Reference(inner) => Self::is_receiving(view, inner),
+            S::StructInstantiation(idx, type_args) => {
+                let struct_tag = resolve_struct(view, *idx);
+                struct_tag == RESOLVED_RECEIVING_STRUCT && type_args.len() == 1
+            }
+            _ => false,
+        }
+    }
 }

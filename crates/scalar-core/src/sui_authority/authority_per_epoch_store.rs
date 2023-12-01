@@ -1,44 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use enum_dispatch::enum_dispatch;
-use fastcrypto_zkp::bn254::zk_login::{JwkId, OIDCProvider, JWK};
-use fastcrypto_zkp::bn254::zk_login_api::ZkLoginEnv;
-use futures::future::{join_all, select, Either};
-use futures::FutureExt;
-use itertools::izip;
-use narwhal_executor::ExecutionIndices;
-use parking_lot::RwLock;
-use parking_lot::{Mutex, RwLockReadGuard, RwLockWriteGuard};
-use rocksdb::Options;
-use scalar_config::node::ExpensiveSafetyCheckConfig;
-use scalar_types::accumulator::Accumulator;
-use scalar_types::authenticator_state::{get_authenticator_state, ActiveJwk};
-use scalar_types::base_types::{
-    AuthorityName, EpochId, ObjectID, SequenceNumber, TransactionDigest,
-};
-use scalar_types::committee::Committee;
-use scalar_types::crypto::{AuthoritySignInfo, AuthorityStrongQuorumSignInfo};
-use scalar_types::digests::ChainIdentifier;
-use scalar_types::error::{SuiError, SuiResult};
-use scalar_types::signature::GenericSignature;
-use scalar_types::transaction::{
-    AuthenticatorStateUpdate, CertifiedTransaction, SenderSignedData, SharedInputObject,
-    TransactionDataAPI, VerifiedCertificate, VerifiedSignedTransaction,
-};
-use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-use std::collections::{BTreeSet, HashMap, HashSet};
-use std::future::Future;
-use std::iter;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tracing::{debug, error, info, instrument, trace, warn};
-use typed_store::rocks::{
-    default_db_options, DBBatch, DBMap, DBOptions, MetricConf, TypedStoreError,
-};
-use typed_store::traits::{TableSummary, TypedStoreDebug};
-
 use super::epoch_start_configuration::EpochStartConfigTrait;
 use crate::authority::epoch_start_configuration::{EpochFlag, EpochStartConfiguration};
 use crate::authority::{AuthorityStore, ResolverWrapper};
@@ -56,15 +18,35 @@ use crate::module_cache_metrics::ResolverMetrics;
 use crate::post_consensus_tx_reorder::PostConsensusTxReorder;
 use crate::signature_verifier::*;
 use crate::stake_aggregator::{GenericMultiStakeAggregator, StakeAggregator};
+use enum_dispatch::enum_dispatch;
+use fastcrypto_zkp::bn254::zk_login::{JwkId, OIDCProvider, JWK};
+use fastcrypto_zkp::bn254::zk_login_api::ZkLoginEnv;
+use futures::future::{join_all, select, Either};
+use futures::FutureExt;
+use itertools::izip;
 use move_bytecode_utils::module_cache::SyncModuleCache;
 use mysten_common::sync::notify_once::NotifyOnce;
 use mysten_common::sync::notify_read::NotifyRead;
 use mysten_metrics::monitored_scope;
+use narwhal_executor::ExecutionIndices;
 use narwhal_types::{Round, TimestampMs};
+use parking_lot::RwLock;
+use parking_lot::{Mutex, RwLockReadGuard, RwLockWriteGuard};
 use prometheus::IntCounter;
+use rocksdb::Options;
+use scalar_config::node::ExpensiveSafetyCheckConfig;
 use scalar_execution::{self, Executor};
 use scalar_storage::mutex_table::{MutexGuard, MutexTable};
+use scalar_types::accumulator::Accumulator;
+use scalar_types::authenticator_state::{get_authenticator_state, ActiveJwk};
+use scalar_types::base_types::{
+    AuthorityName, EpochId, ObjectID, SequenceNumber, TransactionDigest,
+};
+use scalar_types::committee::Committee;
+use scalar_types::crypto::{AuthoritySignInfo, AuthorityStrongQuorumSignInfo};
+use scalar_types::digests::ChainIdentifier;
 use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use scalar_types::error::{SuiError, SuiResult};
 use scalar_types::executable_transaction::{
     TrustedExecutableTransaction, VerifiedExecutableTransaction,
 };
@@ -76,6 +58,7 @@ use scalar_types::messages_consensus::{
     check_total_jwk_size, AuthorityCapabilities, ConsensusTransaction, ConsensusTransactionKey,
     ConsensusTransactionKind,
 };
+use scalar_types::signature::GenericSignature;
 use scalar_types::storage::{
     transaction_input_object_keys, transaction_receiving_object_keys, GetSharedLocks, ObjectKey,
     ObjectStore,
@@ -83,11 +66,26 @@ use scalar_types::storage::{
 use scalar_types::sui_system_state::epoch_start_sui_system_state::{
     EpochStartSystemState, EpochStartSystemStateTrait,
 };
+use scalar_types::transaction::{
+    AuthenticatorStateUpdate, CertifiedTransaction, SenderSignedData, SharedInputObject,
+    TransactionDataAPI, VerifiedCertificate, VerifiedSignedTransaction,
+};
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::future::Future;
+use std::iter;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use std::sync::Arc;
 use sui_macros::fail_point;
 use sui_protocol_config::{Chain, ProtocolConfig, ProtocolVersion};
 use tap::TapOptional;
 use tokio::time::Instant;
+use tracing::{debug, error, info, instrument, trace, warn};
+use typed_store::rocks::{default_db_options, DBBatch, DBMap, DBOptions, MetricConf};
+use typed_store::traits::{TableSummary, TypedStoreDebug};
+use typed_store::TypedStoreError;
 use typed_store::{retry_transaction_forever, Map};
 use typed_store_derive::DBMapUtils;
 

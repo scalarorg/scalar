@@ -1,26 +1,18 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-02 TaiVV
- * copy and modify from sui-types/src/object.rs
- * Tags: SCALAR_OBJECT, SCALAR_MOVE_LANGUAGE
- * Thay the deprecated MultiSigLegacy boi MultiSing
- */
-
-use crate::move_types::runtime_types::Type;
-use crate::move_types::{language_storage::TypeTag, value::MoveStructLayout};
 use crate::{
     error::{ExecutionError, SuiError},
-    object::{MoveObject, ObjectFormatOptions},
+    object::MoveObject,
 };
+use move_core_types::{annotated_value as A, language_storage::TypeTag};
+use move_vm_types::loaded_data::runtime_types::Type;
 
 pub trait LayoutResolver {
-    fn get_layout(
+    fn get_annotated_layout(
         &mut self,
         object: &MoveObject,
-        format: ObjectFormatOptions,
-    ) -> Result<MoveStructLayout, SuiError>;
+    ) -> Result<A::MoveStructLayout, SuiError>;
 }
 
 pub trait TypeTagResolver {

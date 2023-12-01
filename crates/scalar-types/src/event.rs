@@ -1,30 +1,16 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-02
- * TaiVV copy and modify from sui-types/src/event.rs
- * Encapsulating cac event khac nhau dung trong Scalar
- * Tags: SCALAR_EVENT
- */
-
 use std::str::FromStr;
 
-use crate::ident_str;
-use crate::move_types::{
-    account_address::AccountAddress,
-    identifier::{IdentStr, Identifier},
-    language_storage::StructTag,
-    module_cache::GetModule,
-    value::MoveStruct,
-};
 use anyhow::ensure;
-// use move_core_types::account_address::AccountAddress;
-// use move_core_types::ident_str;
-// use move_core_types::identifier::IdentStr;
-// use move_core_types::identifier::Identifier;
-// use move_core_types::language_storage::StructTag;
-// use move_core_types::value::MoveStruct;
+use move_bytecode_utils::module_cache::GetModule;
+use move_core_types::account_address::AccountAddress;
+use move_core_types::annotated_value::MoveStruct;
+use move_core_types::ident_str;
+use move_core_types::identifier::IdentStr;
+use move_core_types::identifier::Identifier;
+use move_core_types::language_storage::StructTag;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -33,10 +19,9 @@ use serde_with::Bytes;
 
 use crate::base_types::{ObjectID, SuiAddress, TransactionDigest};
 use crate::error::{SuiError, SuiResult};
-use crate::object::{MoveObject, ObjectFormatOptions};
-use crate::scalar_serde::{BigInt, Readable};
-// use crate::sui_serde::BigInt;
-// use crate::sui_serde::Readable;
+use crate::object::MoveObject;
+use crate::scalar_serde::BigInt;
+use crate::scalar_serde::Readable;
 use crate::SUI_SYSTEM_ADDRESS;
 
 /// A universal Sui event type encapsulating different types of events
@@ -140,24 +125,12 @@ impl Event {
             contents,
         }
     }
-
-    /*
-     * 2023-11-02 TaiVV
-     * Tam thoi comment out code lien quan toi Move
-     * Se add lai vao cac package doc lap xu ly Move logic
-     * Tags: SCALAR_MOVE_LANGUAGE
-     */
-
     pub fn move_event_to_move_struct(
         type_: &StructTag,
         contents: &[u8],
         resolver: &impl GetModule,
     ) -> SuiResult<MoveStruct> {
-        let layout = MoveObject::get_layout_from_struct_tag(
-            type_.clone(),
-            ObjectFormatOptions::default(),
-            resolver,
-        )?;
+        let layout = MoveObject::get_layout_from_struct_tag(type_.clone(), resolver)?;
         MoveStruct::simple_deserialize(contents, &layout).map_err(|e| {
             SuiError::ObjectSerializationError {
                 error: e.to_string(),

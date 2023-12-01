@@ -549,7 +549,9 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
         /*
          * 231120 Taivv
          * Add transaction listeners for push to Consensus
+         * Tags: Consensus Client
          */
+
         let _consensus_handle = self
             .consensus
             .start_client(&components, jwt_secret.clone(), &mut self.ext)

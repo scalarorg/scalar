@@ -1595,6 +1595,7 @@ mod tests {
     use scalar_types::object::Owner;
     use std::collections::BTreeMap;
     use std::env::temp_dir;
+    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_index_cache() -> anyhow::Result<()> {
@@ -1624,7 +1625,7 @@ mod tests {
                     previous_transaction: object.previous_transaction,
                 },
             ));
-            object_map.insert(object.id(), object.clone());
+            object_map.insert(object.id(), Arc::new(object.clone()));
             written_objects.insert(object.data.id(), object);
         }
         let object_index_changes = ObjectIndexChanges {
@@ -1671,7 +1672,7 @@ mod tests {
         let mut deleted_objects = vec![];
         for (id, object) in object_map.iter().take(3) {
             deleted_objects.push((address, *id));
-            written_objects.insert(object.data.id(), object.clone());
+            written_objects.insert(object.data.id(), (**object).clone());
         }
         let object_index_changes = ObjectIndexChanges {
             deleted_owners: deleted_objects,

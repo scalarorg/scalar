@@ -28,8 +28,8 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use tokio::time::Instant;
 use tracing::{debug, info, trace};
-use typed_store::rocks::{DBBatch, DBMap, TypedStoreError};
-use typed_store::traits::Map;
+use typed_store::rocks::{DBBatch, DBMap};
+use typed_store::{traits::Map, TypedStoreError};
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::authority::authority_store_types::{
