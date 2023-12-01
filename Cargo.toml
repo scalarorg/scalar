@@ -93,6 +93,7 @@ members = [
   "crates-reth/transaction-pool",
   "crates-reth/trie",
   "crates-reth/testing/ef-tests",
+  "crates-reth/testing/eth-tests",
   "crates-reth/rpc/rpc-types-compat",
   "crates-reth/tokio-util",
   #"examples",
