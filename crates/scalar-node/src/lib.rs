@@ -1850,6 +1850,7 @@ pub async fn build_grpc_server(
                 .await
                 .unwrap()
         });
+        info!("Consensus Grpc server listenning on {:?}", &grpc_address);
         handle
     }))
     //Ok(Some(handle))

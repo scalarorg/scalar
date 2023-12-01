@@ -12184,6 +12184,7 @@ dependencies = [
  "hyper",
  "jsonrpsee 0.20.3",
  "metrics",
+ "reth-beacon-consensus",
  "reth-interfaces",
  "reth-ipc",
  "reth-metrics",

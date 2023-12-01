@@ -5,18 +5,20 @@ use jsonrpsee::core::client::{Client, ClientBuilder, ClientT};
 use jsonrpsee::http_client::HttpClientBuilder;
 use jsonrpsee::rpc_params;
 use jsonrpsee::server::{RpcModule, Server};
+use reth_primitives::{IntoRecoveredTransaction, TransactionSigned, TransactionSignedEcRecovered};
 use reth_rpc::JwtSecret;
 use reth_transaction_pool::{
     NewTransactionEvent, PoolConfig, PoolTransaction, PriceBumpConfig, SubPoolLimit,
-    TransactionListenerKind, TransactionPool, DEFAULT_PRICE_BUMP, REPLACE_BLOB_PRICE_BUMP,
-    TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER, TXPOOL_SUBPOOL_MAX_SIZE_MB_DEFAULT,
-    TXPOOL_SUBPOOL_MAX_TXS_DEFAULT,
+    TransactionListenerKind, TransactionPool, ValidPoolTransaction, DEFAULT_PRICE_BUMP,
+    REPLACE_BLOB_PRICE_BUMP, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER,
+    TXPOOL_SUBPOOL_MAX_SIZE_MB_DEFAULT, TXPOOL_SUBPOOL_MAX_TXS_DEFAULT,
 };
 use scalar_consensus_adapter_common::proto::{ConsensusApiClient, ConsensusTransactionIn};
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio_stream::StreamExt;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
-use tracing::info;
+use tracing::{debug, info};
 #[derive(Debug, Clone)]
 pub struct ScalarConsensusHandles {}
 /// Scalar N&B consensus
@@ -24,7 +26,22 @@ pub struct ScalarConsensusHandles {}
 /// This consensus adapter for listen incommit transaction and send to Consensus Grpc Server.
 #[derive(Debug)]
 pub struct ScalarConsensus {}
-
+fn create_consensus_transaction<Pool: PoolTransaction + 'static>(
+    transaction: Arc<ValidPoolTransaction<Pool>>,
+) -> ConsensusTransactionIn {
+    let recovered_transaction = transaction.to_recovered_transaction();
+    let signed_transaction = recovered_transaction.into_signed();
+    let TransactionSigned {
+        hash,
+        signature,
+        transaction,
+    } = signed_transaction;
+    let tx_hash = hash.to_vec();
+    ConsensusTransactionIn {
+        tx_hash,
+        signature: signature.to_bytes().to_vec(),
+    }
+}
 impl ScalarConsensus {
     pub async fn new<Pool>(
         socket_addr: SocketAddr,
@@ -42,7 +59,7 @@ impl ScalarConsensus {
         tokio::spawn(async move {
             let url = format!("http://{}", socket_addr);
             let mut client = ConsensusApiClient::connect(url).await.unwrap();
-
+            info!("Connect to the grpc consensus {:?}", &socket_addr);
             //let in_stream = tokio_stream::wrappers::ReceiverStream::new(transaction_rx)
             let stream = async_stream::stream! {
                 while let Some(NewTransactionEvent { subpool, transaction }) = transaction_rx.recv().await {
@@ -50,8 +67,10 @@ impl ScalarConsensus {
                      * 231129 TaiVV
                      * Scalar TODO: convert transaction to ConsensusTransactionIn
                      */
-                    info!("Receive message from external, send it into narwhal consensus");
-                    yield ConsensusTransactionIn{tx_bytes: todo!(), signatures: todo!() };
+
+                    info!("Receive message from external, send it into narwhal consensus {:?}", &transaction);
+                    let consensus_transaction = create_consensus_transaction(transaction);
+                    yield consensus_transaction;
                 }
             };
             //pin_mut!(stream);

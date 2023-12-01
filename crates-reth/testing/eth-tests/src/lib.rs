@@ -26,7 +26,7 @@ mod tests {
 
         // Get the raw transaction
         let raw_tx = tx.rlp_signed(&signature);
-
+        println!("Raw transaction {:x?}", &raw_tx);
         // Send the raw transaction
         let result = provider.send_raw_transaction(raw_tx).await?;
 
