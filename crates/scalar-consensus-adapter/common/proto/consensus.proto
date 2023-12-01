@@ -22,8 +22,8 @@
 
  // ScalarAbciRequest is the request for ScalarAbci.
  message ConsensusTransactionIn {
-    string tx_bytes = 1;
-    repeated string signatures = 2;
+    bytes tx_hash = 1;
+    bytes signature = 2;
     
  }
 

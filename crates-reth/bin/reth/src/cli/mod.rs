@@ -78,8 +78,10 @@ impl<Ext: RethCliExt> Cli<Ext> {
     /// Execute the configured cli command.
     pub fn run(mut self) -> eyre::Result<()> {
         // add network name to logs dir
-        self.logs.log_file_directory =
-            self.logs.log_file_directory.join(self.chain.chain.to_string());
+        self.logs.log_file_directory = self
+            .logs
+            .log_file_directory
+            .join(self.chain.chain.to_string());
 
         let _guard = self.init_tracing()?;
 
@@ -103,8 +105,10 @@ impl<Ext: RethCliExt> Cli<Ext> {
     /// If file logging is enabled, this function returns a guard that must be kept alive to ensure
     /// that all logs are flushed to disk.
     pub fn init_tracing(&self) -> eyre::Result<Option<FileWorkerGuard>> {
-        let mut layers =
-            vec![reth_tracing::stdout(self.verbosity.directive(), &self.logs.color.to_string())];
+        let mut layers = vec![reth_tracing::stdout(
+            self.verbosity.directive(),
+            &self.logs.color.to_string(),
+        )];
 
         let (additional_layers, guard) = self.logs.layers()?;
         layers.extend(additional_layers);
@@ -180,20 +184,40 @@ impl<Ext: RethCliExt> Commands<Ext> {
 #[command(next_help_heading = "Logging")]
 pub struct Logs {
     /// The path to put log files in.
-    #[arg(long = "log.file.directory", value_name = "PATH", global = true, default_value_t)]
+    #[arg(
+        long = "log.file.directory",
+        value_name = "PATH",
+        global = true,
+        default_value_t
+    )]
     log_file_directory: PlatformPath<LogsDir>,
 
     /// The maximum size (in MB) of one log file.
-    #[arg(long = "log.file.max-size", value_name = "SIZE", global = true, default_value_t = 200)]
+    #[arg(
+        long = "log.file.max-size",
+        value_name = "SIZE",
+        global = true,
+        default_value_t = 200
+    )]
     log_file_max_size: u64,
 
     /// The maximum amount of log files that will be stored. If set to 0, background file logging
     /// is disabled.
-    #[arg(long = "log.file.max-files", value_name = "COUNT", global = true, default_value_t = 5)]
+    #[arg(
+        long = "log.file.max-files",
+        value_name = "COUNT",
+        global = true,
+        default_value_t = 5
+    )]
     log_file_max_files: usize,
 
     /// The filter to use for logs written to the log file.
-    #[arg(long = "log.file.filter", value_name = "FILTER", global = true, default_value = "debug")]
+    #[arg(
+        long = "log.file.filter",
+        value_name = "FILTER",
+        global = true,
+        default_value = "debug"
+    )]
     log_file_filter: String,
 
     /// Write logs to journald.
@@ -276,7 +300,13 @@ pub struct Verbosity {
     verbosity: u8,
 
     /// Silence all log output.
-    #[clap(long, alias = "silent", short = 'q', global = true, help_heading = "Display")]
+    #[clap(
+        long,
+        alias = "silent",
+        short = 'q',
+        global = true,
+        help_heading = "Display"
+    )]
     quiet: bool,
 }
 
@@ -357,8 +387,10 @@ mod tests {
     #[test]
     fn parse_logs_path() {
         let mut reth = Cli::<()>::try_parse_from(["reth", "node"]).unwrap();
-        reth.logs.log_file_directory =
-            reth.logs.log_file_directory.join(reth.chain.chain.to_string());
+        reth.logs.log_file_directory = reth
+            .logs
+            .log_file_directory
+            .join(reth.chain.chain.to_string());
         let log_dir = reth.logs.log_file_directory;
         let end = format!("reth/logs/{}", SUPPORTED_CHAINS[0]);
         assert!(log_dir.as_ref().ends_with(end), "{:?}", log_dir);
@@ -367,8 +399,10 @@ mod tests {
         iter.next();
         for chain in iter {
             let mut reth = Cli::<()>::try_parse_from(["reth", "node", "--chain", chain]).unwrap();
-            reth.logs.log_file_directory =
-                reth.logs.log_file_directory.join(reth.chain.chain.to_string());
+            reth.logs.log_file_directory = reth
+                .logs
+                .log_file_directory
+                .join(reth.chain.chain.to_string());
             let log_dir = reth.logs.log_file_directory;
             let end = format!("reth/logs/{}", chain);
             assert!(log_dir.as_ref().ends_with(end), "{:?}", log_dir);

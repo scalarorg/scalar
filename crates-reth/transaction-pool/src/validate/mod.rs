@@ -105,7 +105,10 @@ impl<T> ValidTransaction<T> {
     /// Creates a new valid transaction with an optional sidecar.
     pub fn new(transaction: T, sidecar: Option<BlobTransactionSidecar>) -> Self {
         if let Some(sidecar) = sidecar {
-            Self::ValidWithSidecar { transaction, sidecar }
+            Self::ValidWithSidecar {
+                transaction,
+                sidecar,
+            }
         } else {
             Self::Valid(transaction)
         }
@@ -193,7 +196,9 @@ pub trait TransactionValidator: Send + Sync {
         transactions: Vec<(TransactionOrigin, Self::Transaction)>,
     ) -> Vec<TransactionValidationOutcome<Self::Transaction>> {
         futures_util::future::join_all(
-            transactions.into_iter().map(|(origin, tx)| self.validate_transaction(origin, tx)),
+            transactions
+                .into_iter()
+                .map(|(origin, tx)| self.validate_transaction(origin, tx)),
         )
         .await
     }
