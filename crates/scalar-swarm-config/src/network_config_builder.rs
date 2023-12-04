@@ -289,7 +289,7 @@ impl<R: rand::RngCore + rand::CryptoRng> ConfigBuilder<R> {
         };
 
         let genesis = {
-            let mut builder = scalar_genesis_builder::Builder::new()
+            let mut builder = sui_genesis_builder::Builder::new()
                 .with_parameters(genesis_config.parameters)
                 .add_objects(self.additional_objects);
 
