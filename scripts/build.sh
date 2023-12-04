@@ -22,7 +22,7 @@ scalar() {
     rm ${SCRIPT_DIR}/scalar-node
 }
 
-scalar_test_validator() {
+test_validator() {
     BIN_NAME=sui-test-validator
     docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}

@@ -74,6 +74,11 @@ pub fn load_bytecode_snapshot(protocol_version: u64) -> anyhow::Result<Vec<Syste
             snapshot_objects.push(object);
         }
     }
+    tracing::info!(
+        "Loaded package for protocol version {:?} with size {}",
+        protocol_version,
+        snapshot_objects.len()
+    );
     Ok(snapshot_objects)
 }
 

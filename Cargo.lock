@@ -15087,6 +15087,7 @@ dependencies = [
  "serde_json",
  "sui-protocol-config",
  "tokio",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
