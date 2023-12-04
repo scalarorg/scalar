@@ -24,7 +24,7 @@ shared-crypto.workspace = true
 sui-protocol-config.workspace = true
 scalar-config.workspace = true
 scalar-types.workspace = true
-scalar-genesis-builder.workspace = true
+sui-genesis-builder.workspace = true
 workspace-hack.workspace = true
 
 [target.'cfg(msim)'.dependencies]

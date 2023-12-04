@@ -13345,34 +13345,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scalar-genesis-builder"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "bcs",
- "camino",
- "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
- "insta",
- "move-binary-format",
- "move-core-types",
- "prometheus",
- "rand 0.8.5",
- "scalar-config",
- "scalar-execution",
- "scalar-framework",
- "scalar-types",
- "serde",
- "serde_with 2.3.3",
- "serde_yaml 0.8.26",
- "shared-crypto 0.0.0",
- "sui-protocol-config",
- "sui-simulator",
- "tempfile",
- "tracing",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "scalar-json"
 version = "0.0.0"
 dependencies = [
@@ -13732,12 +13704,12 @@ dependencies = [
  "rand 0.8.5",
  "scalar-config",
  "scalar-execution",
- "scalar-genesis-builder",
  "scalar-types",
  "serde",
  "serde_with 2.3.3",
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
+ "sui-genesis-builder",
  "sui-protocol-config",
  "sui-simulator",
  "tempfile",
@@ -15103,6 +15075,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-framework-snapshot"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "git-version",
+ "scalar-framework",
+ "scalar-types",
+ "serde",
+ "serde_json",
+ "sui-protocol-config",
+ "tokio",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-genesis-builder"
 version = "0.0.0"
 dependencies = [
@@ -15123,6 +15111,7 @@ dependencies = [
  "serde_with 2.3.3",
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
+ "sui-framework-snapshot",
  "sui-protocol-config",
  "sui-simulator",
  "tempfile",

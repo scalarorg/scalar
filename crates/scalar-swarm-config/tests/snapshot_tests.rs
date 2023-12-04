@@ -22,8 +22,6 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use scalar_config::genesis::{GenesisCeremonyParameters, TokenDistributionScheduleBuilder};
 use scalar_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
-use scalar_genesis_builder::validator_info::ValidatorInfo;
-use scalar_genesis_builder::Builder;
 use scalar_swarm_config::genesis_config::GenesisConfig;
 use scalar_types::base_types::SuiAddress;
 use scalar_types::crypto::{
@@ -32,6 +30,8 @@ use scalar_types::crypto::{
 };
 use scalar_types::multiaddr::Multiaddr;
 use std::num::NonZeroUsize;
+use sui_genesis_builder::validator_info::ValidatorInfo;
+use sui_genesis_builder::Builder;
 
 #[test]
 #[cfg_attr(msim, ignore)]

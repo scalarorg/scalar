@@ -9,7 +9,6 @@ use rand::{rngs::StdRng, SeedableRng};
 use scalar_config::genesis::{GenesisCeremonyParameters, TokenAllocation};
 use scalar_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
 use scalar_config::{local_ip_utils, Config};
-use scalar_genesis_builder::validator_info::{GenesisValidatorInfo, ValidatorInfo};
 use scalar_types::base_types::SuiAddress;
 use scalar_types::crypto::{
     generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
@@ -17,6 +16,7 @@ use scalar_types::crypto::{
 };
 use scalar_types::multiaddr::Multiaddr;
 use serde::{Deserialize, Serialize};
+use sui_genesis_builder::validator_info::{GenesisValidatorInfo, ValidatorInfo};
 use tracing::info;
 
 // All information needed to build a NodeConfig for a state sync fullnode.

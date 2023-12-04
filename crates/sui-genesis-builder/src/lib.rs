@@ -7,46 +7,46 @@ use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::KeyPair;
 use move_binary_format::CompiledModule;
 use move_core_types::ident_str;
-use scalar_config::genesis::{
-    Genesis, GenesisCeremonyParameters, GenesisChainParameters, TokenDistributionSchedule,
-    UnsignedGenesis,
-};
-use scalar_execution::{self, Executor};
-use scalar_framework::{BuiltInFramework, SystemPackage};
-use scalar_types::base_types::{
-    ExecutionDigests, ObjectID, SequenceNumber, SuiAddress, TransactionDigest, TxContext,
-};
-use scalar_types::committee::Committee;
-use scalar_types::crypto::{
-    AuthorityKeyPair, AuthorityPublicKeyBytes, AuthoritySignInfo, AuthoritySignInfoTrait,
-    AuthoritySignature, DefaultHash, SuiAuthoritySignature,
-};
-use scalar_types::digests::ChainIdentifier;
-use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI, TransactionEvents};
-use scalar_types::epoch_data::EpochData;
-use scalar_types::gas::SuiGasStatus;
-use scalar_types::gas_coin::GasCoin;
-use scalar_types::governance::StakedSui;
-use scalar_types::in_memory_storage::InMemoryStorage;
-use scalar_types::inner_temporary_store::InnerTemporaryStore;
-use scalar_types::message_envelope::Message;
-use scalar_types::messages_checkpoint::{
-    CertifiedCheckpointSummary, CheckpointContents, CheckpointSummary,
-};
-use scalar_types::metrics::LimitsMetrics;
-use scalar_types::object::{Object, Owner};
-use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use scalar_types::sui_system_state::{get_sui_system_state, SuiSystemState, SuiSystemStateTrait};
-use scalar_types::transaction::{
-    CallArg, CheckedInputObjects, Command, InputObjectKind, ObjectReadResult, Transaction,
-};
-use scalar_types::{SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS};
 use shared_crypto::intent::{Intent, IntentMessage, IntentScope};
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
+use sui_config::genesis::{
+    Genesis, GenesisCeremonyParameters, GenesisChainParameters, TokenDistributionSchedule,
+    UnsignedGenesis,
+};
+use sui_execution::{self, Executor};
+use sui_framework::{BuiltInFramework, SystemPackage};
 use sui_protocol_config::{Chain, ProtocolConfig, ProtocolVersion};
+use sui_types::base_types::{
+    ExecutionDigests, ObjectID, SequenceNumber, SuiAddress, TransactionDigest, TxContext,
+};
+use sui_types::committee::Committee;
+use sui_types::crypto::{
+    AuthorityKeyPair, AuthorityPublicKeyBytes, AuthoritySignInfo, AuthoritySignInfoTrait,
+    AuthoritySignature, DefaultHash, SuiAuthoritySignature,
+};
+use sui_types::digests::ChainIdentifier;
+use sui_types::effects::{TransactionEffects, TransactionEffectsAPI, TransactionEvents};
+use sui_types::epoch_data::EpochData;
+use sui_types::gas::SuiGasStatus;
+use sui_types::gas_coin::GasCoin;
+use sui_types::governance::StakedSui;
+use sui_types::in_memory_storage::InMemoryStorage;
+use sui_types::inner_temporary_store::InnerTemporaryStore;
+use sui_types::message_envelope::Message;
+use sui_types::messages_checkpoint::{
+    CertifiedCheckpointSummary, CheckpointContents, CheckpointSummary,
+};
+use sui_types::metrics::LimitsMetrics;
+use sui_types::object::{Object, Owner};
+use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use sui_types::sui_system_state::{get_sui_system_state, SuiSystemState, SuiSystemStateTrait};
+use sui_types::transaction::{
+    CallArg, CheckedInputObjects, Command, InputObjectKind, ObjectReadResult, Transaction,
+};
+use sui_types::{SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS};
 use tracing::trace;
 use validator_info::{GenesisValidatorInfo, GenesisValidatorMetadata, ValidatorInfo};
 
@@ -726,10 +726,10 @@ fn build_unsigned_genesis_data(
     // Get the correct system packages for our protocol version. If we cannot find the snapshot
     // that means that we must be at the latest version and we should use the latest version of the
     // framework.
-    // let system_packages =
-    //     sui_framework_snapshot::load_bytecode_snapshot(parameters.protocol_version.as_u64())
-    //         .unwrap_or_else(|_| BuiltInFramework::iter_system_packages().cloned().collect());
-    let system_packages = vec![];
+    let system_packages =
+        sui_framework_snapshot::load_bytecode_snapshot(parameters.protocol_version.as_u64())
+            .unwrap_or_else(|_| BuiltInFramework::iter_system_packages().cloned().collect());
+
     let mut genesis_ctx = create_genesis_context(
         &epoch_data,
         &genesis_chain_parameters,
@@ -822,14 +822,14 @@ fn create_genesis_transaction(
                     *initial_shared_version = SequenceNumber::MIN;
                 }
 
-                scalar_types::transaction::GenesisObject::RawObject {
+                sui_types::transaction::GenesisObject::RawObject {
                     data: object.data,
                     owner: object.owner,
                 }
             })
             .collect();
 
-        scalar_types::transaction::VerifiedTransaction::new_genesis_transaction(genesis_objects)
+        sui_types::transaction::VerifiedTransaction::new_genesis_transaction(genesis_objects)
             .into_inner()
     };
 
@@ -838,7 +838,7 @@ fn create_genesis_transaction(
     let (effects, events, objects) = {
         let silent = true;
         let paranoid_checks = false;
-        let executor = scalar_execution::executor(protocol_config, paranoid_checks, silent)
+        let executor = sui_execution::executor(protocol_config, paranoid_checks, silent)
             .expect("Creating an executor should not fail here");
 
         let expensive_checks = false;
@@ -898,7 +898,7 @@ fn create_genesis_objects(
     let silent = true;
     // paranoid checks are a last line of defense for malicious code, no need to run them in genesis
     let paranoid_checks = false;
-    let executor = scalar_execution::executor(&protocol_config, paranoid_checks, silent)
+    let executor = sui_execution::executor(&protocol_config, paranoid_checks, silent)
         .expect("Creating an executor should not fail here");
 
     for system_package in system_packages.into_iter() {
@@ -1095,7 +1095,7 @@ pub fn generate_genesis_system_object(
 
     // update the value of the clock to match the chain start time
     {
-        let object = written.get_mut(&scalar_types::SUI_CLOCK_OBJECT_ID).unwrap();
+        let object = written.get_mut(&sui_types::SUI_CLOCK_OBJECT_ID).unwrap();
         object
             .data
             .try_as_move_mut()
@@ -1113,12 +1113,12 @@ mod test {
     use crate::validator_info::ValidatorInfo;
     use crate::Builder;
     use fastcrypto::traits::KeyPair;
-    use scalar_config::genesis::*;
-    use scalar_config::local_ip_utils;
-    use scalar_config::node::DEFAULT_COMMISSION_RATE;
-    use scalar_config::node::DEFAULT_VALIDATOR_GAS_PRICE;
-    use scalar_types::base_types::SuiAddress;
-    use scalar_types::crypto::{
+    use sui_config::genesis::*;
+    use sui_config::local_ip_utils;
+    use sui_config::node::DEFAULT_COMMISSION_RATE;
+    use sui_config::node::DEFAULT_VALIDATOR_GAS_PRICE;
+    use sui_types::base_types::SuiAddress;
+    use sui_types::crypto::{
         generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
         NetworkKeyPair,
     };

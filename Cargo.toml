@@ -9,7 +9,7 @@ members = [
   "crates/scalar-keys",
   "crates/scalar-transaction-checks",
   "crates/scalar-transaction-builder",
-  "crates/scalar-genesis-builder",
+  #"crates/scalar-genesis-builder",
   "crates/scalar-swarm-config",
   "crates/scalar-archival",
   "crates/scalar-storage",
@@ -26,13 +26,14 @@ members = [
   "crates/sui-test-validator",
   # For integration testing
   # "crates/sui",
-  "crates/sui-cluster-test",
   # "crates/sui-indexer",
+  "crates/sui-cluster-test",
   "crates/test-cluster",
   "crates/sui-faucet",
   "crates/sui-sdk",
   "crates/sui-swarm",
   "crates/sui-swarm-config",
+  "crates/sui-framework-snapshot",
   # "crates/sui-protocol-config",
   # "crates/sui-protocol-config-macros",
   # "crates/scalar-move",
@@ -445,7 +446,7 @@ scalar-node = { path = "crates/scalar-node" }
 scalar-types = { path = "crates/scalar-types" }
 scalar-transaction-checks = { path = "crates/scalar-transaction-checks" }
 scalar-transaction-builder = { path = "crates/scalar-transaction-builder" }
-scalar-genesis-builder = { path = "crates/scalar-genesis-builder" }
+# scalar-genesis-builder = { path = "crates/scalar-genesis-builder" }
 scalar-swarm-config = { path = "crates/scalar-swarm-config" }
 scalar-archival = { path = "crates/scalar-archival" }
 scalar-storage = { path = "crates/scalar-storage" }
@@ -485,6 +486,7 @@ sui-faucet = { path = "crates/sui-faucet" }
 sui-sdk = { path = "crates/sui-sdk" }
 sui-swarm = { path = "crates/sui-swarm" }
 sui-swarm-config = { path = "crates/sui-swarm-config" }
+sui-framework-snapshot = { path = "crates/sui-framework-snapshot" }
 # End integration testing
 # sui-protocol-config = { path = "crates/sui-protocol-config" }
 # sui-protocol-config-macros = { path = "crates/sui-protocol-config-macros" }

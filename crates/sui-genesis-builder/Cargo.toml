@@ -22,12 +22,12 @@ tracing.workspace = true
 prometheus.workspace = true
 
 shared-crypto.workspace = true
-scalar-config.workspace = true
-scalar-execution.workspace = true
-scalar-framework.workspace = true
-#scalar-framework-snapshot.workspace = true
+sui-config.workspace = true
+sui-execution.workspace = true
+sui-framework.workspace = true
+sui-framework-snapshot.workspace = true
 sui-protocol-config.workspace = true
-scalar-types.workspace = true
+sui-types.workspace = true
 workspace-hack.workspace = true
 [target.'cfg(msim)'.dependencies]
 sui-simulator.workspace = true
@@ -35,4 +35,4 @@ sui-simulator.workspace = true
 [dev-dependencies]
 insta.workspace = true
 tempfile.workspace = true
-scalar-types = { workspace = true, features = ["test-utils"] }
+sui-types = { workspace = true, features = ["test-utils"] }
