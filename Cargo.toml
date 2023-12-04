@@ -23,10 +23,6 @@ members = [
   "crates/sui-move-build",
   "crates/sui-genesis-builder",
   "crates/sui-test-transaction-builder",
-  # "crates/sui-protocol-config",
-  # "crates/sui-protocol-config-macros",
-  # "crates/scalar-move",
-  # "crates/scalar-transaction",
   # "crates/scalar-tss",
   "crates/shared-crypto",
   "crates/workspace-hack",
@@ -47,6 +43,9 @@ members = [
   "scalar-execution",
   "crates/scalar-consensus-adapter",
   "crates/scalar-consensus-adapter/common",
+  # TaiVV 231204 For testing
+  "scalar-test-cluster",
+
   # Reth packages
   "crates-reth/bin/reth",
   "crates-reth/config",
@@ -415,7 +414,6 @@ scalar-genesis-builder = { path = "crates/scalar-genesis-builder" }
 scalar-swarm-config = { path = "crates/scalar-swarm-config" }
 scalar-archival = { path = "crates/scalar-archival" }
 scalar-storage = { path = "crates/scalar-storage" }
-#scalar-simulator = { path = "crates/scalar-simulator" }
 scalar-json = { path = "crates/scalar-json" }
 scalar-json-rpc = { path = "crates/scalar-json-rpc" }
 scalar-json-rpc-types = { path = "crates/scalar-json-rpc-types" }
@@ -429,10 +427,9 @@ scalar-consensus-adapter-common = { path = "crates/scalar-consensus-adapter/comm
 sui-move-build = { path = "crates/sui-move-build" }
 sui-genesis-builder = { path = "crates/sui-genesis-builder" }
 sui-test-transaction-builder = { path = "crates/sui-test-transaction-builder" }
-# sui-protocol-config = { path = "crates/sui-protocol-config" }
-# sui-protocol-config-macros = { path = "crates/sui-protocol-config-macros" }
-# scalar-move = { path = "crates/scalar-move" }
-# scalar-transaction = { path = "crates/scalar-transaction" }
+# For testing
+scalar-test-cluster = { path = "scalar-test-cluster" }
+
 scalar-tss = { path = "crates/scalar-tss" }
 shared-crypto = { path = "crates/shared-crypto" }
 
@@ -468,7 +465,6 @@ mysten-util-mem-derive = { git = "https://github.com/MystenLabs/sui", rev = "01a
 sui-enum-compat-util = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "enum-compat-util" }
 sui-protocol-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-protocol-config" }
 sui-protocol-config-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-protocol-config-macros" }
-# sui-move-build = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-move-build" }
 
 sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
 sui-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }

@@ -1,0 +1,31 @@
+[package]
+name = "scalar-test-cluster"
+version = "0.0.1"
+authors = ["Scalar org <tai@codelight.co>"]
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+axum.workspace = true
+clap.workspace = true
+http.workspace = true
+mysten-metrics.workspace = true
+
+prometheus.workspace = true
+serde = { workspace = true, features = ["derive", "rc"] }
+serde_with.workspace = true
+serde_yaml.workspace = true
+telemetry-subscribers.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tower.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+
+uuid.workspace = true
+workspace-hack.workspace = true
+
+sui-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-config" }
+sui_macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
+sui-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-types" }

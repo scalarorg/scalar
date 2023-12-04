@@ -13757,6 +13757,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-test-cluster"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "axum",
+ "clap 4.4.7",
+ "http",
+ "mysten-metrics",
+ "prometheus",
+ "serde",
+ "serde_with 2.3.3",
+ "serde_yaml 0.8.26",
+ "sui-config",
+ "sui-macros",
+ "sui-types",
+ "telemetry-subscribers",
+ "tokio",
+ "tower",
+ "tower-http 0.3.5",
+ "tracing",
+ "uuid 1.5.0",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "scalar-transaction-builder"
 version = "0.0.0"
 dependencies = [
@@ -14998,6 +15023,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-config"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anemo",
+ "anyhow",
+ "bcs",
+ "csv",
+ "dirs 4.0.0",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "narwhal-config",
+ "once_cell",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "serde_with 2.3.3",
+ "serde_yaml 0.8.26",
+ "sui-keys",
+ "sui-protocol-config",
+ "sui-simulator",
+ "sui-storage",
+ "sui-types",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-enum-compat-util"
 version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
@@ -15048,6 +15100,55 @@ dependencies = [
  "sui-protocol-config",
  "sui-simulator",
  "tempfile",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-json"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sui-framework",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-json-rpc-types"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "colored",
+ "enum_dispatch",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "itertools 0.10.5",
+ "json_to_table",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "mysten-metrics",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_with 2.3.3",
+ "sui-enum-compat-util",
+ "sui-json",
+ "sui-macros",
+ "sui-protocol-config",
+ "sui-types",
+ "tabled",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -15296,6 +15397,56 @@ dependencies = [
  "tower",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-storage"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backoff",
+ "base64-url",
+ "bcs",
+ "byteorder",
+ "bytes",
+ "chrono",
+ "clap 4.4.7",
+ "eyre",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "hyper",
+ "hyper-rustls 0.24.2",
+ "indicatif",
+ "integer-encoding",
+ "itertools 0.10.5",
+ "lru 0.10.1",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "mysten-metrics",
+ "num_enum 0.6.1",
+ "object_store",
+ "parking_lot 0.12.1",
+ "percent-encoding",
+ "prometheus",
+ "reqwest",
+ "rocksdb",
+ "serde",
+ "sui-json-rpc-types",
+ "sui-protocol-config",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "typed-store",
+ "typed-store-derive",
+ "url",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "zstd 0.12.4",
 ]
 
 [[package]]

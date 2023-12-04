@@ -22,6 +22,13 @@ scalar() {
     rm ${SCRIPT_DIR}/scalar-node
 }
 
+test_cluster() {
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin scalar-test-cluster
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/scalar-test-cluster ${SCRIPT_DIR}/scalar-test-cluster
+    docker cp ${SCRIPT_DIR}/scalar-test-cluster ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/scalar-test-cluster
+}
+
 relayer() {
     BUILDER=scalar-relayer
     docker exec -it ${BUILDER} cargo build --manifest-path /scalar-relayer/Cargo.toml --profile dev

@@ -23,4 +23,8 @@ scalar() {
         --indexer-rpc-port 9124
 }
 
+test_cluster() {
+    RUST_LOG=debug /usr/local/bin/scalar-test-cluster
+}
+
 $@
