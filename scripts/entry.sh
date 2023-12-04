@@ -9,11 +9,13 @@ reth() {
         --http.api admin,debug,eth,net,trace,txpool,web3,rpc \
         --ws \
         --ws.addr 0.0.0.0 \
-        --metrics 127.0.0.1:9001
+        --metrics 127.0.0.1:9001 \
+        --narwhal \
+        --narwhal.port 9090
 }
 
 scalar() {
-    RUST_LOG=info /usr/local/bin/scalar-node \
+    RUST_LOG=debug /usr/local/bin/scalar-node \
         --config-path /scalar/fullnode.yaml \
         #--epoch-duration-ms 3600000 \
         --fullnode-rpc-port 9000 \
