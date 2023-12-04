@@ -18,7 +18,7 @@ tap.workspace = true
 prometheus.workspace = true
 
 sui-config.workspace = true
-sui-swarm-config.workspace = true
+scalar-swarm-config.workspace = true
 sui-node.workspace = true
 sui-protocol-config.workspace = true
 sui-types.workspace = true

@@ -16,7 +16,6 @@ members = [
   "crates/scalar-json",
   "crates/scalar-json-rpc",
   "crates/scalar-json-rpc-types",
-  "crates/scalar-framework",
   "crates/scalar-network",
   "crates/scalar-kvstore",
   "crates/scalar-telemetry",
@@ -24,6 +23,8 @@ members = [
   "crates/sui-genesis-builder",
   "crates/sui-test-transaction-builder",
   "crates/sui-test-validator",
+  # For Move language support, copy without modify from SUI
+  "crates/sui-framework",
   # For integration testing
   # "crates/sui",
   # "crates/sui-indexer",
@@ -32,7 +33,7 @@ members = [
   "crates/sui-faucet",
   "crates/sui-sdk",
   "crates/sui-swarm",
-  "crates/sui-swarm-config",
+  #"crates/sui-swarm-config",
   "crates/sui-framework-snapshot",
   # "crates/sui-protocol-config",
   # "crates/sui-protocol-config-macros",
@@ -454,7 +455,6 @@ scalar-storage = { path = "crates/scalar-storage" }
 scalar-json = { path = "crates/scalar-json" }
 scalar-json-rpc = { path = "crates/scalar-json-rpc" }
 scalar-json-rpc-types = { path = "crates/scalar-json-rpc-types" }
-scalar-framework = { path = "crates/scalar-framework" }
 scalar-network = { path = "crates/scalar-network" }
 scalar-kvstore = { path = "crates/scalar-kvstore" }
 scalar-snapshot = { path = "crates/scalar-snapshot" }
@@ -475,7 +475,9 @@ sui-json-rpc-types = { path = "crates/scalar-json-rpc-types", package = "scalar-
 sui-keys = { path = "crates/scalar-keys", package = "scalar-keys" }
 sui-types = { path = "crates/scalar-types", package = "scalar-types" }
 sui-transaction-builder = { path = "crates/scalar-transaction-builder", package = "scalar-transaction-builder" }
-sui-framework = { path = "crates/scalar-framework", package = "scalar-framework" }
+# For Move language support, copy without modify from SUI
+sui-framework = { path = "crates/sui-framework", package = "sui-framework" }
+
 # For integration testing
 # sui = { path = "crates/sui" }
 sui-cluster-test = { path = "crates/sui-cluster-test" }
@@ -485,7 +487,7 @@ test-cluster = { path = "crates/test-cluster" }
 sui-faucet = { path = "crates/sui-faucet" }
 sui-sdk = { path = "crates/sui-sdk" }
 sui-swarm = { path = "crates/sui-swarm" }
-sui-swarm-config = { path = "crates/sui-swarm-config" }
+# sui-swarm-config = { path = "crates/sui-swarm-config" }
 sui-framework-snapshot = { path = "crates/sui-framework-snapshot" }
 # End integration testing
 # sui-protocol-config = { path = "crates/sui-protocol-config" }

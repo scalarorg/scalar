@@ -5,6 +5,11 @@ use super::Node;
 use anyhow::Result;
 use futures::future::try_join_all;
 use rand::rngs::OsRng;
+use scalar_swarm_config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
+use scalar_swarm_config::network_config::NetworkConfig;
+use scalar_swarm_config::network_config_builder::{
+    CommitteeConfig, ConfigBuilder, ProtocolVersionsConfig, SupportedProtocolVersionsCallback,
+};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::num::NonZeroUsize;
@@ -17,12 +22,6 @@ use sui_config::node::DBCheckpointConfig;
 use sui_config::NodeConfig;
 use sui_node::SuiNodeHandle;
 use sui_protocol_config::{ProtocolVersion, SupportedProtocolVersions};
-use sui_swarm_config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
-use sui_swarm_config::network_config::NetworkConfig;
-use sui_swarm_config::network_config_builder::{
-    CommitteeConfig, ConfigBuilder, ProtocolVersionsConfig, SupportedProtocolVersionsCallback,
-};
-use sui_swarm_config::node_config_builder::FullnodeConfigBuilder;
 use sui_types::base_types::AuthorityName;
 use sui_types::object::Object;
 use tempfile::TempDir;

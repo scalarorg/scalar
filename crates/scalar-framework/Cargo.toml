@@ -13,7 +13,7 @@ serde.workspace = true
 once_cell.workspace = true
 tracing.workspace = true
 
-scalar-types.workspace = true
+sui-types.workspace = true
 
 move-binary-format.workspace = true
 move-core-types.workspace = true
@@ -23,7 +23,7 @@ workspace-hack.workspace = true
 anyhow.workspace = true
 bcs.workspace = true
 
-#sui-move-build.workspace = true
+sui-move-build.workspace = true
 
 move-binary-format.workspace = true
 move-package.workspace = true

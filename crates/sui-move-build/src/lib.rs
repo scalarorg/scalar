@@ -42,14 +42,14 @@ use move_package::{
     resolution::resolution_graph::Package, source_package::parsed_manifest::CustomDepInfo,
 };
 use move_symbol_pool::Symbol;
-use scalar_types::{
+use serde_reflection::Registry;
+use sui_types::{
     base_types::ObjectID,
     error::{SuiError, SuiResult},
     is_system_package,
     move_package::{FnInfo, FnInfoKey, FnInfoMap, MovePackage},
     DEEPBOOK_ADDRESS, MOVE_STDLIB_ADDRESS, SUI_FRAMEWORK_ADDRESS, SUI_SYSTEM_ADDRESS,
 };
-use serde_reflection::Registry;
 use sui_verifier::verifier as sui_bytecode_verifier;
 
 use crate::linters::{

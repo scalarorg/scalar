@@ -19,7 +19,7 @@ sui-verifier = { path = "../../scalar-execution/latest/sui-verifier", package = 
 
 
 serde-reflection.workspace = true
-scalar-types.workspace = true
+sui-types.workspace = true
 
 move-binary-format.workspace = true
 move-bytecode-utils.workspace = true

@@ -13258,7 +13258,6 @@ dependencies = [
  "scalar-archival",
  "scalar-config",
  "scalar-execution",
- "scalar-framework",
  "scalar-json-rpc-types",
  "scalar-network",
  "scalar-storage",
@@ -13273,6 +13272,7 @@ dependencies = [
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
  "signature 1.6.4",
+ "sui-framework 0.1.0",
  "sui-genesis-builder",
  "sui-macros",
  "sui-move-build 0.0.0",
@@ -13325,22 +13325,6 @@ dependencies = [
  "sui-verifier-next-vm",
  "sui-verifier-v0",
  "sui-verifier-v1",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "scalar-framework"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bcs",
- "move-binary-format",
- "move-core-types",
- "move-package",
- "once_cell",
- "scalar-types",
- "serde",
- "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -14989,6 +14973,7 @@ dependencies = [
  "scalar-json",
  "scalar-json-rpc-types",
  "scalar-keys",
+ "scalar-swarm-config",
  "scalar-types",
  "serde",
  "serde_json",
@@ -14996,7 +14981,6 @@ dependencies = [
  "sui-faucet",
  "sui-sdk",
  "sui-swarm",
- "sui-swarm-config",
  "sui-test-transaction-builder",
  "telemetry-subscribers",
  "tempfile",
@@ -15059,6 +15043,23 @@ dependencies = [
 [[package]]
 name = "sui-framework"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "move-binary-format",
+ "move-core-types",
+ "move-package",
+ "once_cell",
+ "scalar-types",
+ "serde",
+ "sui-move-build 0.0.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-framework"
+version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
 dependencies = [
  "anyhow",
@@ -15081,10 +15082,10 @@ dependencies = [
  "anyhow",
  "bcs",
  "git-version",
- "scalar-framework",
  "scalar-types",
  "serde",
  "serde_json",
+ "sui-framework 0.1.0",
  "sui-protocol-config",
  "tokio",
  "tracing",
@@ -15106,12 +15107,12 @@ dependencies = [
  "rand 0.8.5",
  "scalar-config",
  "scalar-execution",
- "scalar-framework",
  "scalar-types",
  "serde",
  "serde_with 2.3.3",
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
+ "sui-framework 0.1.0",
  "sui-framework-snapshot",
  "sui-protocol-config",
  "sui-simulator",
@@ -15391,7 +15392,7 @@ dependencies = [
  "msim",
  "narwhal-network",
  "rand 0.8.5",
- "sui-framework",
+ "sui-framework 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "sui-move-build 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "sui-types",
  "telemetry-subscribers",
@@ -15413,42 +15414,15 @@ dependencies = [
  "rand 0.8.5",
  "scalar-config",
  "scalar-node",
+ "scalar-swarm-config",
  "scalar-types",
  "sui-protocol-config",
  "sui-simulator",
- "sui-swarm-config",
  "tap",
  "telemetry-subscribers",
  "tempfile",
  "tokio",
  "tonic-health",
- "tracing",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sui-swarm-config"
-version = "0.0.0"
-dependencies = [
- "anemo",
- "anyhow",
- "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
- "insta",
- "move-bytecode-utils",
- "narwhal-config",
- "prometheus",
- "rand 0.8.5",
- "scalar-config",
- "scalar-execution",
- "scalar-types",
- "serde",
- "serde_with 2.3.3",
- "serde_yaml 0.8.26",
- "shared-crypto 0.0.0",
- "sui-genesis-builder",
- "sui-protocol-config",
- "sui-simulator",
- "tempfile",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -15994,18 +15968,18 @@ dependencies = [
  "rand 0.8.5",
  "scalar-config",
  "scalar-core",
- "scalar-framework",
  "scalar-json-rpc",
  "scalar-json-rpc-types",
  "scalar-keys",
  "scalar-node",
+ "scalar-swarm-config",
  "scalar-types",
+ "sui-framework 0.1.0",
  "sui-macros",
  "sui-protocol-config",
  "sui-sdk",
  "sui-simulator",
  "sui-swarm",
- "sui-swarm-config",
  "sui-test-transaction-builder",
  "tokio",
  "tracing",
