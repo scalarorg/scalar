@@ -10,19 +10,10 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::core::grpc_server::build_grpc_server;
+use scalar_test_cluster::{LocalClusterConfig, LocalNewCluster};
 use std::{net::SocketAddr, sync::Arc};
-// use sui_cluster_test::{
-//     cluster::{Cluster, LocalNewCluster},
-//     config::{ClusterTestOpt, Env},
-//     faucet::{FaucetClient, FaucetClientFactory},
-// };
-// use sui_faucet::{
-//     BatchFaucetResponse, BatchStatusFaucetResponse, FaucetError, FaucetRequest, FaucetResponse,
-//     FixedAmountRequest,
-// };
 use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
+use tracing::info;
 use uuid::Uuid;
 
 /// Start a Sui validator and fullnode for easy testing.
@@ -134,7 +125,12 @@ async fn main() -> Result<()> {
     } else if !use_indexer_v2 {
         println!("`with_indexer` flag unset. Indexer service will run unmaintained indexer.")
     }
-
+    let cluster_config = LocalClusterConfig::new();
+    info!(
+        "Starting local validator cluster with config: {:#?}",
+        &cluster_config
+    );
+    let cluster = LocalNewCluster::start(&cluster_config).await?;
     // let cluster_config = ClusterTestOpt {
     //     env: Env::NewLocal,
     //     fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),

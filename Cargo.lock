@@ -13273,7 +13273,7 @@ dependencies = [
  "serde_yaml 0.8.26",
  "shared-crypto 0.0.0",
  "signature 1.6.4",
- "sui-genesis-builder",
+ "sui-genesis-builder 0.0.0",
  "sui-macros",
  "sui-move-build 0.0.0",
  "sui-protocol-config",
@@ -13312,19 +13312,19 @@ dependencies = [
  "move-vm-runtime-v1",
  "petgraph 0.5.1",
  "scalar-types",
- "sui-adapter-latest",
- "sui-adapter-next-vm",
- "sui-adapter-v0",
- "sui-adapter-v1",
- "sui-move-natives-latest",
- "sui-move-natives-next-vm",
- "sui-move-natives-v0",
- "sui-move-natives-v1",
+ "sui-adapter-latest 0.1.0",
+ "sui-adapter-next-vm 0.1.0",
+ "sui-adapter-v0 0.1.0",
+ "sui-adapter-v1 0.1.0",
+ "sui-move-natives-latest 0.1.0",
+ "sui-move-natives-next-vm 0.1.0",
+ "sui-move-natives-v0 0.1.0",
+ "sui-move-natives-v1 0.1.0",
  "sui-protocol-config",
  "sui-verifier-latest 0.1.0",
- "sui-verifier-next-vm",
- "sui-verifier-v0",
- "sui-verifier-v1",
+ "sui-verifier-next-vm 0.1.0",
+ "sui-verifier-v0 0.1.0",
+ "sui-verifier-v1 0.1.0",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -13760,23 +13760,56 @@ dependencies = [
 name = "scalar-test-cluster"
 version = "0.0.1"
 dependencies = [
+ "anemo",
+ "anemo-tower",
  "anyhow",
+ "arc-swap",
  "axum",
  "clap 4.4.7",
+ "const-str",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "git-version",
  "http",
+ "humantime",
+ "jsonrpsee 0.20.3",
+ "mysten-common",
  "mysten-metrics",
+ "mysten-network",
+ "narwhal-config",
+ "narwhal-network",
  "prometheus",
+ "rand 0.8.5",
+ "reqwest",
  "serde",
  "serde_with 2.3.3",
  "serde_yaml 0.8.26",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-archival",
  "sui-config",
+ "sui-core",
+ "sui-execution",
+ "sui-genesis-builder 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-keys",
  "sui-macros",
+ "sui-network",
+ "sui-node",
+ "sui-protocol-config",
+ "sui-sdk",
+ "sui-snapshot",
+ "sui-telemetry",
  "sui-types",
+ "tap",
  "telemetry-subscribers",
+ "tempfile",
  "tokio",
+ "tonic-health",
  "tower",
- "tower-http 0.3.5",
  "tracing",
+ "typed-store",
+ "typed-store-derive",
+ "typed-store-error",
  "uuid 1.5.0",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -14575,6 +14608,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "simulacrum"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bcs",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "narwhal-config",
+ "once_cell",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-config",
+ "sui-execution",
+ "sui-framework",
+ "sui-genesis-builder 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-keys",
+ "sui-protocol-config",
+ "sui-storage",
+ "sui-swarm-config",
+ "sui-transaction-checks",
+ "sui-types",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "siphasher"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14933,9 +14999,36 @@ dependencies = [
  "scalar-types",
  "serde",
  "sui-macros",
- "sui-move-natives-latest",
+ "sui-move-natives-latest 0.1.0",
  "sui-protocol-config",
  "sui-verifier-latest 0.1.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-adapter-latest"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "leb128",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier",
+ "move-core-types",
+ "move-vm-config",
+ "move-vm-profiler",
+ "move-vm-runtime",
+ "move-vm-types",
+ "parking_lot 0.12.1",
+ "serde",
+ "sui-macros",
+ "sui-move-natives-latest 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-protocol-config",
+ "sui-types",
+ "sui-verifier-latest 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -14960,9 +15053,36 @@ dependencies = [
  "scalar-types",
  "serde",
  "sui-macros",
- "sui-move-natives-next-vm",
+ "sui-move-natives-next-vm 0.1.0",
  "sui-protocol-config",
- "sui-verifier-next-vm",
+ "sui-verifier-next-vm 0.1.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-adapter-next-vm"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "leb128",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier-next-vm",
+ "move-core-types",
+ "move-vm-config",
+ "move-vm-profiler",
+ "move-vm-runtime-next-vm",
+ "move-vm-types",
+ "parking_lot 0.12.1",
+ "serde",
+ "sui-macros",
+ "sui-move-natives-next-vm 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-protocol-config",
+ "sui-types",
+ "sui-verifier-next-vm 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -14988,9 +15108,37 @@ dependencies = [
  "scalar-types",
  "serde",
  "sui-macros",
- "sui-move-natives-v0",
+ "sui-move-natives-v0 0.1.0",
  "sui-protocol-config",
- "sui-verifier-v0",
+ "sui-verifier-v0 0.1.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-adapter-v0"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "leb128",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier-v0",
+ "move-core-types",
+ "move-vm-config",
+ "move-vm-profiler",
+ "move-vm-runtime-v0",
+ "move-vm-types",
+ "once_cell",
+ "parking_lot 0.12.1",
+ "serde",
+ "sui-macros",
+ "sui-move-natives-v0 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-protocol-config",
+ "sui-types",
+ "sui-verifier-v0 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -15015,9 +15163,61 @@ dependencies = [
  "scalar-types",
  "serde",
  "sui-macros",
- "sui-move-natives-v1",
+ "sui-move-natives-v1 0.1.0",
  "sui-protocol-config",
- "sui-verifier-v1",
+ "sui-verifier-v1 0.1.0",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-adapter-v1"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "leb128",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier-v1",
+ "move-core-types",
+ "move-vm-config",
+ "move-vm-profiler",
+ "move-vm-runtime-v1",
+ "move-vm-types",
+ "parking_lot 0.12.1",
+ "serde",
+ "sui-macros",
+ "sui-move-natives-v1 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-protocol-config",
+ "sui-types",
+ "sui-verifier-v1 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-archival"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "byteorder",
+ "bytes",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "indicatif",
+ "num_enum 0.6.1",
+ "object_store",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "sui-config",
+ "sui-simulator",
+ "sui-storage",
+ "sui-types",
+ "tokio",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -15050,11 +15250,124 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-core"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-trait",
+ "bcs",
+ "bytes",
+ "chrono",
+ "dashmap",
+ "either",
+ "enum_dispatch",
+ "eyre",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "im",
+ "indexmap 1.9.3",
+ "itertools 0.10.5",
+ "lru 0.10.1",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "move-package",
+ "move-symbol-pool",
+ "mysten-common",
+ "mysten-metrics",
+ "mysten-network",
+ "mysticeti-core",
+ "narwhal-config",
+ "narwhal-crypto",
+ "narwhal-executor",
+ "narwhal-network",
+ "narwhal-node",
+ "narwhal-test-utils",
+ "narwhal-types",
+ "narwhal-worker",
+ "num_cpus",
+ "object_store",
+ "once_cell",
+ "parking_lot 0.12.1",
+ "prometheus",
+ "rand 0.8.5",
+ "rocksdb",
+ "scopeguard",
+ "serde",
+ "serde_json",
+ "serde_with 2.3.3",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "signature 1.6.4",
+ "sui-archival",
+ "sui-config",
+ "sui-execution",
+ "sui-framework",
+ "sui-genesis-builder 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-json-rpc-types",
+ "sui-macros",
+ "sui-move-build 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-network",
+ "sui-protocol-config",
+ "sui-simulator",
+ "sui-storage",
+ "sui-swarm-config",
+ "sui-transaction-checks",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-retry",
+ "tokio-stream",
+ "tracing",
+ "typed-store",
+ "typed-store-derive",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "zeroize",
+]
+
+[[package]]
 name = "sui-enum-compat-util"
 version = "0.1.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
 dependencies = [
  "serde_yaml 0.8.26",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-execution"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "move-binary-format",
+ "move-bytecode-verifier",
+ "move-bytecode-verifier-next-vm",
+ "move-bytecode-verifier-v0",
+ "move-bytecode-verifier-v1",
+ "move-vm-config",
+ "move-vm-runtime",
+ "move-vm-runtime-next-vm",
+ "move-vm-runtime-v0",
+ "move-vm-runtime-v1",
+ "sui-adapter-latest 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-adapter-next-vm 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-adapter-v0 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-adapter-v1 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-move-natives-latest 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-move-natives-next-vm 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-move-natives-v0 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-move-natives-v1 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-protocol-config",
+ "sui-types",
+ "sui-verifier-latest 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-verifier-next-vm 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-verifier-v0 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-verifier-v1 0.1.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15073,6 +15386,22 @@ dependencies = [
  "sui-move-build 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
  "sui-types",
  "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-framework-snapshot"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "git-version",
+ "serde",
+ "serde_json",
+ "sui-framework",
+ "sui-protocol-config",
+ "sui-types",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15105,6 +15434,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-genesis-builder"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "camino",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "move-binary-format",
+ "move-core-types",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "serde_with 2.3.3",
+ "serde_yaml 0.8.26",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-config",
+ "sui-execution",
+ "sui-framework",
+ "sui-framework-snapshot",
+ "sui-protocol-config",
+ "sui-simulator",
+ "sui-types",
+ "tempfile",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-json"
 version = "0.0.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
@@ -15120,6 +15478,54 @@ dependencies = [
  "serde_json",
  "sui-framework",
  "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-json-rpc"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-trait",
+ "axum",
+ "bcs",
+ "cached",
+ "eyre",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "hyper",
+ "itertools 0.10.5",
+ "jsonrpsee 0.16.2",
+ "linked-hash-map",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "move-package",
+ "mysten-metrics",
+ "once_cell",
+ "prometheus",
+ "serde",
+ "serde_json",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "signature 1.6.4",
+ "sui-core",
+ "sui-json",
+ "sui-json-rpc-types",
+ "sui-open-rpc",
+ "sui-open-rpc-macros",
+ "sui-protocol-config",
+ "sui-storage",
+ "sui-transaction-builder",
+ "sui-types",
+ "tap",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http 0.3.5",
+ "tracing",
+ "typed-store-error",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15169,6 +15575,31 @@ dependencies = [
  "slip10_ed25519",
  "sui-types",
  "tiny-bip39",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-kvstore"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "aws-config",
+ "aws-sdk-dynamodb",
+ "aws-sdk-s3",
+ "backoff",
+ "base64-url",
+ "bcs",
+ "mysten-metrics",
+ "prometheus",
+ "serde",
+ "sui-config",
+ "sui-core",
+ "sui-storage",
+ "sui-types",
+ "tokio",
+ "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15251,6 +15682,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-move-natives-latest"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "bcs",
+ "better_any",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "linked-hash-map",
+ "move-binary-format",
+ "move-core-types",
+ "move-stdlib",
+ "move-vm-runtime",
+ "move-vm-types",
+ "smallvec",
+ "sui-protocol-config",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-move-natives-next-vm"
 version = "0.1.0"
 dependencies = [
@@ -15267,6 +15719,27 @@ dependencies = [
  "scalar-types",
  "smallvec",
  "sui-protocol-config",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-move-natives-next-vm"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "bcs",
+ "better_any",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "linked-hash-map",
+ "move-binary-format",
+ "move-core-types",
+ "move-stdlib-next-vm",
+ "move-vm-runtime-next-vm",
+ "move-vm-types",
+ "smallvec",
+ "sui-protocol-config",
+ "sui-types",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15291,6 +15764,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-move-natives-v0"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "bcs",
+ "better_any",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "linked-hash-map",
+ "move-binary-format",
+ "move-core-types",
+ "move-stdlib-v0",
+ "move-vm-runtime-v0",
+ "move-vm-types",
+ "smallvec",
+ "sui-protocol-config",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-move-natives-v1"
 version = "0.1.0"
 dependencies = [
@@ -15307,6 +15801,108 @@ dependencies = [
  "scalar-types",
  "smallvec",
  "sui-protocol-config",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-move-natives-v1"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "bcs",
+ "better_any",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "linked-hash-map",
+ "move-binary-format",
+ "move-core-types",
+ "move-stdlib-v1",
+ "move-vm-runtime-v1",
+ "move-vm-types",
+ "smallvec",
+ "sui-protocol-config",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-network"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anemo",
+ "anemo-build",
+ "anemo-tower",
+ "anyhow",
+ "dashmap",
+ "futures",
+ "governor",
+ "mysten-metrics",
+ "mysten-network",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "sui-archival",
+ "sui-config",
+ "sui-storage",
+ "sui-swarm-config",
+ "sui-types",
+ "tap",
+ "tokio",
+ "tonic 0.10.2",
+ "tonic-build",
+ "tower",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-node"
+version = "1.15.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anemo",
+ "anemo-tower",
+ "anyhow",
+ "arc-swap",
+ "axum",
+ "clap 4.4.7",
+ "const-str",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "git-version",
+ "humantime",
+ "mysten-common",
+ "mysten-metrics",
+ "mysten-network",
+ "narwhal-network",
+ "prometheus",
+ "reqwest",
+ "serde",
+ "snap",
+ "sui-archival",
+ "sui-config",
+ "sui-core",
+ "sui-json-rpc",
+ "sui-kvstore",
+ "sui-macros",
+ "sui-network",
+ "sui-protocol-config",
+ "sui-rest-api",
+ "sui-simulator",
+ "sui-snapshot",
+ "sui-storage",
+ "sui-telemetry",
+ "sui-tls",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tokio",
+ "tower",
+ "tracing",
+ "typed-store",
+ "url",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15377,6 +15973,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-rest-api"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bcs",
+ "rand 0.8.5",
+ "reqwest",
+ "serde",
+ "simulacrum",
+ "sui-core",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-sdk"
+version = "1.15.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bcs",
+ "clap 4.4.7",
+ "colored",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "futures-core",
+ "jsonrpsee 0.16.2",
+ "move-core-types",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with 2.3.3",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-config",
+ "sui-json",
+ "sui-json-rpc",
+ "sui-json-rpc-types",
+ "sui-keys",
+ "sui-transaction-builder",
+ "sui-types",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-simulator"
 version = "0.7.0"
 source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
@@ -15395,6 +16041,33 @@ dependencies = [
  "telemetry-subscribers",
  "tempfile",
  "tower",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-snapshot"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "bcs",
+ "byteorder",
+ "bytes",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "futures",
+ "indicatif",
+ "integer-encoding",
+ "num_enum 0.6.1",
+ "object_store",
+ "prometheus",
+ "serde",
+ "sui-core",
+ "sui-protocol-config",
+ "sui-storage",
+ "sui-types",
+ "tokio",
+ "tokio-stream",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -15450,6 +16123,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-swarm-config"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anemo",
+ "anyhow",
+ "fastcrypto 0.1.7 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "move-bytecode-utils",
+ "narwhal-config",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "serde_with 2.3.3",
+ "serde_yaml 0.8.26",
+ "shared-crypto 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-config",
+ "sui-genesis-builder 0.0.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
+ "sui-protocol-config",
+ "sui-simulator",
+ "sui-types",
+ "tempfile",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-telemetry"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "reqwest",
+ "serde",
+ "sui-core",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-test-transaction-builder"
 version = "0.1.0"
 dependencies = [
@@ -15457,7 +16168,7 @@ dependencies = [
  "move-core-types",
  "scalar-types",
  "shared-crypto 0.0.0",
- "sui-genesis-builder",
+ "sui-genesis-builder 0.0.0",
  "sui-move-build 0.0.0",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -15482,6 +16193,40 @@ dependencies = [
  "tower-layer",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "x509-parser",
+]
+
+[[package]]
+name = "sui-transaction-builder"
+version = "0.0.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bcs",
+ "futures",
+ "move-binary-format",
+ "move-core-types",
+ "sui-json",
+ "sui-json-rpc-types",
+ "sui-protocol-config",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-transaction-checks"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "fastcrypto-zkp 0.1.2 (git+https://github.com/MystenLabs/fastcrypto?rev=517ec93ad2eba1807c9508f14953814a33523edc)",
+ "once_cell",
+ "sui-config",
+ "sui-execution",
+ "sui-macros",
+ "sui-protocol-config",
+ "sui-types",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -15587,6 +16332,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-verifier-next-vm"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "move-abstract-stack",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier-next-vm",
+ "move-core-types",
+ "move-vm-config",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-verifier-v0"
 version = "0.1.0"
 dependencies = [
@@ -15602,6 +16362,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-verifier-v0"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "move-abstract-stack",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier-v0",
+ "move-core-types",
+ "move-vm-config",
+ "sui-protocol-config",
+ "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-verifier-v1"
 version = "0.1.0"
 dependencies = [
@@ -15612,6 +16388,21 @@ dependencies = [
  "move-core-types",
  "move-vm-config",
  "scalar-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-verifier-v1"
+version = "0.1.0"
+source = "git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8#01a8af7fca6aa8d24cdafad87a1191e06ac75af8"
+dependencies = [
+ "move-abstract-stack",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-bytecode-verifier-v1",
+ "move-core-types",
+ "move-vm-config",
+ "sui-types",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

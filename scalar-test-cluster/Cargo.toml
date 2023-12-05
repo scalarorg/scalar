@@ -7,25 +7,67 @@ publish = false
 edition = "2021"
 
 [dependencies]
+anemo.workspace = true
+anemo-tower.workspace = true
 anyhow.workspace = true
+arc-swap.workspace = true
 axum.workspace = true
 clap.workspace = true
+const-str.workspace = true
+fastcrypto.workspace = true
+fastcrypto-zkp.workspace = true
+futures.workspace = true
+git-version.workspace = true
 http.workspace = true
+humantime.workspace = true
+jsonrpsee.workspace = true
 mysten-metrics.workspace = true
 
 prometheus.workspace = true
+rand.workspace = true
+reqwest.workspace = true
 serde = { workspace = true, features = ["derive", "rc"] }
 serde_with.workspace = true
 serde_yaml.workspace = true
+tap.workspace = true
 telemetry-subscribers.workspace = true
+tempfile.workspace = true
 tokio = { workspace = true, features = ["full"] }
+tonic-health.workspace = true
 tower.workspace = true
-tower-http.workspace = true
+# tower-http.workspace = true
 tracing.workspace = true
 
 uuid.workspace = true
 workspace-hack.workspace = true
 
+mysten-common = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-common" }
+mysten-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-network" }
+narwhal-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-network" }
+narwhal-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-config" }
+sui-archival = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-archival" }
 sui-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-config" }
-sui_macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
+sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
+sui-snapshot = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-snapshot" }
 sui-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-types" }
+sui-telemetry = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-telemetry" }
+sui-node = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-node" }
+sui-core = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-core" }
+sui-keys = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-keys" }
+sui-genesis-builder = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-genesis-builder" }
+sui-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-network" }
+sui-protocol-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-protocol-config" }
+sui-sdk = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-sdk" }
+typed-store = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store" }
+typed-store-derive = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-derive" }
+typed-store-error = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-error" }
+shared-crypto = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "shared-crypto" }
+sui-execution = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-execution" }
+
+[[bin]]
+name = "consensus-node"
+path = "src/bin/consensus_node.rs"
+
+[[bin]]
+name = "test-cluster"
+path = "src/bin/test_cluster.rs"
