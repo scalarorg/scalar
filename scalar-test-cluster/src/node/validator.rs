@@ -4,6 +4,28 @@
  * Consensus node only
  */
 
+use crate::consensus::mysticeti_adapter::LazyMysticetiClient;
+use crate::consensus::{
+    consensus_adapter::{
+        ConnectionMonitorStatus, ConsensusAdapter, ConsensusAdapterMetrics, LazyNarwhalClient,
+        SubmitToConsensus,
+    },
+    consensus_handler::ConsensusHandlerInitializer,
+    consensus_manager::{ConsensusManager, ConsensusManagerTrait},
+    consensus_throughput_calculator::{
+        ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
+    },
+    consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics},
+};
+use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
+use crate::core::authority::AuthorityState;
+use crate::core::authority_server::{ValidatorService, ValidatorServiceMetrics};
+use crate::core::checkpoints::{
+    CheckpointMetrics, CheckpointService, CheckpointStore, SendCheckpointToStateSync,
+    SubmitCheckpointToConsensus,
+};
+use crate::core::epoch::data_removal::EpochDataRemover;
+use crate::core::state_accumulator::StateAccumulator;
 use anyhow::{anyhow, Result};
 use arc_swap::ArcSwap;
 use fastcrypto_zkp::bn254::zk_login::JwkId;
@@ -19,26 +41,6 @@ use std::str::FromStr;
 use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 use sui_config::{node::ConsensusProtocol, ConsensusConfig, NodeConfig};
-use sui_core::checkpoints::{SendCheckpointToStateSync, SubmitCheckpointToConsensus};
-use sui_core::consensus_manager::ConsensusManagerTrait;
-use sui_core::{
-    authority::{authority_per_epoch_store::AuthorityPerEpochStore, AuthorityState},
-    authority_server::{ValidatorService, ValidatorServiceMetrics},
-    checkpoints::{CheckpointMetrics, CheckpointService, CheckpointStore},
-    consensus_adapter::{
-        ConnectionMonitorStatus, ConsensusAdapter, ConsensusAdapterMetrics, LazyNarwhalClient,
-        SubmitToConsensus,
-    },
-    consensus_handler::ConsensusHandlerInitializer,
-    consensus_manager::ConsensusManager,
-    consensus_throughput_calculator::{
-        ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
-    },
-    consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics},
-    epoch::data_removal::EpochDataRemover,
-    mysticeti_adapter::LazyMysticetiClient,
-    state_accumulator::StateAccumulator,
-};
 use sui_network::{api::ValidatorServer, state_sync};
 use sui_node::metrics::{GrpcMetrics, SuiNodeMetrics};
 use sui_protocol_config::ProtocolConfig;

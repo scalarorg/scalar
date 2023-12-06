@@ -1,6 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::node::ScalarNodeHandle;
+
 use super::config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
 use super::config::network_config::NetworkConfig;
 use super::config::network_config_builder::{
@@ -372,7 +374,7 @@ impl Swarm {
             .filter(|node| node.config.consensus_config.is_some())
     }
 
-    pub fn validator_node_handles(&self) -> Vec<SuiNodeHandle> {
+    pub fn validator_node_handles(&self) -> Vec<ScalarNodeHandle> {
         self.validator_nodes()
             .map(|node| node.get_node_handle().unwrap())
             .collect()
@@ -395,7 +397,7 @@ impl Swarm {
             .filter(|node| node.config.consensus_config.is_none())
     }
 
-    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> SuiNodeHandle {
+    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> ScalarNodeHandle {
         let name = config.protocol_public_key();
         let node = Node::new(config);
         node.start().await.unwrap();

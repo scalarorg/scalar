@@ -1,4 +1,17 @@
 use super::validator::ValidatorNode;
+use crate::consensus::consensus_adapter::ConnectionMonitorStatus;
+use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
+use crate::core::authority::authority_store_tables::AuthorityPerpetualTables;
+use crate::core::authority::AuthorityState;
+use crate::core::authority::AuthorityStore;
+use crate::core::authority::CHAIN_IDENTIFIER;
+use crate::core::checkpoints::CheckpointStore;
+use crate::core::epoch::committee_store::CommitteeStore;
+use crate::core::epoch::epoch_metrics::EpochMetrics;
+use crate::core::epoch::reconfiguration::ReconfigurationInitiator;
+use crate::core::module_cache_metrics::ResolverMetrics;
+use crate::core::signature_verifier::SignatureVerifierMetrics;
+use crate::core::{state_accumulator::StateAccumulator, storage::RocksDbStore};
 use anemo::Network;
 use anemo_tower::callback::CallbackLayer;
 use anemo_tower::trace::DefaultMakeSpan;
@@ -16,21 +29,7 @@ use std::{fmt, sync::Arc};
 use sui_archival::reader::ArchiveReaderBalancer;
 use sui_config::node::DBCheckpointConfig;
 use sui_config::NodeConfig;
-use sui_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
-use sui_core::authority::authority_store_tables::AuthorityPerpetualTables;
-use sui_core::authority::AuthorityStore;
-use sui_core::authority::CHAIN_IDENTIFIER;
-use sui_core::checkpoints::CheckpointStore;
 use sui_core::db_checkpoint_handler::DBCheckpointHandler;
-use sui_core::epoch::committee_store::CommitteeStore;
-use sui_core::epoch::epoch_metrics::EpochMetrics;
-use sui_core::epoch::reconfiguration::ReconfigurationInitiator;
-use sui_core::module_cache_metrics::ResolverMetrics;
-use sui_core::signature_verifier::SignatureVerifierMetrics;
-use sui_core::{
-    authority::AuthorityState, consensus_adapter::ConnectionMonitorStatus,
-    state_accumulator::StateAccumulator, storage::RocksDbStore,
-};
 use sui_network::discovery;
 use sui_network::discovery::TrustedPeerChangeEvent;
 use sui_network::state_sync;
@@ -222,7 +221,10 @@ impl ScalarNode {
         {
             pruning_config.set_enable_pruning_tombstones(false);
         }
-
+        /*
+         * 231206 - Taivv
+         * Modify struct AuthorityState, để loại bỏ các logic của SUI. Chỉ giữ lại các phần liên quan tới Consensus
+         */
         let state = AuthorityState::new(
             config.protocol_public_key(),
             secret,

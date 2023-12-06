@@ -1,3 +1,22 @@
-// pub mod authority;
+pub mod authority;
+pub mod authority_aggregator;
+pub mod authority_client;
+pub mod authority_server;
+pub mod checkpoints;
+pub mod epoch;
 pub mod execution_driver;
-pub mod grpc_server;
+pub mod module_cache_metrics;
+pub mod safe_client;
+pub mod scoring_decision;
+pub mod signature_verifier;
+pub mod stake_aggregator;
+pub mod state_accumulator;
+pub mod storage;
+pub mod streamer;
+pub mod subscription_handler;
+pub mod test_authority_clients;
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_utils;
+pub mod transaction_input_loader;
+pub mod transaction_manager;
+pub mod verify_indexes;

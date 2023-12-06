@@ -1,17 +1,17 @@
 use std::net::SocketAddr;
 
+use crate::node::ScalarNodeHandle;
 use crate::swarm::Swarm;
 use jsonrpsee::{
     http_client::{HttpClient, HttpClientBuilder},
     ws_client::{WsClient, WsClientBuilder},
 };
-use sui_node::SuiNodeHandle;
 use sui_sdk::{wallet_context::WalletContext, SuiClient, SuiClientBuilder};
 
 use crate::{LocalClusterBuilder, LocalClusterConfig};
 
 pub struct FullNodeHandle {
-    pub sui_node: SuiNodeHandle,
+    pub sui_node: ScalarNodeHandle,
     pub sui_client: SuiClient,
     pub rpc_client: HttpClient,
     pub rpc_url: String,
@@ -19,7 +19,7 @@ pub struct FullNodeHandle {
 }
 
 impl FullNodeHandle {
-    pub async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
+    pub async fn new(sui_node: ScalarNodeHandle, json_rpc_address: SocketAddr) -> Self {
         let rpc_url = format!("http://{}", json_rpc_address);
         let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
 

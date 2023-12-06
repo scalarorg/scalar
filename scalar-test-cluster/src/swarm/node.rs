@@ -5,10 +5,11 @@ use anyhow::anyhow;
 use anyhow::Result;
 use std::sync::Mutex;
 use sui_config::NodeConfig;
-use sui_node::SuiNodeHandle;
 use sui_types::base_types::AuthorityName;
 use tap::TapFallible;
 use tracing::{error, info};
+
+use crate::node::ScalarNodeHandle;
 
 use super::container::Container;
 
@@ -77,7 +78,7 @@ impl Node {
             .map_or(false, |c| c.is_alive())
     }
 
-    pub fn get_node_handle(&self) -> Option<SuiNodeHandle> {
+    pub fn get_node_handle(&self) -> Option<ScalarNodeHandle> {
         self.container
             .lock()
             .unwrap()
