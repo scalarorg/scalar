@@ -1,7 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::epoch::data_removal;
+use crate::core::epoch::data_removal;
 use std::fs;
 use std::path::PathBuf;
 

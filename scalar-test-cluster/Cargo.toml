@@ -20,6 +20,7 @@ chrono.workspace = true
 clap.workspace = true
 const-str.workspace = true
 dashmap.workspace = true
+derivative.workspace = true
 enum_dispatch.workspace = true
 either.workspace = true
 eyre.workspace = true
@@ -41,6 +42,7 @@ parking_lot.workspace = true
 pprof.workspace = true
 prometheus.workspace = true
 rand.workspace = true
+regex.workspace = true
 reqwest.workspace = true
 rocksdb.workspace = true
 serde = { workspace = true, features = ["derive", "rc"] }

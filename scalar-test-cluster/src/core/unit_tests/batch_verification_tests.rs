@@ -1,8 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::signature_verifier::*;
-use crate::test_utils::{make_cert_with_large_committee, make_dummy_tx};
+use crate::core::signature_verifier::*;
+use crate::core::test_utils::{make_cert_with_large_committee, make_dummy_tx};
 use fastcrypto::traits::KeyPair;
 use futures::future::join_all;
 use prometheus::Registry;

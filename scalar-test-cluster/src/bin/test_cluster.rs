@@ -125,29 +125,25 @@ async fn main() -> Result<()> {
     } else if !use_indexer_v2 {
         println!("`with_indexer` flag unset. Indexer service will run unmaintained indexer.")
     }
-    let cluster_config = LocalClusterConfig::new();
+    let cluster_config = LocalClusterConfig {
+        env: Env::NewLocal,
+        fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),
+        indexer_address: with_indexer.then_some(format!("127.0.0.1:{}", indexer_rpc_port)),
+        pg_address: Some(format!(
+            "postgres://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db_name}"
+        )),
+        faucet_address: Some(format!("127.0.0.1:{}", faucet_port)),
+        epoch_duration_ms,
+        use_indexer_experimental_methods,
+        config_dir,
+        graphql_address: graphql_port.map(|p| format!("{}:{}", graphql_host, p)),
+        use_indexer_v2,
+    };
     info!(
         "Starting local validator cluster with config: {:#?}",
         &cluster_config
     );
     let cluster = LocalNewCluster::start(&cluster_config).await?;
-    // let cluster_config = ClusterTestOpt {
-    //     env: Env::NewLocal,
-    //     fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),
-    //     indexer_address: with_indexer.then_some(format!("127.0.0.1:{}", indexer_rpc_port)),
-    //     pg_address: Some(format!(
-    //         "postgres://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db_name}"
-    //     )),
-    //     faucet_address: Some(format!("127.0.0.1:{}", faucet_port)),
-    //     epoch_duration_ms,
-    //     use_indexer_experimental_methods,
-    //     config_dir,
-    //     graphql_address: graphql_port.map(|p| format!("{}:{}", graphql_host, p)),
-    //     use_indexer_v2,
-    // };
-
-    // println!("Starting Sui validator with config: {:#?}", cluster_config);
-    // let cluster = LocalNewCluster::start(&cluster_config).await?;
 
     // println!("Fullnode RPC URL: {}", cluster.fullnode_url());
 

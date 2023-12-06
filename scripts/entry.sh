@@ -29,7 +29,7 @@ consensus() {
 }
 
 test_cluster() {
-    RUST_LOG=debug /usr/local/bin/test-cluster --config-path /scalar/validator.yaml
+    RUST_LOG=debug /usr/local/bin/test-cluster --config-dir /scalar/cluster-local
 }
 
 $@

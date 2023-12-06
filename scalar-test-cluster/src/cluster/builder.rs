@@ -56,6 +56,16 @@ impl LocalClusterBuilder {
             default_jwks: false,
         }
     }
+    pub fn with_config_dir(mut self, config_dir: PathBuf) -> Self {
+        self.config_dir = Some(config_dir);
+        self
+    }
+    pub fn with_epoch_duration_ms(mut self, epoch_duration_ms: u64) -> Self {
+        self.get_or_init_genesis_config()
+            .parameters
+            .epoch_duration_ms = epoch_duration_ms;
+        self
+    }
 
     pub fn with_num_validators(mut self, num: usize) -> Self {
         self.num_validators = Some(num);
@@ -206,5 +216,17 @@ impl LocalClusterBuilder {
 
         // Return network handle
         Ok(swarm)
+    }
+    fn get_or_init_genesis_config(&mut self) -> &mut GenesisConfig {
+        if self.genesis_config.is_none() {
+            self.genesis_config = Some(GenesisConfig::for_local_testing());
+        }
+        self.genesis_config.as_mut().unwrap()
+    }
+}
+
+impl Default for LocalClusterBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }

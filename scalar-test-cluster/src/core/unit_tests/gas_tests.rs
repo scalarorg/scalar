@@ -4,9 +4,9 @@
 use super::*;
 
 use super::authority_tests::{init_state_with_ids, send_and_confirm_transaction};
-use super::move_integration_tests::build_and_try_publish_test_package;
-use crate::authority::authority_tests::init_state_with_ids_and_object_basics;
-use crate::authority::test_authority_builder::TestAuthorityBuilder;
+// use super::move_integration_tests::build_and_try_publish_test_package;
+use crate::core::authority::authority_tests::init_state_with_ids_and_object_basics;
+use crate::core::authority::test_authority_builder::TestAuthorityBuilder;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use once_cell::sync::Lazy;

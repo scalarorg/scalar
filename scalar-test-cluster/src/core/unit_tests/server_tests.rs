@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::{
+use crate::core::{
     authority::authority_tests::init_state_with_object_id,
     authority_client::{AuthorityAPI, NetworkAuthorityClient},
 };
