@@ -10,7 +10,7 @@ use sui_config::{Config, NodeConfig};
 use sui_core::runtime::SuiRuntimes;
 use sui_node::metrics;
 use sui_protocol_config::SupportedProtocolVersions;
-use sui_telemetry::send_telemetry_event;
+use scalar_test_cluster::core::telemetry::send_telemetry_event;
 use sui_types::multiaddr::Multiaddr;
 use tokio::time::sleep;
 use tracing::{error, info};

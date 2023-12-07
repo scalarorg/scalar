@@ -5,10 +5,9 @@ use futures::FutureExt;
 use std::sync::{Arc, Weak};
 use std::thread;
 use sui_config::NodeConfig;
-use sui_node::SuiNodeHandle;
 use sui_types::crypto::{AuthorityPublicKeyBytes, KeypairTraits};
 use telemetry_subscribers::get_global_telemetry_config;
-use tracing::{info, trace};
+use tracing::{info, trace, error};
 
 use crate::node::{ScalarNode, ScalarNodeHandle};
 
@@ -97,13 +96,17 @@ impl Container {
                     "Started Prometheus HTTP endpoint. To query metrics use\n\tcurl -s http://{}/metrics",
                     config.metrics_address
                 );
-                let server = ScalarNode::start(&config, registry_service).await.unwrap();
-                // Notify that we've successfully started the node
-                let _ = startup_sender.send(Arc::downgrade(&server));
-                // run until canceled
-                cancel_receiver.map(|_| ()).await;
+                match ScalarNode::start(&config, registry_service).await {
+                    Ok(server) => {
+                        // Notify that we've successfully started the node
+                        let _ = startup_sender.send(Arc::downgrade(&server));
+                        // run until canceled
+                        cancel_receiver.map(|_| ()).await;
 
-                trace!("cancellation received; shutting down thread");
+                        trace!("cancellation received; shutting down thread");
+                    },
+                    Err(err) => error!("{:?}", err),
+                }
             });
         });
 

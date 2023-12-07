@@ -20,3 +20,4 @@ pub mod test_utils;
 pub mod transaction_input_loader;
 pub mod transaction_manager;
 pub mod verify_indexes;
+pub mod telemetry;

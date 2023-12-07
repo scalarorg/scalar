@@ -17,7 +17,9 @@ use anemo_tower::callback::CallbackLayer;
 use anemo_tower::trace::DefaultMakeSpan;
 use anemo_tower::trace::DefaultOnFailure;
 use anemo_tower::trace::TraceLayer;
+use anyhow::Error;
 use anyhow::Result;
+use anyhow::anyhow;
 use arc_swap::ArcSwap;
 use mysten_metrics::RegistryService;
 use narwhal_network::metrics::{
@@ -69,6 +71,7 @@ impl ScalarNode {
         config: &NodeConfig,
         registry_service: RegistryService,
     ) -> Result<Arc<ScalarNode>> {
+        info!("Start Scalar node with consensus config {:?}", &config.consensus_config);
         Self::start_async(config, registry_service).await
     }
     pub async fn start_async(
@@ -271,7 +274,7 @@ impl ScalarNode {
         };
         let connection_monitor_status = Arc::new(connection_monitor_status);
         let sui_node_metrics = Arc::new(SuiNodeMetrics::new(&registry_service.default_registry()));
-        let validator_node = ValidatorNode::start(
+        match ValidatorNode::start(
             &config,
             state.clone(),
             committee,
@@ -283,19 +286,24 @@ impl ScalarNode {
             &registry_service,
             sui_node_metrics.clone(),
         )
-        .await?;
+        .await {
+            Ok(validator_node) => {
+                let node = Self {
+                    config,
+                    validator_node: Mutex::new(validator_node),
+                    state,
+                };
+                info!("ScalarNode started!");
+                let node = Arc::new(node);
+                let node_copy = node.clone();
+                // spawn_monitored_task!(async move { Self::monitor_reconfiguration(node_copy).await });
 
-        let node = Self {
-            config,
-            validator_node: Mutex::new(validator_node),
-            state,
-        };
-        info!("ScalarNode started!");
-        let node = Arc::new(node);
-        let node_copy = node.clone();
-        // spawn_monitored_task!(async move { Self::monitor_reconfiguration(node_copy).await });
-
-        Ok(node)
+                Ok(node)
+            },
+            Err(err) => {
+                Err(anyhow!("{:?}", err))
+            }
+        }
     }
 
     fn start_state_snapshot(

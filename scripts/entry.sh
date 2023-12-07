@@ -29,7 +29,9 @@ consensus() {
 }
 
 test_cluster() {
-    RUST_LOG=debug /usr/local/bin/test-cluster --config-dir /scalar/cluster-local
-}
+    RUST_LOG=debug /usr/local/bin/test-cluster \
+        --config-dir /scalar/cluster-local \
+        --epoch-duration-ms 3600000
+}   
 
 $@

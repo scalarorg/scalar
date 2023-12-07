@@ -4,6 +4,8 @@
  * Consensus node only
  */
 
+use crate::ConsensusApiServer;
+use crate::consensus::consensus_service::ConsensusService;
 use crate::consensus::mysticeti_adapter::LazyMysticetiClient;
 use crate::consensus::{
     consensus_adapter::{
@@ -464,7 +466,7 @@ impl ValidatorNode {
     ) -> Result<tokio::task::JoinHandle<Result<()>>> {
         let validator_service = ValidatorService::new(
             state.clone(),
-            consensus_adapter,
+            consensus_adapter.clone(),
             Arc::new(ValidatorServiceMetrics::new(prometheus_registry)),
         );
 
@@ -473,9 +475,14 @@ impl ValidatorNode {
         server_conf.load_shed = config.grpc_load_shed;
         let mut server_builder =
             ServerBuilder::from_config(&server_conf, GrpcMetrics::new(prometheus_registry));
-
+        let consensus_service = ConsensusService::new(
+            state,
+            validator_service.clone(),
+            prometheus_registry
+        );
         server_builder = server_builder.add_service(ValidatorServer::new(validator_service));
-
+        
+        server_builder = server_builder.add_service(ConsensusApiServer::new(consensus_service));
         let server = server_builder
             .bind(config.network_address())
             .await

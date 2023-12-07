@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use clap::*;
+//use derivative::Derivative;
 use regex::Regex;
 use std::{fmt, path::PathBuf};
-
 #[derive(Parser, Clone, ValueEnum, Debug)]
 pub enum Env {
     Devnet,
@@ -16,8 +16,9 @@ pub enum Env {
     NewLocal,
 }
 
-#[derive(derivative::Derivative, Parser)]
-#[derivative(Debug)]
+// #[derive(Derivative, Parser)]
+// #[derivative(Debug)]
+#[derive(Debug, Clone, Parser)]
 #[clap(name = "", rename_all = "kebab-case")]
 pub struct LocalClusterConfig {
     #[clap(value_enum)]
@@ -34,9 +35,9 @@ pub struct LocalClusterConfig {
     /// Use new version of indexer or not
     #[clap(long)]
     pub use_indexer_v2: bool,
-    /// URL for the Indexer Postgres DB
+    // /// URL for the Indexer Postgres DB
     #[clap(long)]
-    #[derivative(Debug(format_with = "obfuscated_pg_address"))]
+    // #[derivative(Debug(format_with = "obfuscated_pg_address"))]
     pub pg_address: Option<String>,
     /// TODO(gegao): remove this after indexer migration is complete.
     #[clap(long)]

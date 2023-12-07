@@ -2,6 +2,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::consensus::consensus_listener::ConsensusListener;
 use crate::core::authority::authority_store_types::{StoreObject, StoreObjectWrapper};
 use crate::core::verify_indexes::verify_indexes;
 use anyhow::anyhow;
@@ -648,6 +649,8 @@ pub struct AuthorityState {
 
     /// Config for when we consider the node overloaded.
     overload_threshold_config: OverloadThresholdConfig,
+
+    consensus_listeners: Arc<ConsensusListener>,
 }
 
 /// The authority state encapsulates all state, drives execution, and ensures safety.
@@ -657,6 +660,9 @@ pub struct AuthorityState {
 ///
 /// Repeating valid commands should produce no changes and return no error.
 impl AuthorityState {
+    pub fn get_consensus_listeners(&self) -> Arc<ConsensusListener> {
+        return self.consensus_listeners.clone();
+    }
     pub fn is_validator(&self, epoch_store: &AuthorityPerEpochStore) -> bool {
         epoch_store.committee().authority_exists(&self.name)
     }
@@ -2191,8 +2197,20 @@ impl AuthorityState {
             certificate_deny_config,
             debug_dump_config,
             overload_threshold_config,
+            consensus_listeners: Arc::new(ConsensusListener::default()),
         });
-
+        /*
+         * 231207 TaiVV
+         * Start consensus result notifier
+         */
+        let consensus_listeners = state.get_consensus_listeners();
+        consensus_listeners
+            .start_notifier(rx_ready_certificates)
+            .await;
+        let (tx_ready_certificates, rx_ready_certificates) = unbounded_channel();
+        consensus_listeners
+            .add_listener(tx_ready_certificates)
+            .await;
         // Start a task to execute ready certificates.
         let authority_state = Arc::downgrade(&state);
         spawn_monitored_task!(execution_process(

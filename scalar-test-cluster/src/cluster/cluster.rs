@@ -17,7 +17,7 @@ use sui_sdk::sui_client_config::{SuiClientConfig, SuiEnv};
 use sui_sdk::{wallet_context::WalletContext, SuiClient, SuiClientBuilder};
 use sui_types::base_types::SuiAddress;
 use sui_types::crypto::{get_key_pair, AccountKeyPair, SuiKeyPair};
-use tracing::info;
+use tracing::{error, info};
 
 const DEVNET_FAUCET_ADDR: &str = "https://faucet.devnet.sui.io:443";
 const STAGING_FAUCET_ADDR: &str = "https://faucet.staging.sui.io:443";
@@ -217,15 +217,28 @@ impl Cluster for LocalNewCluster {
             assert!(options.epoch_duration_ms.is_none());
             // Load the config of the Sui authority.
             let network_config_path = config_dir.join(SUI_NETWORK_CONFIG);
-            let network_config: NetworkConfig = PersistedConfig::read(&network_config_path)
+            match PersistedConfig::read(&network_config_path)
                 .map_err(|err| {
                     err.context(format!(
-                        "Cannot open Sui network config file at {:?}",
+                        "Cannot open Scalar network config file at {:?}",
                         network_config_path
                     ))
-                })?;
+                }) {
+                Ok(network_config) => {
+                    cluster_builder = cluster_builder.set_network_config(network_config);
+                },
+                Err(err) => {
+                    error!("{:?}", err);
+                    // Let the faucet account hold 1000 gas objects on genesis
+                    let genesis_config = GenesisConfig::custom_genesis(1, 100);
+                    // Custom genesis should be build here where we add the extra accounts
+                    cluster_builder = cluster_builder.set_genesis_config(genesis_config);
 
-            cluster_builder = cluster_builder.set_network_config(network_config);
+                    if let Some(epoch_duration_ms) = options.epoch_duration_ms {
+                        cluster_builder = cluster_builder.with_epoch_duration_ms(epoch_duration_ms);
+                    }
+                },      
+            }
             cluster_builder = cluster_builder.with_config_dir(config_dir);
         } else {
             // Let the faucet account hold 1000 gas objects on genesis
@@ -250,7 +263,7 @@ impl Cluster for LocalNewCluster {
         info!(?faucet_address, "faucet_address");
 
         // This cluster has fullnode handle, safe to unwrap
-        //let fullnode_url = test_cluster.fullnode_handle.rpc_url.clone();
+        let fullnode_url = test_cluster.fullnode_handle.rpc_url.clone();
         //Khong chay indexer va graphql
         // if let (Some(pg_address), Some(indexer_address)) =
         //     (options.pg_address.clone(), indexer_address)

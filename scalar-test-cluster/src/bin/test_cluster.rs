@@ -10,7 +10,7 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::{LocalClusterConfig, LocalNewCluster};
+use scalar_test_cluster::{Env, LocalClusterConfig, Cluster, LocalNewCluster};
 use std::{net::SocketAddr, sync::Arc};
 use tower::ServiceBuilder;
 use tracing::info;
