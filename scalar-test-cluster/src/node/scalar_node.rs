@@ -71,8 +71,12 @@ impl ScalarNode {
         config: &NodeConfig,
         registry_service: RegistryService,
     ) -> Result<Arc<ScalarNode>> {
-        info!("Start Scalar node with consensus config {:?}", &config.consensus_config);
-        Self::start_async(config, registry_service).await
+        if config.consensus_config.is_some() {
+            Self::start_async(config, registry_service).await
+        } else {
+            info!("Start scalar node without consensus config");
+            Err(anyhow!("Missing consensus config"))
+        }
     }
     pub async fn start_async(
         config: &NodeConfig,

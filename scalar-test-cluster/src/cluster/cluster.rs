@@ -211,7 +211,9 @@ impl Cluster for LocalNewCluster {
         });
 
         let mut cluster_builder = LocalClusterBuilder::new(); //.enable_fullnode_events();
-
+        if let Some(size) = options.cluster_size.as_ref() {
+            cluster_builder = cluster_builder.with_num_validators(size.clone());
+        }
         // Check if we already have a config directory that is passed
         if let Some(config_dir) = options.config_dir.clone() {
             assert!(options.epoch_duration_ms.is_none());

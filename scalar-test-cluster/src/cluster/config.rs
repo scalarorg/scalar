@@ -44,6 +44,8 @@ pub struct LocalClusterConfig {
     pub use_indexer_experimental_methods: bool,
     #[clap(long)]
     pub config_dir: Option<PathBuf>,
+    #[clap(long)]
+    pub cluster_size: Option<usize>,
     /// URL for the indexer RPC server
     #[clap(long)]
     pub graphql_address: Option<String>,
@@ -75,6 +77,7 @@ impl LocalClusterConfig {
             pg_address: None,
             use_indexer_experimental_methods: false,
             config_dir: None,
+            cluster_size: None,
             graphql_address: None,
             use_indexer_v2: false,
         }

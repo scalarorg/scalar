@@ -28,7 +28,7 @@ use sui_protocol_config::{ProtocolVersion, SupportedProtocolVersions};
 use sui_types::base_types::AuthorityName;
 use sui_types::object::Object;
 use tempfile::TempDir;
-
+use tracing::{info, warn};
 pub struct SwarmBuilder<R = OsRng> {
     rng: R,
     // template: NodeConfig,
@@ -252,7 +252,7 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
                 )
                 .build()
         });
-
+        info!("Validators config size {:?}", network_config.validator_configs().len());
         let mut nodes: HashMap<_, _> = network_config
             .validator_configs()
             .iter()
@@ -271,7 +271,7 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
             fullnode_config_builder =
                 fullnode_config_builder.with_supported_protocol_versions(supported_versions);
         }
-
+        info!("Fullnode count {:?}", &self.fullnode_count);
         if self.fullnode_count > 0 {
             (0..self.fullnode_count).for_each(|idx| {
                 let mut builder = fullnode_config_builder.clone();
@@ -286,7 +286,11 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
                     }
                 }
                 let config = builder.build(&mut OsRng, &network_config);
-                nodes.insert(config.protocol_public_key(), Node::new(config));
+                if config.consensus_config.is_some() {
+                    nodes.insert(config.protocol_public_key(), Node::new(config));
+                } else {
+                    warn!("Start fullnode without consensus config");
+                }
             });
         }
         Swarm {
