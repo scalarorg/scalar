@@ -3,7 +3,9 @@ use fastcrypto::traits::ToFromBytes;
 use mysten_metrics::spawn_monitored_task;
 use prometheus::Registry;
 use shared_crypto::intent::Intent;
-use sui_types::transaction::Transaction;
+use sui_types::crypto::AuthorityStrongQuorumSignInfo;
+use sui_types::error::SuiResult;
+use sui_types::transaction::{Transaction, CertifiedTransaction, SenderSignedData};
 use sui_types::executable_transaction::VerifiedExecutableTransaction;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -46,8 +48,8 @@ impl ConsensusServiceMetrics {
         }
     }
 }
-impl Into<Transaction> for ConsensusTransactionIn {
-    fn into(self) -> Transaction {
+impl Into<CertifiedTransaction> for ConsensusTransactionIn {
+    fn into(self) -> CertifiedTransaction {
         // let ConsensusTransactionIn { tx_bytes, signatures } = self;
         // let data = SenderSignedData::new_from_sender_signature();
         // let transaction = Transaction::new_from_data_and_signer(data, sig);
@@ -89,8 +91,19 @@ impl ConsensusService {
             "gRpc service handle consensus_transaction {:?}",
             &transaction
         );
-        self.validator_service.handle_transaction_for_testing(transaction.into()).await;
+        //self.validator_service.handle_transaction_for_testing(transaction.into()).await;
+        if let Ok(cetificate_tran) = self.create_certificate_transaction(transaction) {
+            self.validator_service.execute_certificate_for_testing(cetificate_tran).await;
+        }
+        
         Ok(())
+    }
+    fn create_certificate_transaction(&self, transaction_in: ConsensusTransactionIn) -> SuiResult<CertifiedTransaction> {
+        let ConsensusTransactionIn { tx_bytes, signatures } = transaction_in;
+        let validator_state = self.validator_service.validator_state();
+        validator_state.get_checkpoint_store()
+        let data = SenderSignedData::new_from_sender_signature();
+        AuthorityStrongQuorumSignInfo::new_from_auth_sign_infos().map(|sig|CertifiedTransaction::new_from_data_and_sig(data, sig))
     }
 }
 
