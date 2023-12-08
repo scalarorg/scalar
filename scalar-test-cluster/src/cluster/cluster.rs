@@ -50,16 +50,17 @@ pub trait Cluster {
     where
         Self: Sized;
 
-    fn fullnode_url(&self) -> &str;
+    // fn fullnode_url(&self) -> &str;
+    
+    // fn indexer_url(&self) -> &Option<String>;
+
+    // /// Returns faucet url in a remote cluster.
+    // fn remote_faucet_url(&self) -> Option<&str>;
+
+    // /// Returns faucet key in a local cluster.
+    // fn local_faucet_key(&self) -> Option<&AccountKeyPair>;
+
     fn user_key(&self) -> AccountKeyPair;
-    fn indexer_url(&self) -> &Option<String>;
-
-    /// Returns faucet url in a remote cluster.
-    fn remote_faucet_url(&self) -> Option<&str>;
-
-    /// Returns faucet key in a local cluster.
-    fn local_faucet_key(&self) -> Option<&AccountKeyPair>;
-
     /// Place to put config for the wallet, and any locally running services.
     fn config_directory(&self) -> &Path;
 }
@@ -117,24 +118,24 @@ impl Cluster for RemoteRunningCluster {
         })
     }
 
-    fn fullnode_url(&self) -> &str {
-        &self.fullnode_url
-    }
+    // fn fullnode_url(&self) -> &str {
+    //     &self.fullnode_url
+    // }
 
-    fn indexer_url(&self) -> &Option<String> {
-        &None
-    }
+    // fn indexer_url(&self) -> &Option<String> {
+    //     &None
+    // }
 
+    // fn remote_faucet_url(&self) -> Option<&str> {
+    //     Some(&self.faucet_url)
+    // }
+
+    // fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
+    //     None
+    // }
+    
     fn user_key(&self) -> AccountKeyPair {
         get_key_pair().1
-    }
-
-    fn remote_faucet_url(&self) -> Option<&str> {
-        Some(&self.faucet_url)
-    }
-
-    fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
-        None
     }
 
     fn config_directory(&self) -> &Path {
@@ -176,15 +177,15 @@ impl FullNodeHandle {
 }
 pub struct TestCluster {
     pub swarm: Swarm,
-    pub wallet: WalletContext,
-    pub fullnode_handle: FullNodeHandle,
+    // pub wallet: WalletContext,
+    // pub fullnode_handle: FullNodeHandle,
 }
 impl TestCluster {}
 pub struct LocalNewCluster {
     test_cluster: TestCluster,
-    fullnode_url: String,
-    indexer_url: Option<String>,
-    faucet_key: AccountKeyPair,
+    // fullnode_url: String,
+    // indexer_url: Option<String>,
+    // faucet_key: AccountKeyPair,
     config_directory: tempfile::TempDir,
 }
 
@@ -265,7 +266,7 @@ impl Cluster for LocalNewCluster {
         info!(?faucet_address, "faucet_address");
 
         // This cluster has fullnode handle, safe to unwrap
-        let fullnode_url = test_cluster.fullnode_handle.rpc_url.clone();
+        // let fullnode_url = test_cluster.fullnode_handle.rpc_url.clone();
         //Khong chay indexer va graphql
         // if let (Some(pg_address), Some(indexer_address)) =
         //     (options.pg_address.clone(), indexer_address)
@@ -326,31 +327,31 @@ impl Cluster for LocalNewCluster {
         // TODO: test connectivity before proceeding?
         Ok(Self {
             test_cluster,
-            fullnode_url,
-            faucet_key,
             config_directory: tempfile::tempdir()?,
-            indexer_url: options.indexer_address.clone(),
+            // fullnode_url,
+            // faucet_key,
+            // indexer_url: options.indexer_address.clone(),
         })
     }
 
-    fn fullnode_url(&self) -> &str {
-        &self.fullnode_url
-    }
+    // fn fullnode_url(&self) -> &str {
+    //     &self.fullnode_url
+    // }
 
-    fn indexer_url(&self) -> &Option<String> {
-        &self.indexer_url
-    }
+    // fn indexer_url(&self) -> &Option<String> {
+    //     &self.indexer_url
+    // }
+
+    // fn remote_faucet_url(&self) -> Option<&str> {
+    //     None
+    // }
+
+    // fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
+    //     Some(&self.faucet_key)
+    // }
 
     fn user_key(&self) -> AccountKeyPair {
         get_key_pair().1
-    }
-
-    fn remote_faucet_url(&self) -> Option<&str> {
-        None
-    }
-
-    fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
-        Some(&self.faucet_key)
     }
 
     fn config_directory(&self) -> &Path {
@@ -366,23 +367,23 @@ impl Cluster for Box<dyn Cluster + Send + Sync> {
             "If we already have a boxed Cluster trait object we wouldn't have to call this function"
         );
     }
-    fn fullnode_url(&self) -> &str {
-        (**self).fullnode_url()
-    }
-    fn indexer_url(&self) -> &Option<String> {
-        (**self).indexer_url()
-    }
+    // fn fullnode_url(&self) -> &str {
+    //     (**self).fullnode_url()
+    // }
+    // fn indexer_url(&self) -> &Option<String> {
+    //     (**self).indexer_url()
+    // }
+
+    // fn remote_faucet_url(&self) -> Option<&str> {
+    //     (**self).remote_faucet_url()
+    // }
+
+    // fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
+    //     (**self).local_faucet_key()
+    // }
 
     fn user_key(&self) -> AccountKeyPair {
         (**self).user_key()
-    }
-
-    fn remote_faucet_url(&self) -> Option<&str> {
-        (**self).remote_faucet_url()
-    }
-
-    fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
-        (**self).local_faucet_key()
     }
 
     fn config_directory(&self) -> &Path {
@@ -390,43 +391,43 @@ impl Cluster for Box<dyn Cluster + Send + Sync> {
     }
 }
 
-pub async fn new_wallet_context_from_cluster(
-    cluster: &(dyn Cluster + Sync + Send),
-    key_pair: AccountKeyPair,
-) -> WalletContext {
-    let config_dir = cluster.config_directory();
-    let wallet_config_path = config_dir.join("client.yaml");
-    let fullnode_url = cluster.fullnode_url();
-    info!("Use RPC: {}", &fullnode_url);
-    let keystore_path = config_dir.join(SUI_KEYSTORE_FILENAME);
-    let mut keystore = Keystore::from(FileBasedKeystore::new(&keystore_path).unwrap());
-    let address: SuiAddress = key_pair.public().into();
-    keystore.add_key(SuiKeyPair::Ed25519(key_pair)).unwrap();
-    SuiClientConfig {
-        keystore,
-        envs: vec![SuiEnv {
-            alias: "localnet".to_string(),
-            rpc: fullnode_url.into(),
-            ws: None,
-        }],
-        active_address: Some(address),
-        active_env: Some("localnet".to_string()),
-    }
-    .persisted(&wallet_config_path)
-    .save()
-    .unwrap();
+// pub async fn new_wallet_context_from_cluster(
+//     cluster: &(dyn Cluster + Sync + Send),
+//     key_pair: AccountKeyPair,
+// ) -> WalletContext {
+//     let config_dir = cluster.config_directory();
+//     let wallet_config_path = config_dir.join("client.yaml");
+//     let fullnode_url = cluster.fullnode_url();
+//     info!("Use RPC: {}", &fullnode_url);
+//     let keystore_path = config_dir.join(SUI_KEYSTORE_FILENAME);
+//     let mut keystore = Keystore::from(FileBasedKeystore::new(&keystore_path).unwrap());
+//     let address: SuiAddress = key_pair.public().into();
+//     keystore.add_key(SuiKeyPair::Ed25519(key_pair)).unwrap();
+//     SuiClientConfig {
+//         keystore,
+//         envs: vec![SuiEnv {
+//             alias: "localnet".to_string(),
+//             rpc: fullnode_url.into(),
+//             ws: None,
+//         }],
+//         active_address: Some(address),
+//         active_env: Some("localnet".to_string()),
+//     }
+//     .persisted(&wallet_config_path)
+//     .save()
+//     .unwrap();
 
-    info!(
-        "Initialize wallet from config path: {:?}",
-        wallet_config_path
-    );
+//     info!(
+//         "Initialize wallet from config path: {:?}",
+//         wallet_config_path
+//     );
 
-    WalletContext::new(&wallet_config_path, None, None)
-        .await
-        .unwrap_or_else(|e| {
-            panic!(
-                "Failed to init wallet context from path {:?}, error: {e}",
-                wallet_config_path
-            )
-        })
-}
+//     WalletContext::new(&wallet_config_path, None, None)
+//         .await
+//         .unwrap_or_else(|e| {
+//             panic!(
+//                 "Failed to init wallet context from path {:?}, error: {e}",
+//                 wallet_config_path
+//             )
+//         })
+// }
