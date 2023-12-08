@@ -211,13 +211,13 @@ impl ConsensusService {
 
 #[tonic::async_trait]
 impl ConsensusApi for ConsensusService {
-    type InitTransactionStreamStream = ResponseStream;
+    type InitTransactionStream = ResponseStream;
 
-    async fn init_transaction_stream(
+    async fn init_transaction(
         &self,
         request: tonic::Request<tonic::Streaming<ConsensusTransactionIn>>,
-    ) -> ConsensusServiceResult<Self::InitTransactionStreamStream> {
-        info!("ConsensusServiceServer::init_transaction_stream");
+    ) -> ConsensusServiceResult<Self::InitTransactionStream> {
+        info!("ConsensusServiceServer::init_transaction");
         let mut in_stream = request.into_inner();
         let (tx_consensus, rx_consensus) = mpsc::unbounded_channel();
         self.add_consensus_listener(tx_consensus).await;
@@ -234,7 +234,7 @@ impl ConsensusApi for ConsensusService {
         let out_stream = UnboundedReceiverStream::new(rx_consensus);
 
         Ok(Response::new(
-            Box::pin(out_stream) as Self::InitTransactionStreamStream
+            Box::pin(out_stream) as Self::InitTransactionStream
         ))
     }
 }

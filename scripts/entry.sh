@@ -29,8 +29,9 @@ consensus() {
 }
 
 test_cluster() {
-    RUST_LOG=debug /usr/local/bin/test-cluster \
+    RUST_LOG=info /usr/local/bin/test-cluster \
         --cluster-size 4 \
+        --consensus-grpc-port 9090 \
         --epoch-duration-ms 3600000
 }   
 

@@ -11,7 +11,8 @@ use axum::{
 use clap::Parser;
 use http::{Method, StatusCode};
 use scalar_test_cluster::{Env, LocalClusterConfig, Cluster, LocalNewCluster};
-use std::{net::SocketAddr, sync::Arc};
+use tokio::time::Sleep;
+use std::{net::SocketAddr, sync::Arc, time, thread};
 use tower::ServiceBuilder;
 use tracing::info;
 use uuid::Uuid;
@@ -30,6 +31,10 @@ struct Args {
     /// Number of node in test cluster
     #[clap(long, default_value = "4")]
     cluster_size: Option<usize>,
+
+    /// Port to start the Fullnode RPC server on
+    #[clap(long, default_value = "5000")]
+    consensus_grpc_port: Option<u16>,
 
     /// Port to start the Fullnode RPC server on
     #[clap(long, default_value = "9000")]
@@ -102,6 +107,7 @@ async fn main() -> Result<()> {
     let Args {
         config_dir,
         cluster_size,
+        consensus_grpc_port,
         fullnode_rpc_port,
         graphql_host,
         graphql_port,
@@ -135,6 +141,7 @@ async fn main() -> Result<()> {
     }
     let cluster_config = LocalClusterConfig {
         env: Env::NewLocal,
+        consensus_grpc_port,
         fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),
         indexer_address: with_indexer.then_some(format!("127.0.0.1:{}", indexer_rpc_port)),
         pg_address: Some(format!(
@@ -152,8 +159,8 @@ async fn main() -> Result<()> {
         "Starting local validator cluster with config: {:#?}",
         &cluster_config
     );
-    let cluster = LocalNewCluster::start(&cluster_config).await?;
-
+    let local_cluster = LocalNewCluster::start(&cluster_config).await?;
+    let swarm = local_cluster.swarm();
     // println!("Fullnode RPC URL: {}", cluster.fullnode_url());
 
     // if with_indexer {
@@ -164,6 +171,10 @@ async fn main() -> Result<()> {
     // }
 
     //start_faucet(&cluster, faucet_port).await?;
-
-    Ok(())
+    // Keep main thread alive instead of start_faucet
+    let one_minute = time::Duration::from_secs(60);
+    loop {
+        thread::sleep(one_minute);
+    }
+    //Ok(())
 }

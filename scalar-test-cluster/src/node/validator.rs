@@ -464,6 +464,8 @@ impl ValidatorNode {
         consensus_adapter: Arc<ConsensusAdapter>,
         prometheus_registry: &Registry,
     ) -> Result<tokio::task::JoinHandle<Result<()>>> {
+        let network_addr = config.network_address();
+        info!("Start grpc validator service at {network_addr}");
         let validator_service = ValidatorService::new(
             state.clone(),
             consensus_adapter.clone(),

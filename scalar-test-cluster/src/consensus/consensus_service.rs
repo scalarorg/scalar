@@ -47,10 +47,21 @@ impl ConsensusServiceMetrics {
 }
 impl Into<Transaction> for ConsensusTransactionIn {
     fn into(self) -> Transaction {
-        todo!()
+        // let ConsensusTransactionIn { tx_bytes, signatures } = self;
+        // let data = SenderSignedData::new_from_sender_signature();
+        // let transaction = Transaction::new_from_data_and_signer(data, sig);
+        // transaction
+        todo!();
     }
 }
-
+impl From<Transaction> for ConsensusTransactionOut {
+    fn from(transaction: Transaction) -> Self {
+        let digest: &[u8] = transaction.digest().as_ref();
+        ConsensusTransactionOut {
+            payload: digest.to_vec(),
+        }
+    }
+}
 #[derive(Clone)]
 pub struct ConsensusService {
     state: Arc<AuthorityState>,
@@ -102,7 +113,8 @@ impl ConsensusApi for ConsensusService {
             consensus_listeners.add_listener(tx_consensus_res).await;
             while let Some((transaction, effects_digest)) = rx_consensus_res.recv().await {
                 // Scalar Todo: Convert consensus result (VerifiedExecutableTransaction, Option<TransactionEffectsDigest>) to ConsensusTransactionIn
-                let transaction_out = ConsensusTransactionOut { payload: todo!() };
+                info!("Consensus output {:?}", &transaction);
+                let transaction_out = ConsensusTransactionOut::from(transaction);
                 tx_consensus_out.send(Ok(transaction_out));
             }
         });
@@ -113,7 +125,7 @@ impl ConsensusApi for ConsensusService {
             let service = consensus_service;
             while let Some(Ok(transaction_in)) = in_stream.next().await {
                 //Scalar Todo: Convert incomming message to EthMessage
-                service.handle_consensus_transaction(transaction_in).await;
+                ler _handle_res = service.handle_consensus_transaction(transaction_in).await;
             }
         });
         let out_stream = UnboundedReceiverStream::new(rx_consensus_out);

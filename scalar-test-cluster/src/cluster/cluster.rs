@@ -215,6 +215,7 @@ impl Cluster for LocalNewCluster {
         if let Some(size) = options.cluster_size.as_ref() {
             cluster_builder = cluster_builder.with_num_validators(size.clone());
         }
+        cluster_builder = cluster_builder.with_consensus_grpc_port(options.consensus_grpc_port.clone());
         // Check if we already have a config directory that is passed
         if let Some(config_dir) = options.config_dir.clone() {
             assert!(options.epoch_duration_ms.is_none());

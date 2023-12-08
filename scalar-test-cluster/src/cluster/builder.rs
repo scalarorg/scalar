@@ -25,6 +25,7 @@ pub struct LocalClusterBuilder {
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
     num_validators: Option<usize>,
+    consensus_grpc_port: Option<u16>,
     fullnode_rpc_port: Option<u16>,
     enable_fullnode_events: bool,
     validator_supported_protocol_versions_config: ProtocolVersionsConfig,
@@ -43,6 +44,7 @@ impl LocalClusterBuilder {
             genesis_config: None,
             network_config: None,
             additional_objects: vec![],
+            consensus_grpc_port: None,
             fullnode_rpc_port: None,
             num_validators: None,
             enable_fullnode_events: false,
@@ -69,6 +71,11 @@ impl LocalClusterBuilder {
 
     pub fn with_num_validators(mut self, num: usize) -> Self {
         self.num_validators = Some(num);
+        self
+    }
+
+    pub fn with_consensus_grpc_port(mut self, port: Option<u16>) -> Self {
+        self.consensus_grpc_port = port;
         self
     }
 
@@ -172,7 +179,9 @@ impl LocalClusterBuilder {
         if let Some(network_config) = self.network_config.take() {
             builder = builder.with_network_config(network_config);
         }
-
+        if let Some(consensus_grpc_port) = self.consensus_grpc_port {
+            builder = builder.with_consensus_rpc_port(consensus_grpc_port);
+        }
         if let Some(fullnode_rpc_port) = self.fullnode_rpc_port {
             builder = builder.with_fullnode_rpc_port(fullnode_rpc_port);
         }

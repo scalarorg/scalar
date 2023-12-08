@@ -26,6 +26,8 @@ pub struct LocalClusterConfig {
     #[clap(long)]
     pub faucet_address: Option<String>,
     #[clap(long)]
+    pub consensus_grpc_port: Option<u16>,
+    #[clap(long)]
     pub fullnode_address: Option<String>,
     #[clap(long)]
     pub epoch_duration_ms: Option<u64>,
@@ -71,6 +73,7 @@ impl LocalClusterConfig {
         Self {
             env: Env::NewLocal,
             faucet_address: None,
+            consensus_grpc_port: None,
             fullnode_address: None,
             epoch_duration_ms: None,
             indexer_address: None,

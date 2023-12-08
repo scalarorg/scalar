@@ -23,7 +23,7 @@ use std::{
 };
 use sui_config::node::DBCheckpointConfig;
 use sui_config::NodeConfig;
-use sui_node::SuiNodeHandle;
+use std::net::Ipv4Addr;
 use sui_protocol_config::{ProtocolVersion, SupportedProtocolVersions};
 use sui_types::base_types::AuthorityName;
 use sui_types::object::Object;
@@ -34,6 +34,7 @@ pub struct SwarmBuilder<R = OsRng> {
     // template: NodeConfig,
     dir: Option<PathBuf>,
     committee: CommitteeConfig,
+    consensus_rpc_port: Option<u16>,
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
@@ -55,6 +56,7 @@ impl SwarmBuilder {
             rng: OsRng,
             dir: None,
             committee: CommitteeConfig::Size(NonZeroUsize::new(1).unwrap()),
+            consensus_rpc_port: None,
             genesis_config: None,
             network_config: None,
             additional_objects: vec![],
@@ -76,6 +78,7 @@ impl<R> SwarmBuilder<R> {
             rng,
             dir: self.dir,
             committee: self.committee,
+            consensus_rpc_port: self.consensus_rpc_port,
             genesis_config: self.genesis_config,
             network_config: self.network_config,
             additional_objects: self.additional_objects,
@@ -149,6 +152,12 @@ impl<R> SwarmBuilder<R> {
 
     pub fn with_fullnode_count(mut self, fullnode_count: usize) -> Self {
         self.fullnode_count = fullnode_count;
+        self
+    }
+
+    pub fn with_consensus_rpc_port(mut self, consensus_rpc_port: u16) -> Self {
+        assert!(self.consensus_rpc_port.is_none());
+        self.consensus_rpc_port = Some(consensus_rpc_port);
         self
     }
 
@@ -253,10 +262,19 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
                 .build()
         });
         info!("Validators config size {:?}", network_config.validator_configs().len());
+        let grpc_port = self.consensus_rpc_port.clone();
         let mut nodes: HashMap<_, _> = network_config
             .validator_configs()
-            .iter()
-            .map(|config| (config.protocol_public_key(), Node::new(config.to_owned())))
+            .iter().enumerate()
+            .map(|(ind,config)| {
+                let mut config = config.to_owned();
+                if let Some(port) = grpc_port.as_ref() {
+                    let network_address = format!("/ip4/{}/tcp/{}/http", Ipv4Addr::LOCALHOST, port.clone() + (ind as u16));
+                    info!("Network address {network_address}");
+                    config.network_address = network_address.parse().unwrap();
+                }
+                (config.protocol_public_key(), Node::new(config))
+            })
             .collect();
 
         let mut fullnode_config_builder = FullnodeConfigBuilder::new()
@@ -330,6 +348,7 @@ impl Swarm {
 
     /// Start all nodes associated with this Swarm
     pub async fn launch(&mut self) -> Result<()> {
+        
         try_join_all(self.nodes_iter_mut().map(|node| node.start())).await?;
         tracing::info!("Successfully launched Swarm");
         Ok(())
