@@ -4,6 +4,7 @@ use mysten_metrics::spawn_monitored_task;
 use prometheus::Registry;
 use shared_crypto::intent::Intent;
 use sui_types::transaction::Transaction;
+use sui_types::executable_transaction::VerifiedExecutableTransaction;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedSender};
@@ -54,8 +55,8 @@ impl Into<Transaction> for ConsensusTransactionIn {
         todo!();
     }
 }
-impl From<Transaction> for ConsensusTransactionOut {
-    fn from(transaction: Transaction) -> Self {
+impl From<VerifiedExecutableTransaction> for ConsensusTransactionOut {
+    fn from(transaction: VerifiedExecutableTransaction) -> Self {
         let digest: &[u8] = transaction.digest().as_ref();
         ConsensusTransactionOut {
             payload: digest.to_vec(),
@@ -112,7 +113,7 @@ impl ConsensusApi for ConsensusService {
             let consensus_listeners = state.get_consensus_listeners();
             consensus_listeners.add_listener(tx_consensus_res).await;
             while let Some((transaction, effects_digest)) = rx_consensus_res.recv().await {
-                // Scalar Todo: Convert consensus result (VerifiedExecutableTransaction, Option<TransactionEffectsDigest>) to ConsensusTransactionIn
+                // Scalar Todo: Convert consensus result (VerifiedExecutableTransaction, Option<TransactionEffectsDigest>) to ConsensusTransactionOut
                 info!("Consensus output {:?}", &transaction);
                 let transaction_out = ConsensusTransactionOut::from(transaction);
                 tx_consensus_out.send(Ok(transaction_out));
@@ -125,7 +126,7 @@ impl ConsensusApi for ConsensusService {
             let service = consensus_service;
             while let Some(Ok(transaction_in)) = in_stream.next().await {
                 //Scalar Todo: Convert incomming message to EthMessage
-                ler _handle_res = service.handle_consensus_transaction(transaction_in).await;
+                let _handle_res = service.handle_consensus_transaction(transaction_in).await;
             }
         });
         let out_stream = UnboundedReceiverStream::new(rx_consensus_out);
