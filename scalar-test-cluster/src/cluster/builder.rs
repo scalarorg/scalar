@@ -117,33 +117,33 @@ impl LocalClusterBuilder {
         let swarm = self.start_swarm().await.unwrap();
         let working_dir = swarm.dir();
 
-        let mut wallet_conf: SuiClientConfig =
-            PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
+        // let mut wallet_conf: SuiClientConfig =
+        //     PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
 
-        let fullnode = swarm.fullnodes().next().unwrap();
-        let json_rpc_address = fullnode.config.json_rpc_address;
-        let fullnode_handle =
-            FullNodeHandle::new(fullnode.get_node_handle().unwrap(), json_rpc_address).await;
+        // let fullnode = swarm.fullnodes().next().unwrap();
+        // let json_rpc_address = fullnode.config.json_rpc_address;
+        // let fullnode_handle =
+        //     FullNodeHandle::new(fullnode.get_node_handle().unwrap(), json_rpc_address).await;
 
-        wallet_conf.envs.push(SuiEnv {
-            alias: "localnet".to_string(),
-            rpc: fullnode_handle.rpc_url.clone(),
-            ws: Some(fullnode_handle.ws_url.clone()),
-        });
-        wallet_conf.active_env = Some("localnet".to_string());
+        // wallet_conf.envs.push(SuiEnv {
+        //     alias: "localnet".to_string(),
+        //     rpc: fullnode_handle.rpc_url.clone(),
+        //     ws: Some(fullnode_handle.ws_url.clone()),
+        // });
+        // wallet_conf.active_env = Some("localnet".to_string());
 
-        wallet_conf
-            .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
-            .save()
-            .unwrap();
+        // wallet_conf
+        //     .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
+        //     .save()
+        //     .unwrap();
 
-        let wallet_conf = swarm.dir().join(SUI_CLIENT_CONFIG);
-        let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
+        // let wallet_conf = swarm.dir().join(SUI_CLIENT_CONFIG);
+        // let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
 
         TestCluster {
             swarm,
-            wallet,
-            fullnode_handle,
+            // wallet,
+            // fullnode_handle,
         }
     }
     /// Start a Swarm and set up WalletConfig
