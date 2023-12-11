@@ -133,6 +133,18 @@ async fn submit_transaction_to_consensus_adapter() {
                 .await?;
             Ok(())
         }
+        async fn submit_raw_transaction_to_consensus(
+            &self,
+            transaction: &[u8],
+            epoch_store: &Arc<AuthorityPerEpochStore>,
+        ) -> SuiResult {
+
+            /*
+             * 2023-12-11 TaiVV
+             * Scalar Todo: Implement unit testing
+             */
+            Ok(())
+        }
     }
     // Make a new consensus adapter instance.
     let adapter = Arc::new(ConsensusAdapter::new(
