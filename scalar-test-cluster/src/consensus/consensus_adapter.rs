@@ -186,6 +186,8 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
         transaction: &ConsensusTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult;
+    async fn submit_raw_transaction_to_consensus(&self, transaction: &[u8],
+        epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult;
 }
 
 #[async_trait::async_trait]
@@ -198,6 +200,23 @@ impl SubmitToConsensus for TransactionsClient<sui_network::tonic::transport::Cha
         let serialized =
             bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
         let bytes = Bytes::from(serialized.clone());
+
+        self.clone()
+            .submit_transaction(TransactionProto { transaction: bytes })
+            .await
+            .map_err(|e| SuiError::ConsensusConnectionBroken(format!("{:?}", e)))
+            .tap_err(|r| {
+                // Will be logged by caller as well.
+                warn!("Submit transaction failed with: {:?}", r);
+            })?;
+        Ok(())
+    }
+    async fn submit_raw_transaction_to_consensus(
+        &self,
+        transaction_data: &[u8],
+        _epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        let bytes = Bytes::from(transaction_data.to_vec());
 
         self.clone()
             .submit_transaction(TransactionProto { transaction: bytes })
@@ -258,6 +277,35 @@ impl SubmitToConsensus for LazyNarwhalClient {
     async fn submit_to_consensus(
         &self,
         transaction: &ConsensusTransaction,
+        _epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        let transaction =
+            bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
+        // The retrieved LocalNarwhalClient can be from the past epoch. Submit would fail after
+        // Narwhal shuts down, so there should be no correctness issue.
+        let client = {
+            let c = self.client.load();
+            if c.is_some() {
+                c
+            } else {
+                self.client.store(Some(self.get().await));
+                self.client.load()
+            }
+        };
+        let client = client.as_ref().unwrap().load();
+        client
+            .submit_transaction(transaction)
+            .await
+            .map_err(|e| SuiError::FailedToSubmitToConsensus(format!("{:?}", e)))
+            .tap_err(|r| {
+                // Will be logged by caller as well.
+                warn!("Submit transaction failed with: {:?}", r);
+            })?;
+        Ok(())
+    }
+     async fn submit_raw_transaction_to_consensus(
+        &self,
+        transaction: &[u8],
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
         let transaction =
@@ -1113,6 +1161,17 @@ impl SubmitToConsensus for Arc<ConsensusAdapter> {
     ) -> SuiResult {
         self.submit(transaction.clone(), None, epoch_store)
             .map(|_| ())
+    }
+    /*
+     * 2023-12-11 TaiVV
+     * Scalar Todo: Submit rawtransaction to consensus layer
+     * 
+     */
+    async fn submit_raw_transaction_to_consensus(&self, transaction_data: &[u8], epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult {
+        self
+                    .consensus_client
+                    .submit_raw_transaction_to_consensus(&transaction_data, epoch_store)
+                    .await
     }
 }
 

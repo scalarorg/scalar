@@ -40,6 +40,20 @@ impl MysticetiClient {
             .tap_err(|e| warn!("Block Handler failed to ack: {:?}", e))
             .map_err(|e| SuiError::ConsensusConnectionBroken(format!("{:?}", e)))
     }
+    async fn submit_raw_transaction(&self, transaction: &[u8]) -> SuiResult {
+        let (sender, receiver) = oneshot::channel();
+        let tx_bytes = bcs::to_bytes(transaction).expect("Serialization should not fail.");
+        self.sender
+            .send((tx_bytes, sender))
+            .await
+            .tap_err(|e| warn!("Submit transaction failed with {:?}", e))
+            .map_err(|e| SuiError::FailedToSubmitToConsensus(format!("{:?}", e)))?;
+        // Give a little bit backpressure if BlockHandler is not able to keep up.
+        receiver
+            .await
+            .tap_err(|e| warn!("Block Handler failed to ack: {:?}", e))
+            .map_err(|e| SuiError::ConsensusConnectionBroken(format!("{:?}", e)))
+    }
 }
 
 /// Basically a wrapper struct that reads from the LOCAL_MYSTICETI_CLIENT variable where the latest
@@ -108,6 +122,25 @@ impl SubmitToConsensus for LazyMysticetiClient {
             .as_ref()
             .expect("Client should always be returned")
             .submit_transaction(transaction)
+            .await
+            .tap_err(|r| {
+                // Will be logged by caller as well.
+                warn!("Submit transaction failed with: {:?}", r);
+            })?;
+        Ok(())
+    }
+    async fn submit_raw_transaction_to_consensus(
+        &self,
+        transaction: &[u8],
+        _epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        // The retrieved MysticetiClient can be from the past epoch. Submit would fail after
+        // Mysticeti shuts down, so there should be no correctness issue.
+        let client = self.get().await;
+        client
+            .as_ref()
+            .expect("Client should always be returned")
+            .submit_raw_transaction(transaction)
             .await
             .tap_err(|r| {
                 // Will be logged by caller as well.

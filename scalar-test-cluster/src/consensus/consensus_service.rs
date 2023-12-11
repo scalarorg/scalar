@@ -1,9 +1,16 @@
+use anyhow::anyhow;
 use fastcrypto::encoding::Base64;
 use fastcrypto::traits::ToFromBytes;
 use mysten_metrics::spawn_monitored_task;
 use prometheus::Registry;
-use shared_crypto::intent::Intent;
-use sui_types::transaction::Transaction;
+use shared_crypto::intent::{Intent, IntentScope, AppId};
+use sui_types::base_types::SuiAddress;
+use sui_types::crypto::{AuthorityStrongQuorumSignInfo, AuthoritySignInfo, Signature};
+use sui_types::error::{SuiResult, SuiError};
+use sui_types::gas::SuiGasStatusAPI;
+use sui_types::messages_consensus::ConsensusTransaction;
+use sui_types::signature::GenericSignature;
+use sui_types::transaction::{Transaction, CertifiedTransaction, SenderSignedData, TransactionData, TransactionKind, TransactionDataAPI};
 use sui_types::executable_transaction::VerifiedExecutableTransaction;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -13,7 +20,9 @@ use tokio_stream::{wrappers::UnboundedReceiverStream, Stream, StreamExt};
 use tonic::{Response, Status};
 use tracing::{info, instrument};
 
+use crate::consensus::consensus_adapter::SubmitToConsensus;
 use crate::core::authority::AuthorityState;
+use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::core::authority_server::ValidatorService;
 use crate::{ConsensusTransactionOut, ConsensusApi, ConsensusTransactionIn};
 
@@ -46,8 +55,8 @@ impl ConsensusServiceMetrics {
         }
     }
 }
-impl Into<Transaction> for ConsensusTransactionIn {
-    fn into(self) -> Transaction {
+impl Into<CertifiedTransaction> for ConsensusTransactionIn {
+    fn into(self) -> CertifiedTransaction {
         // let ConsensusTransactionIn { tx_bytes, signatures } = self;
         // let data = SenderSignedData::new_from_sender_signature();
         // let transaction = Transaction::new_from_data_and_signer(data, sig);
@@ -66,32 +75,75 @@ impl From<VerifiedExecutableTransaction> for ConsensusTransactionOut {
 #[derive(Clone)]
 pub struct ConsensusService {
     state: Arc<AuthorityState>,
+    consensus_adapter: Arc<ConsensusAdapter>,
     validator_service: ValidatorService,
+    epoch_store: Arc<AuthorityPerEpochStore>,
     metrics: Arc<ConsensusServiceMetrics>,
 }
 impl ConsensusService {
     pub fn new(
         state: Arc<AuthorityState>,
+        consensus_adapter: Arc<ConsensusAdapter>,
         validator_service: ValidatorService,
+        epoch_store: Arc<AuthorityPerEpochStore>,
         prometheus_registry: &Registry,
     ) -> Self {
         Self {
             state,
+            consensus_adapter,
             validator_service,
+            epoch_store,
             metrics: Arc::new(ConsensusServiceMetrics::new(prometheus_registry)),
         }
     }
     pub async fn handle_consensus_transaction(
         &self,
-        transaction: ConsensusTransactionIn,
+        transaction_in: ConsensusTransactionIn,
     ) -> anyhow::Result<()> {
         info!(
             "gRpc service handle consensus_transaction {:?}",
-            &transaction
+            &transaction_in
         );
-        self.validator_service.handle_transaction_for_testing(transaction.into()).await;
-        Ok(())
+        let ConsensusTransactionIn { tx_bytes, signatures } = transaction_in;
+        //self.validator_service.handle_transaction_for_testing(transaction.into()).await;
+        // if let Ok(cetificate_tran) = self.create_certificate_transaction(transaction) {
+        //     // self.validator_service.execute_certificate_for_testing(cetificate_tran).await;
+        //     let authority = &self.state.name;
+        //     let consensus_transaction = ConsensusTransaction::new_certificate_message(authority, cetificate_tran);
+        //     self.consensus_adapter.submit_to_consensus(&consensus_transaction, &self.epoch_store).await;
+            
+        // }
+        self.consensus_adapter.submit_raw_transaction_to_consensus(tx_bytes.as_bytes(), &self.epoch_store).await.map_err(|err| anyhow!(err.to_string()))
     }
+
+    // fn create_certificate_transaction(&self, transaction_in: ConsensusTransactionIn) -> SuiResult<CertifiedTransaction> {
+    //     let ConsensusTransactionIn { tx_bytes, signatures } = transaction_in;
+    //     let authority_name = &self.state.name;
+    //     let generic_signatures = signatures.iter().map(|sig| {
+    //         Signature::from_bytes(sig.as_bytes()).map_err(|err| 
+    //             SuiError::InvalidSignature{ error: sig.to_owned()}
+    //         ).map(|sig| GenericSignature::Signature(sig)).unwrap()
+    //     }).collect::<Vec<GenericSignature>>();
+    //     let validator_state = self.validator_service.validator_state();
+    //     //validator_state.get_checkpoint_store().get_com
+    //     let committee = self.epoch_store.committee().as_ref();
+    //     let tx_kind = TransactionKind::ProgrammableTransaction(());
+    //     let sender : SuiAddress = SuiAddress::ZERO;
+    //     let gas_payment = ();
+    //     let gas_budget = 1;
+    //     let gas_price = 0;
+    //     let tx_data = TransactionData::new(tx_kind, sender, gas_payment, gas_budget, gas_price);
+    //     /*
+    //      * Scalar Todo: define new Intent for modular architechture
+    //      */
+    //     let intent = Intent::personal_message();
+    //     //let intent = Intent::sui_app();
+    //     let data = SenderSignedData::new(tx_data, intent.clone(), generic_signatures);
+    //     let epoch = self.epoch_store.epoch();
+    //     let secret = &*self.state.secret;
+    //     let authority_sig_info = AuthoritySignInfo::new(epoch, &data, intent, authority_name.clone(), secret);
+    //     AuthorityStrongQuorumSignInfo::new_from_auth_sign_infos(vec![authority_sig_info], committee).map(|sig|CertifiedTransaction::new_from_data_and_sig(data, sig))
+    // }
 }
 
 #[tonic::async_trait]

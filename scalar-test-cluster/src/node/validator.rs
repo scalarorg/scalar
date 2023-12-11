@@ -1,4 +1,4 @@
-// Copyright (c) Scalar, org.
+on// Copyright (c) Scalar, org.
 // SPDX-License-Identifier: Apache-2.0
 /*
  * Consensus node only
@@ -139,6 +139,7 @@ impl ValidatorNode {
             config,
             state.clone(),
             consensus_adapter.clone(),
+            epoch_store.clone(),
             &registry_service.default_registry(),
         )
         .await?;
@@ -462,6 +463,7 @@ impl ValidatorNode {
         config: &NodeConfig,
         state: Arc<AuthorityState>,
         consensus_adapter: Arc<ConsensusAdapter>,
+        epoch_store: Arc<AuthorityPerEpochStore>,
         prometheus_registry: &Registry,
     ) -> Result<tokio::task::JoinHandle<Result<()>>> {
         let network_addr = config.network_address();
@@ -479,7 +481,9 @@ impl ValidatorNode {
             ServerBuilder::from_config(&server_conf, GrpcMetrics::new(prometheus_registry));
         let consensus_service = ConsensusService::new(
             state,
+            consensus_adapter,
             validator_service.clone(),
+            epoch_store,
             prometheus_registry
         );
         server_builder = server_builder.add_service(ValidatorServer::new(validator_service));
