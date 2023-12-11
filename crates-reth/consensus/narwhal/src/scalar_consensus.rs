@@ -59,7 +59,7 @@ impl ScalarConsensus {
         tokio::spawn(async move {
             let url = format!("http://{}", socket_addr);
             let mut client = ConsensusApiClient::connect(url).await.unwrap();
-            info!("Connect to the grpc consensus {:?}", &socket_addr);
+            info!("Connected to the grpc consensus server at {:?}", &socket_addr);
             //let in_stream = tokio_stream::wrappers::ReceiverStream::new(transaction_rx)
             let stream = async_stream::stream! {
                 while let Some(NewTransactionEvent { subpool, transaction }) = transaction_rx.recv().await {
@@ -74,12 +74,12 @@ impl ScalarConsensus {
                 }
             };
             //pin_mut!(stream);
-            let response = client.init_transaction_stream(stream).await.unwrap();
+            let response = client.init_transaction(stream).await.unwrap();
             let mut resp_stream = response.into_inner();
 
             while let Some(received) = resp_stream.next().await {
                 let received = received.unwrap();
-                println!("\treceived message: `{:?}`", received.payload);
+                info!("\treceived message: `{:?}`", received.payload);
             }
         });
         Ok(handles)

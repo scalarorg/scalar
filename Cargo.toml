@@ -126,7 +126,7 @@ async-trait = "0.1.68" #Reth
 # async-trait = "0.1.61" #Sui
 bytes = "1.5"
 #clap = "4" #Reth
-clap = { version = "4.3.2", features = ["derive"] } #Sui
+clap = { version = "4.4", features = ["derive", "wrap_help"] } #Sui
 eyre = "0.6.8"
 # futures = "0.3.25" #Reth
 # futures = "0.3.26" #Sui

@@ -48,5 +48,5 @@
    // ClientStreamingEcho is client side streaming.
    // rpc ClientStreamingScalarAbci(stream ScalarAbciRequest) returns (ScalarAbciResponse) {}
    // BidirectionalStreamingScalarAbci is bidi streaming.
-   rpc InitTransactionStream(stream ConsensusTransactionIn) returns (stream ConsensusTransactionOut) {}
+   rpc InitTransaction(stream ConsensusTransactionIn) returns (stream ConsensusTransactionOut) {}
  }

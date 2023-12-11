@@ -7,25 +7,143 @@ publish = false
 edition = "2021"
 
 [dependencies]
+indexmap.workspace = true
+anemo.workspace = true
+anemo-tower.workspace = true
 anyhow.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
 axum.workspace = true
+bcs.workspace = true
+bytes.workspace = true
+chrono.workspace = true
 clap.workspace = true
+const-str.workspace = true
+dashmap.workspace = true
+derivative.workspace = true
+enum_dispatch.workspace = true
+either.workspace = true
+eyre.workspace = true
+fastcrypto.workspace = true
+fastcrypto-zkp.workspace = true
+futures.workspace = true
+git-version.workspace = true
 http.workspace = true
+humantime.workspace = true
+im.workspace = true
+itertools.workspace = true
+jsonrpsee.workspace = true
+lru.workspace = true
+more-asserts.workspace = true
 mysten-metrics.workspace = true
-
+num_cpus.workspace = true
+once_cell.workspace = true
+parking_lot.workspace = true
+pprof.workspace = true
+prost.workspace = true
 prometheus.workspace = true
+rand.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+rocksdb.workspace = true
 serde = { workspace = true, features = ["derive", "rc"] }
+serde_json.workspace = true
 serde_with.workspace = true
 serde_yaml.workspace = true
+tap.workspace = true
 telemetry-subscribers.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
 tokio = { workspace = true, features = ["full"] }
+tokio-retry.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+tonic-health.workspace = true
 tower.workspace = true
-tower-http.workspace = true
+# tower-http.workspace = true
 tracing.workspace = true
 
 uuid.workspace = true
 workspace-hack.workspace = true
 
+mysten-common = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-common" }
+mysten-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-network" }
+narwhal-crypto = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-crypto" }
+narwhal-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-network" }
+narwhal-node = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-node" }
+narwhal-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-config" }
+narwhal-executor = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-executor" }
+narwhal-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-types" }
+narwhal-worker = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-worker" }
+narwhal-test-utils = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-test-utils" }
+mysticeti-core = { git = "https://github.com/MystenLabs/mysticeti", rev = "318d61d27f47d257d99a86983d835e9e9756bc59" }
+sui-archival = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-archival" }
 sui-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-config" }
-sui_macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
+sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
+sui-snapshot = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-snapshot" }
+sui-simulator = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-simulator" }
+sui-storage = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-storage" }
 sui-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-types" }
+sui-telemetry = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-telemetry" }
+sui-node = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-node" }
+sui-core = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-core" }
+sui-keys = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-keys" }
+sui-genesis-builder = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-genesis-builder" }
+sui-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-network" }
+sui-json-rpc-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-json-rpc-types" }
+sui-protocol-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-protocol-config" }
+sui-sdk = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-sdk" }
+typed-store = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store" }
+typed-store-derive = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-derive" }
+typed-store-error = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-error" }
+shared-crypto = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "shared-crypto" }
+sui-execution = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-execution" }
+sui-transaction-checks = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-transaction-checks" }
+sui-framework = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-framework" }
+sui-move-build = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-move-build" }
+# Import in testing only
+move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-core-types" }
+move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-utils" }
+move-binary-format = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-binary-format" }
+move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-symbol-pool" }
+move-package = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-package" }
+
+[dev-dependencies]
+clap.workspace = true
+criterion.workspace = true
+expect-test.workspace = true
+fs_extra.workspace = true
+more-asserts.workspace = true
+pretty_assertions.workspace = true
+serde-reflection.workspace = true
+serde_yaml.workspace = true
+
+move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-symbol-pool" }
+sui-test-transaction-builder = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-test-transaction-builder" }
+
+sui-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-types", features = [
+    "test-utils",
+] }
+
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+pprof.workspace = true
+test-fuzz.workspace = true
+
+sui-macros.workspace = true
+sui-protocol-config.workspace = true
+
+[build-dependencies]
+tonic-build.workspace = true
+
+[[bin]]
+name = "consensus-node"
+path = "src/bin/consensus_node.rs"
+
+[[bin]]
+name = "test-cluster"
+path = "src/bin/test_cluster.rs"
+
+[features]
+test-utils = []
+pg_integration = []

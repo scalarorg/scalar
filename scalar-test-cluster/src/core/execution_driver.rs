@@ -42,7 +42,6 @@ pub async fn execution_process(
 
     // Rate limit concurrent executions to # of cpus.
     let limit = Arc::new(Semaphore::new(num_cpus::get()));
-
     // Loop whenever there is a signal that a new transactions is ready to process.
     loop {
         let _scope = monitored_scope("ExecutionDriver::loop");

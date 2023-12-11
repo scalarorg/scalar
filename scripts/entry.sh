@@ -16,15 +16,29 @@ reth() {
 
 scalar() {
     RUST_LOG=debug /usr/local/bin/scalar-node \
-        --config-path /scalar/fullnode.yaml \
+        --config-path /scalar/validator.yaml \
         #--epoch-duration-ms 3600000 \
         --fullnode-rpc-port 9000 \
         --faucet-port 9123 \
         --indexer-rpc-port 9124
 }
 
-test_cluster() {
-    RUST_LOG=debug /usr/local/bin/scalar-test-cluster
+consensus() {
+    RUST_LOG=debug /usr/local/bin/consensus-node \
+        --config-path /scalar/validator.yaml
 }
+
+test_cluster() {
+    RUST_LOG=info /usr/local/bin/test-cluster \
+        --cluster-size 4 \
+        --consensus-grpc-port 9090 \
+        --epoch-duration-ms 3600000
+}   
+
+test_cluster1() {
+    RUST_LOG=debug /usr/local/bin/test-cluster \
+        --config-dir /scalar/cluster-local \
+        --epoch-duration-ms 3600000
+}   
 
 $@
