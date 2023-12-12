@@ -7,4 +7,4 @@ pub mod node;
 mod swarm;
 pub use cluster::*;
 pub use swarm::*;
-pub use proto::*;
+pub use scalar_consensus_adapter_common::proto::*;

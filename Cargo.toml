@@ -256,6 +256,7 @@ fdlimit = "0.2.1"
 fs_extra = "1.3.0"
 
 futures-core = "0.3.21"
+getrandom = "0.2.9"
 git-version = "0.3.5"
 governor = "0.6.0"
 hex = "0.4.3"
@@ -288,7 +289,6 @@ pprof = { version = "0.11.0", features = [
   "criterion",
   "flamegraph",
 ] }
-pretty_assertions = "1.3.0"
 
 prometheus = "0.13.3"
 prometheus-http-query = { version = "0.6.6", default_features = false, features = [
@@ -321,10 +321,9 @@ rustversion = "1.0.9"
 
 schemars = { version = "0.8.10", features = ["either"] }
 scopeguard = "1.1"
-
+serde_bytes = "0.11.5"
 serde-name = "0.2.1"
 serde-reflection = "0.3.6"
-
 serde_repr = "0.1"
 serde_test = "1.0.147"
 serde_with = { version = "2.1.0", features = ["hex"] }
@@ -386,6 +385,9 @@ zstd = "0.12.3"
 zeroize = "1.6.0"
 url = "2.3.1"
 uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
+# 2023-12-12 Move
+variant_count = "1.1.0"
+petgraph = "0.5.1"
 
 #narwhal-config = { path = "narwhal/config" }
 #narwhal-consensus = { path = "narwhal/consensus" }
@@ -487,10 +489,49 @@ workspace-hack = "0.1.0"
 ref-cast = "1.0.6"
 ethnum = "1.0.4"
 uint = "0.9.4"
+named-lock = "0.2.0"
 num = "0.4.0"
 num-bigint = "0.4.0"
+pretty = "0.10.0"
+pretty_assertions = "1.3.0"
+prettydiff = "0.4.0"
 primitive-types = { version = "0.10.1", features = ["impl-serde"] }
 
+hdrhistogram = "7.5.1"
+ouroboros = "0.17"
+rstest = "0.16.0"
+sha2 = "0.9.3"
+shell-words = "1.0.0"
+simplelog = "0.9.0"
+toml_edit = { version = "0.19.10" }
+tera = "1.16.0"
+treeline = { version = "0.1", default-features = false }
+walkdir = { version = "2", default-features = false }
+whoami = { version = "1.2.1" }
+paste = "1.0.5"
+phf = { version = "0.11", features = ["macros"] }
+multiaddr = "0.17.0"
+codespan = { version = "0.11", default-features = false, features = [
+    "serialization",
+] }
+codespan-reporting = { version = "0.11", default-features = false, features = [
+    "serialization",
+] }
+collectable = "0.0.2"
+log = { version = "0.4.14", features = ["serde"] }
+internment = { version = "0.5.0", features = [ "arc"] }
+move-docgen = { path = "./sui/external-crates/move/crates/move-docgen" }
+move-model = { path = "./sui/external-crates/move/crates/move-model" }
+move-prover = { path = "./sui/external-crates/move/crates/move-prover" }
+move-errmapgen = { path = "./sui/external-crates/move/crates/move-errmapgen" }
+move-prover-boogie-backend = { path = "./sui/external-crates/move/crates/move-prover-boogie-backend" }
+move-prover-test-utils = { path = "./sui/external-crates/move/crates/move-prover-test-utils" }
+move-stackless-bytecode = { path = "./sui/external-crates/move/crates/move-stackless-bytecode" }
+move-read-write-set-types = { path = "./sui/external-crates/move/crates/move-read-write-set-types" }
+sui-keys = { path = "./sui/crates/sui-keys" }
+sui-types = { path = "./sui/crates/sui-types" }
+msim = { git = "https://github.com/MystenLabs/mysten-sim.git", rev = "1a52783d6600ecc22e15253a982f77881bd47c77", package = "msim" }
+msim-macros = { git = "https://github.com/MystenLabs/mysten-sim.git", rev = "1a52783d6600ecc22e15253a982f77881bd47c77", package = "msim-macros" }
 
 move-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-proc-macros" }
 move-vm-profiler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-profiler" }
@@ -513,6 +554,7 @@ move-bytecode-verifier = { git = "https://github.com/MystenLabs/sui", rev = "01a
 move-vm-runtime = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime" }
 move-stdlib = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-stdlib" }
 move-abstract-stack = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-abstract-stack" }
+enum-compat-util = { path = "./sui/external-crates/move/crates/enum-compat-util" }
 
 # 23-11-08 TaiVV
 # For Reth itegration

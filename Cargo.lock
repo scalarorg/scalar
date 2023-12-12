@@ -13200,6 +13200,7 @@ dependencies = [
  "tokio-stream",
  "tonic 0.10.2",
  "tonic-build",
+ "tracing",
 ]
 
 [[package]]
@@ -13819,6 +13820,7 @@ dependencies = [
  "regex",
  "reqwest",
  "rocksdb",
+ "scalar-consensus-adapter-common",
  "serde",
  "serde-reflection",
  "serde_json",

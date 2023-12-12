@@ -1,4 +1,4 @@
-on// Copyright (c) Scalar, org.
+// Copyright (c) Scalar, org.
 // SPDX-License-Identifier: Apache-2.0
 /*
  * Consensus node only

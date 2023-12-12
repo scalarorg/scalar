@@ -135,7 +135,7 @@ async fn submit_transaction_to_consensus_adapter() {
         }
         async fn submit_raw_transaction_to_consensus(
             &self,
-            transaction: &[u8],
+            transaction: Vec<u8>,
             epoch_store: &Arc<AuthorityPerEpochStore>,
         ) -> SuiResult {
 

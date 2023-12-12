@@ -1,4 +1,3 @@
-use futures::{pin_mut, Stream};
 use hyper::body::Bytes;
 use jsonrpsee::client_transport::ws::{Url, WsTransportClientBuilder};
 use jsonrpsee::core::client::{Client, ClientBuilder, ClientT};
@@ -36,10 +35,11 @@ fn create_consensus_transaction<Pool: PoolTransaction + 'static>(
         signature,
         transaction,
     } = signed_transaction;
-    let tx_hash = hash.to_vec();
+    let tx_bytes = hash.to_vec();
+    let sig_bytes = signature.to_bytes(); //[u8;65]
     ConsensusTransactionIn {
-        tx_hash,
-        signature: signature.to_bytes().to_vec(),
+        tx_bytes,
+        signatures: vec![],
     }
 }
 impl ScalarConsensus {
@@ -74,6 +74,7 @@ impl ScalarConsensus {
                 }
             };
             //pin_mut!(stream);
+            let stream = Box::pin(stream);
             let response = client.init_transaction(stream).await.unwrap();
             let mut resp_stream = response.into_inner();
 

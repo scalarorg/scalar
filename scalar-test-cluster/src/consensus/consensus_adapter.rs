@@ -186,7 +186,7 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
         transaction: &ConsensusTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult;
-    async fn submit_raw_transaction_to_consensus(&self, transaction: &[u8],
+    async fn submit_raw_transaction_to_consensus(&self, transaction: Vec<u8>,
         epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult;
 }
 
@@ -213,10 +213,10 @@ impl SubmitToConsensus for TransactionsClient<sui_network::tonic::transport::Cha
     }
     async fn submit_raw_transaction_to_consensus(
         &self,
-        transaction_data: &[u8],
+        transaction_data: Vec<u8>,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
-        let bytes = Bytes::from(transaction_data.to_vec());
+        let bytes = Bytes::from(transaction_data);
 
         self.clone()
             .submit_transaction(TransactionProto { transaction: bytes })
@@ -305,11 +305,11 @@ impl SubmitToConsensus for LazyNarwhalClient {
     }
      async fn submit_raw_transaction_to_consensus(
         &self,
-        transaction: &[u8],
+        transaction: Vec<u8>,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
-        let transaction =
-            bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
+        // let transaction =
+        //     bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
         // The retrieved LocalNarwhalClient can be from the past epoch. Submit would fail after
         // Narwhal shuts down, so there should be no correctness issue.
         let client = {
@@ -1167,10 +1167,10 @@ impl SubmitToConsensus for Arc<ConsensusAdapter> {
      * Scalar Todo: Submit rawtransaction to consensus layer
      * 
      */
-    async fn submit_raw_transaction_to_consensus(&self, transaction_data: &[u8], epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult {
+    async fn submit_raw_transaction_to_consensus(&self, transaction_data: Vec<u8>, epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult {
         self
                     .consensus_client
-                    .submit_raw_transaction_to_consensus(&transaction_data, epoch_store)
+                    .submit_raw_transaction_to_consensus(transaction_data, epoch_store)
                     .await
     }
 }

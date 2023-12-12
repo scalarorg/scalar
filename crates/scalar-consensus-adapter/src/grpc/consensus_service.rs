@@ -66,11 +66,9 @@ impl EthTransactionHandler {
             "gRpc service handle consensus_transaction {:?}",
             &transaction
         );
-        let ConsensusTransactionIn { tx_hash, signature } = transaction;
-        let tx_bytes = Base64::from_bytes(tx_hash.as_slice());
-        let mut base64_sigs = vec![];
-        let base64 = Base64::from_bytes(signature.as_slice());
-        base64_sigs.push(base64);
+        let ConsensusTransactionIn { tx_bytes, signatures } = transaction;
+        let tx_bytes = Base64::from_bytes(tx_bytes.as_slice());
+        let base64_sigs = signatures.iter().map(|signature| Base64::from_bytes(signature.as_bytes())).collect::<Vec<Base64>>();
 
         let (opts, request_type, sender, input_objs, txn, transaction, raw_transaction) =
             self.prepare_execute_transaction_block(tx_bytes, base64_sigs, None, None)?;

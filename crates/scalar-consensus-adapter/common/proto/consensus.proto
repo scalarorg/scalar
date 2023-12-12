@@ -22,9 +22,8 @@
 
  // ScalarAbciRequest is the request for ScalarAbci.
  message ConsensusTransactionIn {
-    bytes tx_hash = 1;
-    bytes signature = 2;
-    
+    bytes tx_bytes = 1;
+    repeated string signatures = 2;
  }
 
  // ScalarAbciResponse is the response for ScalarAbci.
@@ -50,3 +49,4 @@
    // BidirectionalStreamingScalarAbci is bidi streaming.
    rpc InitTransaction(stream ConsensusTransactionIn) returns (stream ConsensusTransactionOut) {}
  }
+ 

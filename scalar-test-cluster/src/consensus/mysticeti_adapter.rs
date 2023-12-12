@@ -40,9 +40,9 @@ impl MysticetiClient {
             .tap_err(|e| warn!("Block Handler failed to ack: {:?}", e))
             .map_err(|e| SuiError::ConsensusConnectionBroken(format!("{:?}", e)))
     }
-    async fn submit_raw_transaction(&self, transaction: &[u8]) -> SuiResult {
+    async fn submit_raw_transaction(&self, tx_bytes: Vec<u8>) -> SuiResult {
         let (sender, receiver) = oneshot::channel();
-        let tx_bytes = bcs::to_bytes(transaction).expect("Serialization should not fail.");
+        //let tx_bytes = bcs::to_bytes(tx_bytes).expect("Serialization should not fail.");
         self.sender
             .send((tx_bytes, sender))
             .await
@@ -131,7 +131,7 @@ impl SubmitToConsensus for LazyMysticetiClient {
     }
     async fn submit_raw_transaction_to_consensus(
         &self,
-        transaction: &[u8],
+        transaction: Vec<u8>,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
         // The retrieved MysticetiClient can be from the past epoch. Submit would fail after

@@ -422,7 +422,7 @@ impl TransactionManager {
                 }
             })
             .collect();
-
+        let mut pending_certificates = vec![];
         let mut object_availability: HashMap<InputKey, Option<bool>> = HashMap::new();
         let mut receiving_objects: HashSet<InputKey> = HashSet::new();
         let certs: Vec<_> = certs
@@ -612,6 +612,7 @@ impl TransactionManager {
                     .with_label_values(&["ready"])
                     .inc();
                 // Send to execution driver for execution.
+                pending_certificates.push(pending_cert.clone());
                 self.certificate_ready(&mut inner, pending_cert);
                 continue;
             }
@@ -639,7 +640,11 @@ impl TransactionManager {
             .set(inner.pending_certificates.len() as i64);
 
         inner.maybe_reserve_capacity();
-
+        /*
+         * 2023-12-12 Taivv
+         * Send lit pending_certificates to output stream for external client
+         */
+        
         Ok(())
     }
 
