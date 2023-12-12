@@ -2,10 +2,10 @@
 mod tests {
     use ethers::{core::k256::ecdsa::SigningKey, prelude::*, signers::coins_bip39::English};
 
-    /// Dev node rpc url
+    /// Node rpc url
     ///
-    /// Must be running a local node before running tests
-    const RPC_URL: &str = "http://192.168.1.44:8545";
+    /// Must provide the RPC_URL from env or run a local node before running tests
+    const DEFAULT_RPC_URL: &str = "http://127.0.0.1:8545";
 
     /// Test account, must be prefunded
     ///
@@ -26,7 +26,7 @@ mod tests {
 
         // Get the raw transaction
         let raw_tx = tx.rlp_signed(&signature);
-
+        println!("Raw transaction {:x?}", &raw_tx);
         // Send the raw transaction
         let result = provider.send_raw_transaction(raw_tx).await?;
 
@@ -77,7 +77,8 @@ mod tests {
     }
 
     async fn create_provider() -> Result<(Provider<Http>, u64), Box<dyn std::error::Error>> {
-        let provider = Provider::<Http>::try_from(RPC_URL)?;
+        let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| DEFAULT_RPC_URL.to_string());
+        let provider = Provider::<Http>::try_from(rpc_url)?;
         let chain_id = provider.get_chainid().await?.as_u64();
         Ok((provider, chain_id))
     }

@@ -9,17 +9,43 @@ SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
 reth() {
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin reth
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/reth ${SCRIPT_DIR}/reth
-    docker cp ${SCRIPT_DIR}/reth ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/reth
+    BIN_NAME=reth
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
 scalar() {
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin scalar-node
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/scalar-node ${SCRIPT_DIR}/scalar-node
-    docker cp ${SCRIPT_DIR}/scalar-node ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/scalar-node
+    BIN_NAME=scalar-node
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
+consensus() {
+    BIN_NAME=consensus-node
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
+test_cluster() {
+    BIN_NAME=test-cluster
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
+sui() {
+    BIN_NAME=sui
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/sui/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
 relayer() {

@@ -6,13 +6,13 @@ use crate::network_config::NetworkConfig;
 use fastcrypto::encoding::{Encoding, Hex};
 use fastcrypto::traits::KeyPair;
 use narwhal_config::{NetworkAdminServerParameters, PrometheusMetricsParameters};
-use scalar_config::node::default_zklogin_oauth_providers;
 use scalar_config::node::{
     default_enable_index_processing, default_end_of_epoch_broadcast_channel_capacity,
     AuthorityKeyPairWithPath, AuthorityStorePruningConfig, DBCheckpointConfig,
     ExpensiveSafetyCheckConfig, Genesis, KeyPairWithPath, StateArchiveConfig, StateSnapshotConfig,
     DEFAULT_GRPC_CONCURRENCY_LIMIT,
 };
+use scalar_config::node::{default_zklogin_oauth_providers, ConsensusProtocol};
 use scalar_config::p2p::{P2pConfig, SeedPeer};
 use scalar_config::{
     local_ip_utils, ConsensusConfig, NodeConfig, AUTHORITIES_DB_NAME, CONSENSUS_DB_NAME,
@@ -90,6 +90,7 @@ impl ValidatorConfigBuilder {
             max_pending_transactions: None,
             max_submit_position: None,
             submit_delay_step_override_millis: None,
+            protocol: ConsensusProtocol::Narwhal,
             narwhal_config: narwhal_config::Parameters {
                 network_admin_server: NetworkAdminServerParameters {
                     primary_network_admin_server_port: local_ip_utils::get_available_port(
@@ -133,6 +134,9 @@ impl ValidatorConfigBuilder {
             metrics_address: validator.metrics_address,
             admin_interface_port: local_ip_utils::get_available_port(&localhost),
             json_rpc_address: local_ip_utils::new_tcp_address_for_testing(&localhost)
+                .to_socket_addr()
+                .unwrap(),
+            consensus_rpc_address: local_ip_utils::new_tcp_address_for_testing(&localhost)
                 .to_socket_addr()
                 .unwrap(),
             consensus_config: Some(consensus_config),
@@ -196,6 +200,8 @@ pub struct FullnodeConfigBuilder {
     db_path: Option<PathBuf>,
     network_address: Option<Multiaddr>,
     json_rpc_address: Option<SocketAddr>,
+    consensus_rpc_address: Option<SocketAddr>,
+    consensus_rpc_port: Option<u16>,
     metrics_address: Option<SocketAddr>,
     admin_interface_port: Option<u16>,
     genesis: Option<Genesis>,
@@ -348,7 +354,12 @@ impl FullnodeConfigBuilder {
                 .unwrap_or_else(|| local_ip_utils::get_available_port(&ip));
             format!("{}:{}", ip, rpc_port).parse().unwrap()
         });
-
+        let consensus_rpc_address = self.rpc_addr.unwrap_or_else(|| {
+            let rpc_port = self
+                .consensus_rpc_port
+                .unwrap_or_else(|| local_ip_utils::get_available_port(&ip));
+            format!("{}:{}", ip, rpc_port).parse().unwrap()
+        });
         NodeConfig {
             protocol_key_pair: AuthorityKeyPairWithPath::new(validator_config.key_pair),
             account_key_pair: KeyPairWithPath::new(validator_config.account_key_pair),
@@ -371,6 +382,7 @@ impl FullnodeConfigBuilder {
                 .admin_interface_port
                 .unwrap_or(local_ip_utils::get_available_port(&localhost)),
             json_rpc_address: self.json_rpc_address.unwrap_or(json_rpc_address),
+            consensus_rpc_address: self.consensus_rpc_address.unwrap_or(consensus_rpc_address),
             consensus_config: None,
             enable_event_processing: true, // This is unused.
             enable_index_processing: default_enable_index_processing(),

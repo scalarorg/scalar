@@ -9,9 +9,9 @@ edition = "2021"
 [dependencies]
 move-package.workspace = true
 
-sui-framework.workspace = true
-sui-move-build.workspace = true
-sui-types.workspace = true
+scalar-framework.workspace = true
+#sui-move-build.workspace = true
+scalar-types.workspace = true
 tempfile.workspace = true
 tracing.workspace = true
 anemo.workspace = true

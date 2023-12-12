@@ -13,11 +13,12 @@ use scalar_narwhal_consensus::constants;
 use scalar_narwhal_consensus::ScalarConsensusHandles;
 use std::net::SocketAddr;
 use std::net::{IpAddr, Ipv4Addr};
+use tracing::info;
 
 /// Parameters for debugging purposes
 #[derive(Debug, Clone, Args)]
 pub struct ConsensusArgs {
-    /// Enable the HTTP-RPC server
+    /// Enable the Narwhal client
     #[arg(long, default_value_if("dev", "true", "true"))]
     pub narwhal: bool,
 
@@ -38,7 +39,7 @@ impl ConsensusArgs {
     #[allow(clippy::too_many_arguments)]
     pub async fn start_client<Reth, Conf>(
         &self,
-        components: &Reth,
+        components: &Reth, //RethNodeComponentsImpl
         jwt_secret: JwtSecret,
         _conf: &mut Conf,
     ) -> eyre::Result<ScalarConsensusHandles>
@@ -46,9 +47,17 @@ impl ConsensusArgs {
         Reth: RethNodeComponents,
         Conf: RethNodeCommandConfig,
     {
+        info!(
+            "Start Narwhal&Bullshark consensus client option {:?}",
+            &self.narwhal
+        );
         if self.narwhal {
             let socket_address = SocketAddr::new(self.narwhal_addr, self.narwhal_port);
             let transaction_pool = components.pool();
+            info!(
+                "Start Narwhal&Bullshark consensus client at the address {:?}",
+                &socket_address
+            );
             scalar_narwhal_consensus::ScalarConsensus::new(
                 socket_address,
                 &transaction_pool,

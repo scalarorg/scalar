@@ -9,6 +9,12 @@ reth() {
 scalar() {
   docker exec -it ${RUNNER} /entry.sh scalar
 }
+consensus() {
+  docker exec -it ${RUNNER} /entry.sh consensus
+}
+test_cluster() {
+  docker exec -it ${RUNNER} /entry.sh test_cluster
+}
 
 tss() {
   docker exec -it ${RUNNER} /entry.sh tss

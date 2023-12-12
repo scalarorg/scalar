@@ -9,6 +9,7 @@ use scalar_types::scalar_serde::SuiStructTag;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use std::fmt::{Display, Formatter, Result};
 
 /// ObjectChange are derived from the object mutations in the TransactionEffect to provide richer object information.
 #[serde_as]
@@ -162,6 +163,95 @@ impl ObjectChange {
             }
             ObjectChange::Deleted { version, .. } | ObjectChange::Wrapped { version, .. } => {
                 *version = new_version
+            }
+        }
+    }
+}
+
+impl Display for ObjectChange {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        match self {
+            ObjectChange::Published {
+                package_id,
+                version,
+                digest,
+                modules,
+            } => {
+                write!(
+                    f,
+                    " ┌──\n │ PackageID: {} \n │ Version: {} \n │ Digest: {}\n | Modules: {}\n └──",
+                    package_id,
+                    u64::from(*version),
+                    digest,
+                    modules.join(", ")
+                )
+            }
+            ObjectChange::Transferred {
+                sender,
+                recipient,
+                object_type,
+                object_id,
+                version,
+                digest,
+            } => {
+                write!(
+                    f,
+                    " ┌──\n │ ObjectID: {}\n │ Sender: {} \n │ Recipient: {}\n │ ObjectType: {} \n │ Version: {}\n │ Digest: {}\n └──",
+                    object_id, sender, recipient, object_type, u64::from(*version), digest
+                )
+            }
+            ObjectChange::Mutated {
+                sender,
+                owner,
+                object_type,
+                object_id,
+                version,
+                previous_version: _,
+                digest,
+            } => {
+                write!(
+                    f,
+                    " ┌──\n │ ObjectID: {}\n │ Sender: {} \n │ Owner: {}\n │ ObjectType: {} \n │ Version: {}\n │ Digest: {}\n └──",
+                    object_id, sender, owner, object_type, u64::from(*version), digest
+                )
+            }
+            ObjectChange::Deleted {
+                sender,
+                object_type,
+                object_id,
+                version,
+            } => {
+                write!(
+                    f,
+                    " ┌──\n │ ObjectID: {}\n │ Sender: {} \n │ ObjectType: {} \n │ Version: {}\n └──",
+                    object_id, sender, object_type, u64::from(*version)
+                )
+            }
+            ObjectChange::Wrapped {
+                sender,
+                object_type,
+                object_id,
+                version,
+            } => {
+                write!(
+                    f,
+                    " ┌──\n │ ObjectID: {}\n │ Sender: {} \n │ ObjectType: {} \n │ Version: {}\n └──",
+                    object_id, sender, object_type, u64::from(*version)
+                )
+            }
+            ObjectChange::Created {
+                sender,
+                owner,
+                object_type,
+                object_id,
+                version,
+                digest,
+            } => {
+                write!(
+                    f,
+                    " ┌──\n │ ObjectID: {}\n │ Sender: {} \n │ Owner: {}\n │ ObjectType: {} \n │ Version: {}\n │ Digest: {}\n └──",
+                    object_id, sender, owner, object_type, u64::from(*version), digest
+                )
             }
         }
     }

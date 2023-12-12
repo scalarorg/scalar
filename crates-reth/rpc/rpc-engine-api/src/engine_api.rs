@@ -881,7 +881,7 @@ mod tests {
         let api = EngineApi::new(
             provider.clone(),
             chain_spec.clone(),
-            ConsensusEngineHandle::new(to_engine),
+            BeaconConsensusEngineHandle::new(to_engine),
             payload_store.into(),
             task_executor,
         );

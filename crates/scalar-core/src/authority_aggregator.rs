@@ -45,7 +45,7 @@ use scalar_types::effects::{
     VerifiedCertifiedTransactionEffects,
 };
 use scalar_types::messages_grpc::{
-    HandleCertificateResponseV2, ObjectInfoRequest, TransactionInfoRequest,
+    HandleCertificateResponseV2, LayoutGenerationOption, ObjectInfoRequest, TransactionInfoRequest,
 };
 use scalar_types::messages_safe_client::PlainTransactionInfoResponse;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -1036,7 +1036,7 @@ where
                 |_name, client| {
                     Box::pin(async move {
                         let request =
-                            ObjectInfoRequest::latest_object_info_request(object_id, None);
+                            ObjectInfoRequest::latest_object_info_request(object_id, /* generate_layout */ LayoutGenerationOption::None);
                         client.handle_object_info_request(request).await
                     })
                 },

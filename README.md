@@ -1,7 +1,8 @@
 # scalar
 Scalar block chain
 Pakages structure
-
+# Prepare
+https://docs.sui.io/references/cli/keytool
 # Run
 Currently following steps work on only ubuntu 20.04 or Ubuntu 22.04 with intel chips
 

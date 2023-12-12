@@ -1,16 +1,9 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-02 TaiVV
- * copy and modify from sui-types/src/execution_status.rs
- * Tags: SCALAR_EXECUTION
- */
-
-use crate::move_types::language_storage::ModuleId;
 use crate::ObjectID;
-//use move_binary_format::file_format::{CodeOffset, TypeParameterIndex};
-use crate::move_types::file_format::CodeOffset;
+use move_binary_format::file_format::{CodeOffset, TypeParameterIndex};
+use move_core_types::language_storage::ModuleId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use sui_macros::EnumVariantOrder;
@@ -90,20 +83,14 @@ pub enum ExecutionFailureStatus {
     //
     // Errors from the Move VM
     //
-    /*
-     * 2023-11-03 TaiVV
-     * Comment out move related type
-     * Tags: SCALAR_EXECUTION
-     */
     // Indicates an error from a non-abort instruction
-    // #[error(
-    //     "Move Primitive Runtime Error. Location: {0}. \
-    //     Arithmetic error, stack overflow, max value depth, etc."
-    // )]
-    // MovePrimitiveRuntimeError(MoveLocationOpt),
-    // #[error("Move Runtime Abort. Location: {0}, Abort Code: {1}")]
-    // MoveAbort(MoveLocation, u64),
-    /******************/
+    #[error(
+        "Move Primitive Runtime Error. Location: {0}. \
+        Arithmetic error, stack overflow, max value depth, etc."
+    )]
+    MovePrimitiveRuntimeError(MoveLocationOpt),
+    #[error("Move Runtime Abort. Location: {0}, Abort Code: {1}")]
+    MoveAbort(MoveLocation, u64),
     #[error(
         "Move Bytecode Verification Error. \
         Please run the Bytecode Verifier for more information."
@@ -134,16 +121,11 @@ pub enum ExecutionFailureStatus {
         arg_idx: u16,
         kind: CommandArgumentError,
     },
-    /*
-     * 2023-11-03 TaiVV
-     * Comment out move related type
-     * Tags: SCALAR_EXECUTION
-     */
-    // #[error("Error for type argument at index {argument_idx}: {kind}")]
-    // TypeArgumentError {
-    //     argument_idx: TypeParameterIndex,
-    //     kind: TypeArgumentError,
-    // },
+    #[error("Error for type argument at index {argument_idx}: {kind}")]
+    TypeArgumentError {
+        argument_idx: TypeParameterIndex,
+        kind: TypeArgumentError,
+    },
     #[error(
         "Unused result without the drop ability. \
         Command result {result_idx}, return value {secondary_idx}"
@@ -200,6 +182,12 @@ pub enum ExecutionFailureStatus {
         Please run the Sui Move Verifier for more information."
     )]
     SuiMoveVerificationTimedout,
+
+    #[error("Wrapping a shared object is not allowed.")]
+    SharedObjectWrapped,
+
+    #[error("Certificate cannot be executed due to a dependency on a deleted shared object")]
+    InputObjectDeleted,
     // NOTE: if you want to add a new enum,
     // please add it at the end for Rust SDK backward compatibility.
 }
@@ -252,10 +240,15 @@ pub enum CommandArgumentError {
         Taken values cannot be used again."
     )]
     InvalidValueUsage,
-    #[error("Immutable and shared objects cannot be passed by-value.")]
+    #[error("Immutable objects cannot be passed by-value.")]
     InvalidObjectByValue,
     #[error("Immutable objects cannot be passed by mutable reference, &mut.")]
     InvalidObjectByMutRef,
+    #[error(
+        "Shared object operations such a wrapping, freezing, or converting to owned are not \
+        allowed."
+    )]
+    SharedObjectOperationNotAllowed,
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, Hash, Error)]
@@ -291,42 +284,36 @@ impl ExecutionFailureStatus {
     }
 }
 
-/*
- * 2023-11-03 TaiVV
- * Comment out Move related type
- * Tags: SCALAR_EXECUTION
- */
+impl Display for MoveLocationOpt {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            None => write!(f, "UNKNOWN"),
+            Some(l) => write!(f, "{l}"),
+        }
+    }
+}
 
-// impl Display for MoveLocationOpt {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         match &self.0 {
-//             None => write!(f, "UNKNOWN"),
-//             Some(l) => write!(f, "{l}"),
-//         }
-//     }
-// }
-
-// impl Display for MoveLocation {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         let Self {
-//             module,
-//             function,
-//             instruction,
-//             function_name,
-//         } = self;
-//         if let Some(fname) = function_name {
-//             write!(
-//                 f,
-//                 "{module}::{fname} (function index {function}) at offset {instruction}"
-//             )
-//         } else {
-//             write!(
-//                 f,
-//                 "{module} in function definition {function} at offset {instruction}"
-//             )
-//         }
-//     }
-// }
+impl Display for MoveLocation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            module,
+            function,
+            instruction,
+            function_name,
+        } = self;
+        if let Some(fname) = function_name {
+            write!(
+                f,
+                "{module}::{fname} (function index {function}) at offset {instruction}"
+            )
+        } else {
+            write!(
+                f,
+                "{module} in function definition {function} at offset {instruction}"
+            )
+        }
+    }
+}
 
 impl ExecutionStatus {
     pub fn new_failure(

@@ -1,13 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-02 TaiVV
- * copy and modify from sui-types/src/messages_consensus.rs
- * Dinh nghia cac struct phuc vu qua trinh giao tiep giua Sui va Narwhal
- * Tags: SCALAR_CONSENSUS, SCALAR_MESSAGE
- */
-
 use crate::base_types::{AuthorityName, ObjectRef, TransactionDigest};
 use crate::messages_checkpoint::{
     CheckpointSequenceNumber, CheckpointSignatureMessage, CheckpointTimestamp,
@@ -42,10 +35,7 @@ pub fn check_total_jwk_size(id: &JwkId, jwk: &JWK) -> bool {
     id.iss.len() + id.kid.len() + jwk.kty.len() + jwk.alg.len() + jwk.e.len() + jwk.n.len()
         <= MAX_TOTAL_JWK_SIZE
 }
-/*
- * 2023-11-02 TaiVV
- * Sau khi verify o tang logic cua Sui, du lieu duoc encode va gui toi N&B thong qua ConsensusAdapter
- */
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ConsensusTransaction {
     /// Encodes an u64 unique tracking id to allow us trace a message between Sui and Narwhal.
@@ -63,6 +53,7 @@ pub enum ConsensusTransactionKey {
     // Key must include both id and jwk, because honest validators could be given multiple jwks for
     // the same id by malfunctioning providers.
     NewJWKFetched(Box<(AuthorityName, JwkId, JWK)>),
+    RandomnessStateUpdate(u64),
 }
 
 impl Debug for ConsensusTransactionKey {
@@ -89,6 +80,7 @@ impl Debug for ConsensusTransactionKey {
                     jwk
                 )
             }
+            Self::RandomnessStateUpdate(round) => write!(f, "RandomnessStateUpdate({round:?})"),
         }
     }
 }
@@ -156,6 +148,7 @@ pub enum ConsensusTransactionKind {
     EndOfPublish(AuthorityName),
     CapabilityNotification(AuthorityCapabilities),
     NewJWKFetched(AuthorityName, JwkId, JWK),
+    RandomnessStateUpdate(u64, Vec<u8>),
 }
 
 impl ConsensusTransaction {
@@ -204,6 +197,23 @@ impl ConsensusTransaction {
         }
     }
 
+    pub fn new_mysticeti_certificate(
+        round: u64,
+        offset: u64,
+        certificate: CertifiedTransaction,
+    ) -> Self {
+        let mut hasher = DefaultHasher::new();
+        let tx_digest = certificate.digest();
+        tx_digest.hash(&mut hasher);
+        round.hash(&mut hasher);
+        offset.hash(&mut hasher);
+        let tracking_id = hasher.finish().to_le_bytes();
+        Self {
+            tracking_id,
+            kind: ConsensusTransactionKind::UserTransaction(Box::new(certificate)),
+        }
+    }
+
     pub fn new_jwk_fetched(authority: AuthorityName, id: JwkId, jwk: JWK) -> Self {
         let mut hasher = DefaultHasher::new();
         id.hash(&mut hasher);
@@ -243,6 +253,9 @@ impl ConsensusTransaction {
                     id.clone(),
                     key.clone(),
                 )))
+            }
+            ConsensusTransactionKind::RandomnessStateUpdate(round, _bytes) => {
+                ConsensusTransactionKey::RandomnessStateUpdate(*round)
             }
         }
     }

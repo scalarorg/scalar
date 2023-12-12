@@ -13,9 +13,6 @@ use anyhow::Result;
 use num_enum::IntoPrimitive;
 use num_enum::TryFromPrimitive;
 use object_store::path::Path;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::sync::Arc;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfiguration;
 use scalar_core::checkpoints::CheckpointStore;
@@ -25,9 +22,13 @@ use scalar_storage::{compute_sha3_checksum, FileCompression, SHA3_BYTES};
 use scalar_types::accumulator::Accumulator;
 use scalar_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
 use scalar_types::base_types::ObjectID;
+use scalar_types::randomness_state::get_randomness_state_obj_initial_shared_version;
 use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use scalar_types::sui_system_state::get_sui_system_state;
 use scalar_types::sui_system_state::SuiSystemStateTrait;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use std::sync::Arc;
 
 /// The following describes the format of an object file (*.obj) used for persisting live sui objects.
 /// The maximum size per .obj file is 128MB. State snapshot will be taken at the end of every epoch.
@@ -224,6 +225,8 @@ pub async fn setup_db_state(
     let system_state_object = get_sui_system_state(&perpetual_db)?;
     let authenticator_state_obj_initial_shared_version =
         get_authenticator_state_obj_initial_shared_version(&perpetual_db)?;
+    let randomness_state_obj_initial_shared_version =
+        get_randomness_state_obj_initial_shared_version(&perpetual_db)?;
     let new_epoch_start_state = system_state_object.into_epoch_start_state();
     let next_epoch_committee = new_epoch_start_state.get_sui_committee();
     let last_checkpoint = checkpoint_store
@@ -234,6 +237,7 @@ pub async fn setup_db_state(
         new_epoch_start_state,
         *last_checkpoint.digest(),
         authenticator_state_obj_initial_shared_version,
+        randomness_state_obj_initial_shared_version,
     );
     perpetual_db
         .set_epoch_start_configuration(&epoch_start_configuration)

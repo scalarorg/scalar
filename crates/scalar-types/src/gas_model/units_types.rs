@@ -6,7 +6,7 @@ use std::{
     ops::{Add, Bound},
 };
 
-use crate::move_types::gas_algebra::{
+use move_core_types::gas_algebra::{
     GasQuantity, InternalGas, InternalGasUnit, ToUnit, ToUnitFractional,
 };
 use serde::{Deserialize, Serialize};

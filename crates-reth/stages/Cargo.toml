@@ -57,8 +57,8 @@ reth-primitives = { workspace = true, features = ["test-utils", "arbitrary"] }
 reth-db = { workspace = true, features = ["test-utils", "mdbx"] }
 reth-interfaces = { workspace = true, features = ["test-utils"] }
 reth-downloaders = { path = "../net/downloaders" }
-reth-eth-wire = { path = "../net/eth-wire" } # TODO(onbjerg): We only need this for [BlockBody]
-reth-blockchain-tree = { path = "../blockchain-tree" }
+reth-eth-wire = { path = "../net/eth-wire" }                                   # TODO(onbjerg): We only need this for [BlockBody]
+# reth-blockchain-tree = { path = "../blockchain-tree" } -> Cyclic deps
 reth-revm = { path = "../revm" }
 reth-trie = { path = "../trie", features = ["test-utils"] }
 
@@ -70,7 +70,11 @@ rand.workspace = true
 paste = "1.0"
 
 # Stage benchmarks
-pprof = { version = "0.12", features = ["flamegraph", "frame-pointer", "criterion"] }
+pprof = { version = "0.12", features = [
+    "flamegraph",
+    "frame-pointer",
+    "criterion",
+] }
 criterion = { version = "0.5", features = ["async_futures"] }
 
 # io

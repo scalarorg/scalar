@@ -20,8 +20,9 @@ members = [
   "crates/scalar-network",
   "crates/scalar-kvstore",
   "crates/scalar-telemetry",
-  # "crates/scalar-move",
-  # "crates/scalar-transaction",
+  "crates/sui-move-build",
+  "crates/sui-genesis-builder",
+  "crates/sui-test-transaction-builder",
   # "crates/scalar-tss",
   "crates/shared-crypto",
   "crates/workspace-hack",
@@ -43,6 +44,9 @@ members = [
   "scalar-execution",
   "crates/scalar-consensus-adapter",
   "crates/scalar-consensus-adapter/common",
+  # TaiVV 231204 For testing
+  "scalar-test-cluster",
+
   # Reth packages
   "crates-reth/bin/reth",
   "crates-reth/config",
@@ -125,7 +129,7 @@ async-trait = "0.1.68" #Reth
 # async-trait = "0.1.61" #Sui
 bytes = "1.5"
 #clap = "4" #Reth
-clap = { version = "4.3.2", features = ["derive"] } #Sui
+clap = { version = "4.4", features = ["derive", "wrap_help"] } #Sui
 eyre = "0.6.8"
 # futures = "0.3.25" #Reth
 # futures = "0.3.26" #Sui
@@ -188,7 +192,7 @@ tokio-util = { version = "0.7", features = ["codec", "compat", "io"] }
 #tracing = "0.1.0" #Reth
 tracing = "0.1.37"         #sui
 tracing-appender = "0.2.2"
-
+async-stream = "0.3.5"
 
 # For sui only
 anyhow = "1.0.71"
@@ -224,6 +228,7 @@ backoff = { version = "0.4.0", features = [
 base64 = "0.21.2"
 base64-url = "2"
 bcs = { version = "0.1", default-features = false }
+better_any = "0.1.1"
 bincode = "1.3.3"
 bip32 = "0.4.0"
 byteorder = "1.4.3"
@@ -240,6 +245,7 @@ criterion = { version = "0.5.0", features = [
 ] }
 csv = "1.2.1"
 dashmap = "5.4.0"
+datatest-stable = { git = "https://github.com/nextest-rs/datatest-stable.git", rev = "72db7f6d1bbe36a5407e96b9488a581f763e106f" }
 derivative = "2.2.0"
 derive_builder = "0.12.0"
 derive_more = "0.99.17"
@@ -270,6 +276,7 @@ insta = { version = "1.21.1", features = ["redactions", "yaml", "json"] }
 integer-encoding = "3.0.1"
 
 json_to_table = { git = "https://github.com/zhiburt/tabled/", rev = "e449317a1c02eb6b29e409ad6617e5d9eb7b3bd4" }
+leb128 = "0.2.5"
 linked-hash-map = "0.5.6"
 lru = "0.12"
 mockall = "0.11.4"
@@ -327,12 +334,13 @@ serde_with = { version = "2.1.0", features = ["hex"] }
 serde_yaml = "0.8.26"
 signature = "1.6.0"
 slip10_ed25519 = "0.1.3"
+smallvec = "1.10.0"
 snap = "1.1.0"
 static_assertions = "1.1.0"
 structopt = "0.3.26"
 
 strum_macros = "0.24.3"
-
+tabled = { version = "0.12" }
 tap = "1.0.1"
 test-fuzz = "3.0.4"
 thiserror-impl = { version = "1", default-features = false }
@@ -378,6 +386,7 @@ tracing-subscriber = { version = "0.3.15", default-features = false, features = 
   "env-filter",
 ] }
 zstd = "0.12.3"
+zeroize = "1.6.0"
 url = "2.3.1"
 uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 
@@ -418,24 +427,27 @@ scalar-snapshot = { path = "crates/scalar-snapshot" }
 scalar-telemetry = { path = "crates/scalar-telemetry" }
 scalar-consensus-adapter = { path = "crates/scalar-consensus-adapter" }
 scalar-consensus-adapter-common = { path = "crates/scalar-consensus-adapter/common" }
-#scalar-move = { path = "crates/scalar-move" }
-#scalar-transaction = { path = "crates/scalar-transaction" }
+sui-move-build = { path = "crates/sui-move-build" }
+sui-genesis-builder = { path = "crates/sui-genesis-builder" }
+sui-test-transaction-builder = { path = "crates/sui-test-transaction-builder" }
+# For testing
+scalar-test-cluster = { path = "scalar-test-cluster" }
+
 scalar-tss = { path = "crates/scalar-tss" }
 shared-crypto = { path = "crates/shared-crypto" }
 
-
-config = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-config" }
-crypto = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-crypto" }
-narwhal-config = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-config" }
-narwhal-crypto = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-crypto" }
-narwhal-executor = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-executor" }
-narwhal-network = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-network" }
-narwhal-node = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-node" }
-narwhal-primary = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-primary" }
-narwhal-storage = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-storage" }
-narwhal-test-utils = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-test-utils" }
-narwhal-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-types" }
-narwhal-worker = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "narwhal-worker" }
+config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-config" }
+crypto = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-crypto" }
+narwhal-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-config" }
+narwhal-crypto = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-crypto" }
+narwhal-executor = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-executor" }
+narwhal-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-network" }
+narwhal-node = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-node" }
+narwhal-primary = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-primary" }
+narwhal-storage = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-storage" }
+narwhal-test-utils = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-test-utils" }
+narwhal-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-types" }
+narwhal-worker = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "narwhal-worker" }
 
 # anemo dependencies
 anemo = { git = "https://github.com/mystenlabs/anemo.git", rev = "1169850e6af127397068cd86764c29b1d49dbe35" }
@@ -443,33 +455,34 @@ anemo-build = { git = "https://github.com/mystenlabs/anemo.git", rev = "1169850e
 anemo-cli = { git = "https://github.com/mystenlabs/anemo.git", rev = "1169850e6af127397068cd86764c29b1d49dbe35" }
 anemo-tower = { git = "https://github.com/mystenlabs/anemo.git", rev = "1169850e6af127397068cd86764c29b1d49dbe35" }
 
-fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "802c1ac98061687d6ce024849c747a250dbeea52" }
-fastcrypto-tbls = { git = "https://github.com/MystenLabs/fastcrypto", rev = "802c1ac98061687d6ce024849c747a250dbeea52" }
-fastcrypto-zkp = { git = "https://github.com/MystenLabs/fastcrypto", rev = "802c1ac98061687d6ce024849c747a250dbeea52", package = "fastcrypto-zkp" }
+fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "517ec93ad2eba1807c9508f14953814a33523edc" }
+fastcrypto-tbls = { git = "https://github.com/MystenLabs/fastcrypto", rev = "517ec93ad2eba1807c9508f14953814a33523edc" }
+fastcrypto-zkp = { git = "https://github.com/MystenLabs/fastcrypto", rev = "517ec93ad2eba1807c9508f14953814a33523edc", package = "fastcrypto-zkp" }
 
-mysten-common = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "mysten-common" }
-mysten-metrics = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "mysten-metrics" }
-mysten-network = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "mysten-network" }
-mysten-util-mem = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "mysten-util-mem" }
-mysten-util-mem-derive = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "mysten-util-mem-derive" }
+mysten-common = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-common" }
+mysten-metrics = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-metrics" }
+mysten-network = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-network" }
+mysten-util-mem = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-util-mem" }
+mysten-util-mem-derive = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "mysten-util-mem-derive" }
 
-sui-enum-compat-util = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "enum-compat-util" }
-sui-protocol-config = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-protocol-config" }
-sui-protocol-config-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-protocol-config-macros" }
+sui-enum-compat-util = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "enum-compat-util" }
+sui-protocol-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-protocol-config" }
+sui-protocol-config-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-protocol-config-macros" }
 
-sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-macros" }
-sui-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-macros" }
+sui-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
+sui-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-macros" }
 
-sui-open-rpc = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-open-rpc" }
-sui-open-rpc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-open-rpc-macros" }
-sui-simulator = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-simulator" }
-sui-tls = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "sui-tls" }
+sui-open-rpc = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-open-rpc" }
+sui-open-rpc-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-open-rpc-macros" }
+sui-simulator = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-simulator" }
+sui-tls = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "sui-tls" }
 
-telemetry-subscribers = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "telemetry-subscribers" }
-store = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "typed-store" }
-store-derive = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "typed-store-derive" }
-typed-store = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "typed-store" }
-typed-store-derive = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "typed-store-derive" }
+telemetry-subscribers = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "telemetry-subscribers" }
+store = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store" }
+store-derive = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-derive" }
+typed-store = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store" }
+typed-store-derive = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-derive" }
+typed-store-error = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "typed-store-error" }
 
 workspace-hack = "0.1.0"
 
@@ -482,20 +495,27 @@ num-bigint = "0.4.0"
 primitive-types = { version = "0.10.1", features = ["impl-serde"] }
 
 
-move-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-proc-macros" }
-move-vm-profiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-vm-profiler" }
-move-vm-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-vm-types" }
-move-binary-format = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-binary-format" }
-move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-core-types" }
-move-command-line-common = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-command-line-common" }
-move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-utils" }
-move-package = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-package" }
-move-ir-types = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-ir-types" }
-move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-symbol-pool" }
-move-disassembler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-disassembler" }
-move-bytecode-source-map = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-bytecode-source-map" }
-move-coverage = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-coverage" }
-move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "23c02802c858da6b396fa9f9acf47c72b64367bc", package = "move-compiler" }
+move-proc-macros = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-proc-macros" }
+move-vm-profiler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-profiler" }
+move-vm-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-types" }
+move-binary-format = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-binary-format" }
+move-core-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-core-types" }
+move-command-line-common = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-command-line-common" }
+move-bytecode-utils = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-utils" }
+move-package = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-package" }
+move-vm-config = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-config" }
+move-ir-types = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-ir-types" }
+move-symbol-pool = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-symbol-pool" }
+move-disassembler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-disassembler" }
+move-bytecode-source-map = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-source-map" }
+move-coverage = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-coverage" }
+move-compiler = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-compiler" }
+
+# For execution
+move-bytecode-verifier = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-bytecode-verifier" }
+move-vm-runtime = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-vm-runtime" }
+move-stdlib = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-stdlib" }
+move-abstract-stack = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "move-abstract-stack" }
 
 # 23-11-08 TaiVV
 # For Reth itegration

@@ -13,6 +13,14 @@ use futures::StreamExt;
 use integer_encoding::VarInt;
 use object_store::path::Path;
 use object_store::DynObjectStore;
+use scalar_core::authority::authority_store_tables::{AuthorityPerpetualTables, LiveObject};
+use scalar_core::authority::CHAIN_IDENTIFIER;
+use scalar_storage::blob::{Blob, BlobEncoding, BLOB_ENCODING_BYTES};
+use scalar_storage::object_store::util::{copy_file, delete_recursively, path_to_filesystem};
+use scalar_storage::object_store::ObjectStoreConfig;
+use scalar_types::base_types::{ObjectID, ObjectRef};
+use scalar_types::sui_system_state::get_sui_system_state;
+use scalar_types::sui_system_state::SuiSystemStateTrait;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use std::fs;
@@ -21,15 +29,7 @@ use std::io::{BufWriter, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::sync::Arc;
-use scalar_core::authority::authority_store_tables::{AuthorityPerpetualTables, LiveObject};
-use scalar_core::authority::CHAIN_IDENTIFIER;
 use sui_protocol_config::{ProtocolConfig, ProtocolVersion};
-use scalar_storage::blob::{Blob, BlobEncoding, BLOB_ENCODING_BYTES};
-use scalar_storage::object_store::util::{copy_file, delete_recursively, path_to_filesystem};
-use scalar_storage::object_store::ObjectStoreConfig;
-use scalar_types::base_types::{ObjectID, ObjectRef};
-use scalar_types::sui_system_state::get_sui_system_state;
-use scalar_types::sui_system_state::SuiSystemStateTrait;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::task::JoinHandle;
@@ -450,7 +450,7 @@ impl StateSnapshotWriterV1 {
         // Delete remote epoch dir if it exists
         delete_recursively(
             &epoch_dir,
-            self.remote_object_store.clone(),
+            &self.remote_object_store,
             NonZeroUsize::new(self.concurrency).unwrap(),
         )
         .await?;
@@ -470,7 +470,7 @@ impl StateSnapshotWriterV1 {
         to: Arc<DynObjectStore>,
     ) -> Result<()> {
         debug!("Syncing snapshot file to remote: {:?}", path);
-        copy_file(path.clone(), path.clone(), from, to).await?;
+        copy_file(&path, &path, &from, &to).await?;
         fs::remove_file(path_to_filesystem(local_path, &path)?)?;
         Ok(())
     }

@@ -41,7 +41,7 @@ parking_lot.workspace = true
 clap = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
-reth-db = { workspace = true, features = ["test-utils"] }
+# reth-db = { workspace = true, features = ["test-utils"] } -> Cyclic deps
 tokio = { workspace = true, features = ["full"] }
 tokio-stream = { workspace = true, features = ["sync"] }
 arbitrary = { workspace = true, features = ["derive"] }
