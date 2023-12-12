@@ -3,6 +3,7 @@ use cluster::{Cluster, ClusterFactory};
 use config::ClusterTestOpt;
 use test_case::send_raw_transaction_test::SendRawTransactionTest;
 use tracing::{error, info};
+use wallet_client::WalletClient;
 
 pub mod cluster;
 pub mod config;
@@ -13,12 +14,33 @@ pub mod wallet_client;
 pub struct TestContext {
     /// Cluster handle that allows access to various components in a cluster
     cluster: Box<dyn Cluster + Sync + Send>,
+    /// Client that provides wallet context and fullnode access
+    client: WalletClient,
+    options: ClusterTestOpt,
 }
 
 impl TestContext {
     pub async fn setup(options: ClusterTestOpt) -> Result<Self, anyhow::Error> {
         let cluster = ClusterFactory::start(&options).await?;
-        Ok(Self { cluster })
+
+        // Sleep for a bit to allow the cluster to start up
+        // TODO: Use a better way to check if the cluster is up and running
+        tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+
+        let wallet_client = WalletClient::new_from_cluster(&cluster, &options).await;
+        Ok(Self {
+            cluster,
+            client: wallet_client,
+            options,
+        })
+    }
+
+    fn get_context(&self) -> &WalletClient {
+        &self.client
+    }
+
+    fn get_fullnode_rpc_url(&self) -> &str {
+        self.client.get_wallet_address()
     }
 }
 
@@ -29,10 +51,6 @@ impl ClusterTest {
         let mut ctx = TestContext::setup(options)
             .await
             .unwrap_or_else(|e| panic!("Failed to setup test context: {e}"));
-
-        // Sleep for a bit to allow the cluster to start up
-        // TODO: Use a better way to check if the cluster is up and running
-        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
         let tests = vec![TestCase::new(SendRawTransactionTest {})];
 

@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 futures.workspace = true
 serde_json.workspace = true
+serde.workspace = true
 tokio = { workspace = true, features = ["full"] }
 tracing.workspace = true
 clap.workspace = true
@@ -19,3 +20,7 @@ derivative.workspace = true
 tempfile.workspace = true
 test-cluster.workspace = true
 ethers = { version = "2.0", features = ["rustls"] }
+
+# env
+dotenvy = { version = "0.15", default-features = false }
+envy = "0.4"

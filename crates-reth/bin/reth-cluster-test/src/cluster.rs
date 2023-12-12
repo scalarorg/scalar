@@ -2,7 +2,7 @@ use anyhow::Ok;
 use async_trait::async_trait;
 use test_cluster::{TestCluster, TestClusterBuilder};
 
-use crate::config::{ClusterTestOpt, Env};
+use crate::config::ClusterTestOpt;
 
 pub struct ClusterFactory;
 
@@ -10,10 +10,11 @@ impl ClusterFactory {
     pub async fn start(
         options: &ClusterTestOpt,
     ) -> Result<Box<dyn Cluster + Sync + Send>, anyhow::Error> {
-        Ok(match &options.env {
-            Env::NewLocal => Box::new(LocalNewCluster::start(options).await?),
-            _ => Box::new(RemoteRunningCluster::start(options).await?),
-        })
+        // Ok(match &options.env {
+        //     Env::NewLocal => Box::new(LocalNewCluster::start(options).await?),
+        //     _ => Box::new(RemoteRunningCluster::start(options).await?),
+        // })
+        Ok(Box::new(LocalNewCluster::start(options).await?))
     }
 }
 
@@ -65,20 +66,28 @@ pub struct LocalNewCluster {
 impl Cluster for LocalNewCluster {
     async fn start(options: &ClusterTestOpt) -> Result<Self, anyhow::Error> {
         let mut cluster_builder = TestClusterBuilder::new();
-        let test_cluster = cluster_builder.build();
         let mut handles = vec![];
-        for index in 0..options.nodes {
-            let mut cluster = cluster_builder.increase_port_with_index(index).build();
+
+        for instance in 1..=options.nodes {
+            cluster_builder
+                .instance(instance)
+                .chain(options.chain.clone());
+            let mut test_cluster = cluster_builder.build();
+
             let handle = tokio::task::spawn_blocking(move || {
-                cluster.start().expect("Failed to start cluster");
+                test_cluster.start().expect("Failed to start cluster");
             });
+
             handles.push(handle);
         }
 
+        let test_cluster = cluster_builder.chain(options.chain.clone()).build();
+
+        let fullnode_url = test_cluster.fullnode_url().to_string();
+
         Ok(Self {
+            fullnode_url,
             test_cluster,
-            // TODO: Get the fullnode url from the cluster
-            fullnode_url: "http://localhost:8545".to_string(),
             handles,
         })
     }

@@ -1,5 +1,3 @@
-use clap::*;
-use futures::future::join_all;
 use reth_cluster_test::{config::ClusterTestOpt, ClusterTest};
 
 #[tokio::main]

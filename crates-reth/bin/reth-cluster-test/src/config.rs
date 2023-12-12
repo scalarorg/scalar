@@ -1,37 +1,43 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
+use dotenvy::dotenv;
+use serde::Deserialize;
 
-use clap::*;
-
-#[derive(Parser, Clone, ValueEnum, Debug)]
-pub enum Env {
-    Devnet,
-    Staging,
-    Ci,
-    CiNomad,
-    Testnet,
-    CustomRemote,
-    NewLocal,
-}
-
-#[derive(derivative::Derivative, Parser)]
+#[derive(derivative::Derivative, Deserialize)]
 #[derivative(Debug)]
-#[clap(name = "", rename_all = "kebab-case")]
 pub struct ClusterTestOpt {
-    #[clap(value_enum)]
-    pub env: Env,
-    #[clap(long)]
-    pub fullnode_address: Option<String>,
-    #[clap(long, default_value_t = 4)]
-    pub nodes: u32,
+    pub nodes: u8,
+    pub chain: String,
+    pub phrase: String,
+    pub receiver_address: String,
+    pub transaction_amount: u64,
 }
 
 impl ClusterTestOpt {
-    pub fn new_local() -> Self {
-        Self {
-            env: Env::NewLocal,
-            fullnode_address: None,
-            nodes: 4,
+    pub fn parse() -> Self {
+        dotenv().expect(".env file not found");
+
+        match envy::from_env::<Self>() {
+            Ok(config) => config,
+            Err(e) => panic!("Couldn't read config ({})", e),
         }
+    }
+
+    pub fn phrase(&self) -> &str {
+        &self.phrase
+    }
+
+    pub fn receiver_address(&self) -> &str {
+        &self.receiver_address
+    }
+
+    pub fn nodes(&self) -> u8 {
+        self.nodes
+    }
+
+    pub fn chain(&self) -> &str {
+        &self.chain
+    }
+
+    pub fn transaction_amount(&self) -> u64 {
+        self.transaction_amount
     }
 }
