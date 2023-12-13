@@ -35,6 +35,10 @@ test_cluster() {
         --epoch-duration-ms 3600000
 }   
 
+reth_test_cluster() {
+    RUST_LOG=info /usr/local/bin/reth-test-cluster
+}   
+
 test_cluster1() {
     RUST_LOG=debug /usr/local/bin/test-cluster \
         --config-dir /scalar/cluster-local \

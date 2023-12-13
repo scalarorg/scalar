@@ -69,11 +69,11 @@ impl WalletClient {
     pub fn create_transaction(&self, to: &str, value: U256, nonce: u64) -> TransactionRequest {
         let chain_id = self.wallet_context.chain_id();
         TransactionRequest::new()
-            .to(to) // this will use ENS
+            .to(to)
             .nonce(nonce)
             .value(value)
-            .gas(0x76c0000)
-            .gas_price(0x43423422)
+            .gas(100000)
+            .gas_price(0x4342342)
             .chain_id(chain_id)
     }
 }

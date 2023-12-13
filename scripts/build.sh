@@ -40,6 +40,14 @@ test_cluster() {
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
+reth_test_cluster() {
+    BIN_NAME=reth-test-cluster
+    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
 sui() {
     BIN_NAME=sui
     docker exec -it ${BUILDER} cargo build --manifest-path /scalar/sui/Cargo.toml --profile dev --bin ${BIN_NAME}

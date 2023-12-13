@@ -1,4 +1,4 @@
-use reth_cluster_test::{config::ClusterTestOpt, ClusterTest};
+use reth_test_cluster::{config::ClusterTestOpt, ClusterTest};
 
 #[tokio::main]
 async fn main() {

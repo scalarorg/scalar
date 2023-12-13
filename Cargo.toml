@@ -96,8 +96,10 @@ members = [
   "crates-reth/testing/eth-tests",
   "crates-reth/rpc/rpc-types-compat",
   "crates-reth/tokio-util",
-  "crates-reth/bin/reth-cluster-test",
-  "crates-reth/test-cluster",
+  # HuongND 231213 For testing
+  "crates-reth/bin/reth-test-cluster",
+  "crates-reth/reth-cluster-test",
+
   #"examples",
   #"examples/additional-rpc-namespace-in-cli",
   #"examples/cli-extension-event-hooks",
@@ -544,8 +546,8 @@ reth-eth-wire = { path = "./crates-reth/net/eth-wire" }
 reth-ecies = { path = "./crates-reth/net/ecies" }
 reth-tracing = { path = "./crates-reth/tracing" }
 reth-tokio-util = { path = "crates-reth/tokio-util" }
-reth-cluster-test = { path = "./crates-reth/bin/cluster-test" }
-test-cluster = { path = "./crates-reth/test-cluster" }
+reth-test-cluster = { path = "./crates-reth/bin/reth-test-cluster" }
+reth-cluster-test = { path = "./crates-reth/reth-cluster-test" }
 #For consensus
 reth-snapshot = { path = "./crates-reth/snapshot" }
 reth-stages = { path = "./crates-reth/stages" }

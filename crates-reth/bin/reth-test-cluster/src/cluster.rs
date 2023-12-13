@@ -1,6 +1,6 @@
 use anyhow::Ok;
 use async_trait::async_trait;
-use test_cluster::{TestCluster, TestClusterBuilder};
+use reth_cluster_test::{TestCluster, TestClusterBuilder};
 
 use crate::config::ClusterTestOpt;
 
@@ -27,7 +27,7 @@ pub trait Cluster {
 
     fn fullnode_url(&self) -> &str;
 
-    fn shutdown(&self) -> Result<(), anyhow::Error> {
+    fn shutdown(&mut self) -> Result<(), anyhow::Error> {
         Ok(())
     }
 }
@@ -60,6 +60,7 @@ pub struct LocalNewCluster {
     test_cluster: TestCluster,
     fullnode_url: String,
     handles: Vec<tokio::task::JoinHandle<()>>,
+    tx_shutdowns: Vec<tokio::sync::oneshot::Sender<()>>,
 }
 
 #[async_trait]
@@ -67,18 +68,25 @@ impl Cluster for LocalNewCluster {
     async fn start(options: &ClusterTestOpt) -> Result<Self, anyhow::Error> {
         let mut cluster_builder = TestClusterBuilder::new();
         let mut handles = vec![];
+        let mut tx_shutdowns = vec![];
 
         for instance in 1..=options.nodes {
             cluster_builder
-                .instance(instance)
-                .chain(options.chain.clone());
+                .narwhal_port(options.narwhal_port.clone())
+                .chain(options.chain.clone())
+                .instance(instance);
             let mut test_cluster = cluster_builder.build();
 
+            let (tx_shutdown, rx_shutdown) = tokio::sync::oneshot::channel::<()>();
+
             let handle = tokio::task::spawn_blocking(move || {
-                test_cluster.start().expect("Failed to start cluster");
+                test_cluster
+                    .start(rx_shutdown)
+                    .expect("Failed to start cluster");
             });
 
             handles.push(handle);
+            tx_shutdowns.push(tx_shutdown);
         }
 
         let test_cluster = cluster_builder.chain(options.chain.clone()).build();
@@ -89,6 +97,7 @@ impl Cluster for LocalNewCluster {
             fullnode_url,
             test_cluster,
             handles,
+            tx_shutdowns,
         })
     }
 
@@ -96,7 +105,10 @@ impl Cluster for LocalNewCluster {
         &self.fullnode_url
     }
 
-    fn shutdown(&self) -> Result<(), anyhow::Error> {
+    fn shutdown(&mut self) -> Result<(), anyhow::Error> {
+        for tx in std::mem::take(&mut self.tx_shutdowns) {
+            tx.send(()).expect("Should send shutdown signal to cluster");
+        }
         for handle in &self.handles {
             handle.abort();
         }
@@ -116,7 +128,7 @@ impl Cluster for Box<dyn Cluster + Send + Sync> {
         (**self).fullnode_url()
     }
 
-    fn shutdown(&self) -> Result<(), anyhow::Error> {
+    fn shutdown(&mut self) -> Result<(), anyhow::Error> {
         (**self).shutdown()
     }
 }

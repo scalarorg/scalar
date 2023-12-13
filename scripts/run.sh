@@ -16,6 +16,10 @@ test_cluster() {
   docker exec -it ${RUNNER} /entry.sh test_cluster
 }
 
+reth_test_cluster() {
+  docker exec -it ${RUNNER} /entry.sh reth_test_cluster
+}
+
 tss() {
   docker exec -it ${RUNNER} /entry.sh tss
 }

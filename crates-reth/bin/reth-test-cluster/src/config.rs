@@ -9,6 +9,7 @@ pub struct ClusterTestOpt {
     pub phrase: String,
     pub receiver_address: String,
     pub transaction_amount: u64,
+    pub narwhal_port: Option<String>,
 }
 
 impl ClusterTestOpt {
@@ -39,5 +40,9 @@ impl ClusterTestOpt {
 
     pub fn transaction_amount(&self) -> u64 {
         self.transaction_amount
+    }
+
+    pub fn narwhal_port(&self) -> &Option<String> {
+        &self.narwhal_port
     }
 }

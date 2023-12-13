@@ -1,5 +1,5 @@
 [package]
-name = "reth-cluster-test"
+name = "reth-test-cluster"
 version = "0.1.0"
 authors = ["Duc Huong Nguyen <huong@codelight.co>"]
 license = "Apache-2.0"
@@ -18,7 +18,7 @@ anyhow = { workspace = true, features = ["backtrace"] }
 telemetry-subscribers.workspace = true
 derivative.workspace = true
 tempfile.workspace = true
-test-cluster.workspace = true
+reth-cluster-test.workspace = true
 ethers = { version = "2.0", features = ["rustls"] }
 
 # env

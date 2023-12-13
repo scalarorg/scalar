@@ -1,6 +1,11 @@
 use clap::Parser;
+use futures::pin_mut;
 use reth::node::NodeCommand;
-use reth::runner::CliRunner;
+use reth::runner::{tokio_runtime, CliContext, CliRunner};
+use reth_tasks::TaskManager;
+use std::future::Future;
+use tokio::sync::oneshot;
+use tracing::trace;
 
 #[derive(Clone, Default)]
 pub struct TestCluster {
@@ -16,6 +21,7 @@ pub struct TestCluster {
     auth_jwt_secret: String,
     instance: u8,
     chain: String,
+    narwhal_port: Option<String>,
 }
 
 // Metrics
@@ -39,7 +45,14 @@ const DEFAULT_INSTANCE: u8 = 1;
 const DEFAULT_CHAIN: &str = "sepolia";
 
 impl TestCluster {
-    pub fn start(&mut self) -> eyre::Result<()> {
+    pub fn start(&mut self, rx_shutdown: oneshot::Receiver<()>) -> eyre::Result<()> {
+        let narwhal = if self.narwhal_port.is_some() {
+            "--narwhal"
+        } else {
+            // TODO: Chose a better way to turn off narwhal
+            "--ws"
+        };
+
         let node_cmd = NodeCommand::<()>::try_parse_from([
             "reth node",
             "--http",
@@ -49,7 +62,7 @@ impl TestCluster {
             self.http_port.as_str(),
             "--http.api",
             "eth,net,trace,web3,rpc,debug,txpool",
-            "--ws",
+            // "--ws",
             "--ws.addr",
             self.ws_addr.as_str(),
             "--ws.port",
@@ -70,17 +83,48 @@ impl TestCluster {
             self.instance.to_string().as_str(),
             "--chain",
             self.chain.as_str(),
+            "--narwhal.port",
+            self.narwhal_port
+                .as_ref()
+                .unwrap_or(&"9090".to_string())
+                .as_str(),
+            narwhal,
         ])
         .expect("Parse node command");
 
-        let runner = CliRunner::default();
-        runner.run_command_until_exit(|ctx| node_cmd.execute(ctx))
+        let tokio_runtime = tokio_runtime()?;
+        let task_manager = TaskManager::new(tokio_runtime.handle().clone());
+        let task_executor = task_manager.executor();
+        let context = CliContext { task_executor };
+
+        let task_manager = tokio_runtime.block_on(run_to_completion_or_panic(
+            task_manager,
+            run_until_ctrl_c(node_cmd.execute(context)),
+            rx_shutdown,
+        ))?;
+
+        // after the command has finished or exit signal was received we drop the task manager which
+        // fires the shutdown signal to all tasks spawned via the task executor
+        drop(task_manager);
+
+        // drop the tokio runtime on a separate thread because drop blocks until its pools
+        // (including blocking pool) are shutdown. In other words `drop(tokio_runtime)` would block
+        // the current thread but we want to exit right away.
+        std::thread::spawn(move || drop(tokio_runtime));
+
+        // give all tasks that are now being shut down some time to finish before tokio leaks them
+        // see [Runtime::shutdown_timeout](tokio::runtime::Runtime::shutdown_timeout)
+        // TODO: enable this again, when pipeline/stages are not longer blocking tasks
+        // warn!(target: "reth::cli", "Received shutdown signal, waiting up to 30 seconds for
+        // tasks."); tokio_runtime.shutdown_timeout(Duration::from_secs(30));
+        Ok(())
     }
 
     pub fn fullnode_url(&self) -> String {
         format!(
             "http://{}:{}",
             self.http_addr,
+            // http port base on instance number, see detail here: https://paradigmxyz.github.io/reth/cli/node.html
             self.http_port
                 .parse::<u32>()
                 .expect("http port should be a number")
@@ -103,6 +147,7 @@ pub struct TestClusterBuilder {
     auth_jwt_secret: String,
     instance: u8,
     chain: String,
+    narwhal_port: Option<String>,
 }
 
 impl Default for TestClusterBuilder {
@@ -120,6 +165,7 @@ impl Default for TestClusterBuilder {
             auth_jwt_secret: DEFAULT_AUTH_JWT_SECRET.to_string(),
             instance: DEFAULT_INSTANCE,
             chain: DEFAULT_CHAIN.to_string(),
+            narwhal_port: None,
         }
     }
 }
@@ -174,9 +220,25 @@ impl TestClusterBuilder {
         self
     }
 
+    /// Sets the instance number of the node. This is used to calculate the port of the node.
+    ///
+    /// Should be called right before `build`.
     pub fn instance(&mut self, instance: u8) -> &mut Self {
         self.instance = instance;
         self.data_dir = format!("{}/{}", DEFAULT_DATA_DIR, instance);
+        if self.narwhal_port.is_some() {
+            self.narwhal_port = Some(
+                (self
+                    .narwhal_port
+                    .as_ref()
+                    .unwrap()
+                    .parse::<u32>()
+                    .expect("narwhal port should be a number")
+                    + instance as u32
+                    - 1)
+                .to_string(),
+            );
+        }
         self
     }
 
@@ -185,8 +247,14 @@ impl TestClusterBuilder {
         self
     }
 
+    pub fn narwhal_port(&mut self, narwhal_port: Option<String>) -> &mut Self {
+        self.narwhal_port = narwhal_port;
+        self
+    }
+
     pub fn build(&self) -> TestCluster {
         TestCluster {
+            narwhal_port: self.narwhal_port.clone(),
             metrics_addr: self.metrics_addr.clone(),
             metrics_port: self.metrics_port.clone(),
             ws_port: self.ws_port.clone(),
@@ -201,4 +269,72 @@ impl TestClusterBuilder {
             data_dir: self.data_dir.clone(),
         }
     }
+}
+
+/// Runs the given future to completion or until a critical task panicked
+async fn run_to_completion_or_panic<F, E>(
+    mut tasks: TaskManager,
+    fut: F,
+    rx_shutdown: oneshot::Receiver<()>,
+) -> Result<TaskManager, E>
+where
+    F: Future<Output = Result<(), E>>,
+    E: Send + Sync + From<reth_tasks::PanickedTaskError> + 'static,
+{
+    {
+        pin_mut!(fut);
+        tokio::select! {
+            _ = rx_shutdown => {
+                trace!(target: "reth-cluster-test::cli",  "Received shutdown signal");
+            },
+
+            err = &mut tasks => {
+                return Err(err.into())
+            },
+            res = fut => res?,
+        }
+    }
+    Ok(tasks)
+}
+
+/// Runs the future to completion or until:
+/// - `ctrl-c` is received.
+/// - `SIGTERM` is received (unix only).
+async fn run_until_ctrl_c<F, E>(fut: F) -> Result<(), E>
+where
+    F: Future<Output = Result<(), E>>,
+    E: Send + Sync + 'static + From<std::io::Error>,
+{
+    let ctrl_c = tokio::signal::ctrl_c();
+
+    #[cfg(unix)]
+    {
+        let mut stream = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
+        let sigterm = stream.recv();
+        pin_mut!(sigterm, ctrl_c, fut);
+
+        tokio::select! {
+            _ = ctrl_c => {
+                trace!(target: "reth::cli",  "Received ctrl-c");
+            },
+            _ = sigterm => {
+                trace!(target: "reth::cli",  "Received SIGTERM");
+            },
+            res = fut => res?,
+        }
+    }
+
+    #[cfg(not(unix))]
+    {
+        pin_mut!(ctrl_c, fut);
+
+        tokio::select! {
+            _ = ctrl_c => {
+                trace!(target: "reth::cli",  "Received ctrl-c");
+            },
+            res = fut => res?,
+        }
+    }
+
+    Ok(())
 }

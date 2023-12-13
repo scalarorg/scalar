@@ -12187,18 +12187,13 @@ name = "reth-cluster-test"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "clap 4.4.7",
- "derivative",
- "dotenvy",
- "envy",
- "ethers",
+ "eyre",
  "futures",
- "serde",
- "serde_json",
- "telemetry-subscribers",
- "tempfile",
- "test-cluster",
+ "jsonrpsee 0.20.3",
+ "rand 0.8.5",
+ "reth",
+ "reth-tasks",
  "tokio",
  "tracing",
 ]
@@ -13017,6 +13012,27 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-futures",
+]
+
+[[package]]
+name = "reth-test-cluster"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clap 4.4.7",
+ "derivative",
+ "dotenvy",
+ "envy",
+ "ethers",
+ "futures",
+ "reth-cluster-test",
+ "serde",
+ "serde_json",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -17699,22 +17715,6 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
-
-[[package]]
-name = "test-cluster"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap 4.4.7",
- "eyre",
- "futures",
- "jsonrpsee 0.20.3",
- "rand 0.8.5",
- "reth",
- "reth-tasks",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "test-fuzz"
