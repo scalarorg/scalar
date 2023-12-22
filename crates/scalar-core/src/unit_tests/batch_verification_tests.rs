@@ -7,15 +7,15 @@ use fastcrypto::traits::KeyPair;
 use futures::future::join_all;
 use prometheus::Registry;
 use rand::{thread_rng, Rng};
-use scalar_types::committee::Committee;
-use scalar_types::crypto::{get_key_pair, AccountKeyPair, AuthorityKeyPair};
-use scalar_types::gas::GasCostSummary;
-use scalar_types::messages_checkpoint::{
-    CheckpointContents, CheckpointSummary, SignedCheckpointSummary,
-};
-use scalar_types::transaction::CertifiedTransaction;
 use std::sync::Arc;
 use sui_macros::sim_test;
+use sui_types::committee::Committee;
+use sui_types::crypto::{get_key_pair, AccountKeyPair, AuthorityKeyPair};
+use sui_types::gas::GasCostSummary;
+use sui_types::messages_checkpoint::{
+    CheckpointContents, CheckpointSummary, SignedCheckpointSummary,
+};
+use sui_types::transaction::CertifiedTransaction;
 
 // TODO consolidate with `gen_certs` in batch_verification_bench.rs
 fn gen_certs(

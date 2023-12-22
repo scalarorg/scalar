@@ -11,12 +11,12 @@ use enum_dispatch::enum_dispatch;
 use fastcrypto::traits::KeyPair;
 use mysten_metrics::RegistryService;
 use prometheus::{register_int_gauge_with_registry, IntGauge, Registry};
-use scalar_config::{ConsensusConfig, NodeConfig};
-use scalar_types::committee::EpochId;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
+use sui_config::{ConsensusConfig, NodeConfig};
 use sui_protocol_config::ProtocolVersion;
+use sui_types::committee::EpochId;
 use tokio::sync::{Mutex, MutexGuard};
 
 pub mod mysticeti_manager;

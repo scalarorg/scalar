@@ -1,23 +1,16 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-06 TaiVV
- * copy and modify from sui-core/src/state_accumulator.rs
- * Tổng hợp trạng thái của hệ thống sau khi thực hiện các transactions.
- * Tags: SCALAR_SCORING, SCALAR_AUTHORITY
- */
-
 use itertools::Itertools;
 use mysten_metrics::monitored_scope;
-use scalar_types::base_types::{ObjectID, ObjectRef, SequenceNumber, VersionNumber};
-use scalar_types::committee::EpochId;
-use scalar_types::digests::{ObjectDigest, TransactionDigest};
-use scalar_types::in_memory_storage::InMemoryStorage;
-use scalar_types::object::Object;
-use scalar_types::storage::{ObjectKey, ObjectStore};
 use serde::Serialize;
 use sui_protocol_config::ProtocolConfig;
+use sui_types::base_types::{ObjectID, ObjectRef, SequenceNumber, VersionNumber};
+use sui_types::committee::EpochId;
+use sui_types::digests::{ObjectDigest, TransactionDigest};
+use sui_types::in_memory_storage::InMemoryStorage;
+use sui_types::object::Object;
+use sui_types::storage::{ObjectKey, ObjectStore};
 use tracing::debug;
 use typed_store::Map;
 
@@ -25,12 +18,11 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use fastcrypto::hash::MultisetHash;
-use scalar_types::accumulator::Accumulator;
-use scalar_types::effects::TransactionEffects;
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::error::SuiResult;
-use scalar_types::messages_checkpoint::{CheckpointSequenceNumber, ECMHLiveObjectSetDigest};
-use typed_store::TypedStoreError;
+use sui_types::accumulator::Accumulator;
+use sui_types::effects::TransactionEffects;
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::error::SuiResult;
+use sui_types::messages_checkpoint::{CheckpointSequenceNumber, ECMHLiveObjectSetDigest};
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::authority::authority_store_tables::LiveObject;
@@ -113,7 +105,9 @@ where
     S: std::ops::Deref<Target = T>,
     T: AccumulatorReadStore,
 {
-    if protocol_config.simplified_unwrap_then_delete() {
+    if protocol_config.enable_effects_v2() {
+        accumulate_effects_v3(effects)
+    } else if protocol_config.simplified_unwrap_then_delete() {
         accumulate_effects_v2(store, effects)
     } else {
         accumulate_effects_v1(store, effects, protocol_config)
@@ -299,6 +293,36 @@ where
     acc
 }
 
+fn accumulate_effects_v3(effects: Vec<TransactionEffects>) -> Accumulator {
+    let mut acc = Accumulator::default();
+
+    // process insertions to the set
+    acc.insert_all(
+        effects
+            .iter()
+            .flat_map(|fx| {
+                fx.all_changed_objects()
+                    .into_iter()
+                    .map(|(object_ref, _, _)| object_ref.2)
+            })
+            .collect::<Vec<ObjectDigest>>(),
+    );
+
+    // process modified objects to the set
+    acc.remove_all(
+        effects
+            .iter()
+            .flat_map(|fx| {
+                fx.old_object_metadata()
+                    .into_iter()
+                    .map(|(object_ref, _owner)| object_ref.2)
+            })
+            .collect::<Vec<ObjectDigest>>(),
+    );
+
+    acc
+}
+
 impl StateAccumulator {
     pub fn new(authority_store: Arc<AuthorityStore>) -> Self {
         Self { authority_store }
@@ -346,7 +370,7 @@ impl StateAccumulator {
         epoch: &EpochId,
         last_checkpoint_of_epoch: CheckpointSequenceNumber,
         epoch_store: Arc<AuthorityPerEpochStore>,
-    ) -> Result<Accumulator, TypedStoreError> {
+    ) -> SuiResult<Accumulator> {
         if let Some((_checkpoint, acc)) = self
             .authority_store
             .perpetual_tables
@@ -457,7 +481,7 @@ impl StateAccumulator {
         epoch: &EpochId,
         last_checkpoint_of_epoch: CheckpointSequenceNumber,
         epoch_store: Arc<AuthorityPerEpochStore>,
-    ) -> Result<ECMHLiveObjectSetDigest, TypedStoreError> {
+    ) -> SuiResult<ECMHLiveObjectSetDigest> {
         Ok(self
             .accumulate_epoch(epoch, last_checkpoint_of_epoch, epoch_store)
             .await?

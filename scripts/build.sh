@@ -8,45 +8,96 @@ BIN_DIR=${SCRIPT_DIR}/validator/${PROFILE}
 SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
+# Working from 2023-12-13
+consensus_cluster() {
+    BIN_NAME=consensus-cluster
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+scalar_cluster() {
+    BIN_NAME=scalar-cluster
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
+# HuongND 2023-12-14
+reth_test_cluster() {
+    BIN_NAME=reth-test-cluster
+    WORKING_DIR=/reth
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/scalar/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
+    docker cp ${SCRIPT_DIR}/test-genesis.json ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+    rm ${SCRIPT_DIR}/test-genesis.json
+}
+
+reth_test_client() {
+    BIN_NAME=reth-test-client
+    WORKING_DIR=/reth
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/scalar/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
+    docker cp ${SCRIPT_DIR}/test-genesis.json ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+    rm ${SCRIPT_DIR}/test-genesis.json
+}
+
+# Working from 2023-12-13
+scalar_reth() {
+    BIN_NAME=scalar-reth
+    WORKING_DIR=/reth
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/scalar/reth-node/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
 reth() {
     BIN_NAME=reth
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    WORKING_DIR=/reth
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
 scalar() {
     BIN_NAME=scalar-node
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
 consensus() {
     BIN_NAME=consensus-node
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/${BIN_NAME}
-}
-
-test_cluster() {
-    BIN_NAME=test-cluster
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
 sui() {
     BIN_NAME=sui
-    docker exec -it ${BUILDER} cargo build --manifest-path /scalar/sui/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:/scalar/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    RKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
+
+
 
 relayer() {
     BUILDER=scalar-relayer

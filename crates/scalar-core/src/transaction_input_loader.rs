@@ -4,19 +4,18 @@
 use crate::authority::authority_store::AuthorityStore;
 use itertools::izip;
 use once_cell::unsync::OnceCell;
-use scalar_types::{
+use std::collections::HashMap;
+use std::sync::Arc;
+use sui_protocol_config::ProtocolConfig;
+use sui_types::{
     base_types::{EpochId, ObjectID, ObjectRef, SequenceNumber, TransactionDigest},
     error::{SuiError, SuiResult, UserInputError},
-    fp_ensure,
     storage::{BackingPackageStore, GetSharedLocks, ObjectKey, ObjectStore},
     transaction::{
         InputObjectKind, InputObjects, ObjectReadResult, ObjectReadResultKind,
         ReceivingObjectReadResult, ReceivingObjectReadResultKind, ReceivingObjects,
     },
 };
-use std::collections::HashMap;
-use std::sync::Arc;
-use sui_protocol_config::ProtocolConfig;
 use tracing::instrument;
 
 pub(crate) struct TransactionInputLoader {
@@ -41,21 +40,11 @@ impl TransactionInputLoader {
         _tx_digest: &TransactionDigest,
         input_object_kinds: &[InputObjectKind],
         receiving_objects: &[ObjectRef],
-        protocol_config: &ProtocolConfig,
         epoch_id: EpochId,
     ) -> SuiResult<(InputObjects, ReceivingObjects)> {
-        fp_ensure!(
-            receiving_objects.len() + input_object_kinds.len()
-                <= protocol_config.max_input_objects() as usize,
-            UserInputError::SizeLimitExceeded {
-                limit: "maximum input and receiving objects in a transaction".to_string(),
-                value: protocol_config.max_input_objects().to_string()
-            }
-            .into()
-        );
-
+        // Length of input_object_kinds have beeen checked via validity_check() for ProgrammableTransaction.
         let mut input_results = vec![None; input_object_kinds.len()];
-        let mut object_keys = Vec::with_capacity(input_object_kinds.len());
+        let mut object_refs = Vec::with_capacity(input_object_kinds.len());
         let mut fetch_indices = Vec::with_capacity(input_object_kinds.len());
 
         for (i, kind) in input_object_kinds.iter().enumerate() {
@@ -89,22 +78,20 @@ impl TransactionInputLoader {
                     }
                 },
                 InputObjectKind::ImmOrOwnedMoveObject(objref) => {
-                    object_keys.push(ObjectKey::from(objref));
+                    object_refs.push(*objref);
                     fetch_indices.push(i);
                 }
             }
         }
 
-        let objects = self.store.multi_get_object_by_key(&object_keys)?;
-        assert_eq!(objects.len(), object_keys.len());
+        let objects = self
+            .store
+            .multi_get_object_with_more_accurate_error_return(&object_refs)?;
+        assert_eq!(objects.len(), object_refs.len());
         for (index, object) in fetch_indices.into_iter().zip(objects.into_iter()) {
-            let object = object.ok_or_else(|| {
-                SuiError::from(input_object_kinds[index].object_not_found_error())
-            })?;
-
             input_results[index] = Some(ObjectReadResult {
                 input_object_kind: input_object_kinds[index],
-                object: ObjectReadResultKind::Object(Arc::new(object)),
+                object: ObjectReadResultKind::Object(object),
             });
         }
 
@@ -292,19 +279,10 @@ impl TransactionInputLoader {
         _tx_digest: Option<&TransactionDigest>,
         input_object_kinds: &[InputObjectKind],
         receiving_objects: &[ObjectRef],
-        protocol_config: &ProtocolConfig,
+        _protocol_config: &ProtocolConfig,
     ) -> SuiResult<(InputObjects, ReceivingObjects)> {
-        fp_ensure!(
-            receiving_objects.len() + input_object_kinds.len()
-                <= protocol_config.max_input_objects() as usize,
-            UserInputError::SizeLimitExceeded {
-                limit: "maximum input and receiving objects in a transaction".to_string(),
-                value: protocol_config.max_input_objects().to_string()
-            }
-            .into()
-        );
-
         let mut results = Vec::with_capacity(input_object_kinds.len());
+        // Length of input_object_kinds have beeen checked via validity_check() for ProgrammableTransaction.
         for kind in input_object_kinds {
             let obj = match kind {
                 InputObjectKind::MovePackage(id) => self

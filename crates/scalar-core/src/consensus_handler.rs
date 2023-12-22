@@ -20,23 +20,24 @@ use mysten_metrics::{monitored_scope, spawn_monitored_task};
 use narwhal_config::Committee;
 use narwhal_executor::{ExecutionIndices, ExecutionState};
 use narwhal_types::ConsensusOutput;
-use scalar_types::authenticator_state::ActiveJwk;
-use scalar_types::base_types::{AuthorityName, EpochId, TransactionDigest};
-use scalar_types::executable_transaction::{
-    TrustedExecutableTransaction, VerifiedExecutableTransaction,
-};
-use scalar_types::messages_consensus::{
-    ConsensusTransaction, ConsensusTransactionKey, ConsensusTransactionKind,
-};
-use scalar_types::storage::ObjectStore;
-use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-use scalar_types::transaction::{SenderSignedData, VerifiedTransaction};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroUsize;
 use std::sync::Arc;
+use sui_types::authenticator_state::ActiveJwk;
+use sui_types::base_types::{AuthorityName, EpochId, TransactionDigest};
+use sui_types::digests::ConsensusCommitDigest;
+use sui_types::executable_transaction::{
+    TrustedExecutableTransaction, VerifiedExecutableTransaction,
+};
+use sui_types::messages_consensus::{
+    ConsensusTransaction, ConsensusTransactionKey, ConsensusTransactionKind,
+};
+use sui_types::storage::ObjectStore;
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+use sui_types::transaction::{SenderSignedData, VerifiedTransaction};
 use tracing::{debug, error, info, instrument, trace_span};
 
 pub struct ConsensusHandlerInitializer {
@@ -267,7 +268,18 @@ impl<T: ObjectStore + Send + Sync, C: CheckpointServiceNotify + Send + Sync>
             self.epoch_store.epoch(),
         );
 
-        let prologue_transaction = self.consensus_commit_prologue_transaction(round, timestamp);
+        let prologue_transaction = match self
+            .epoch_store
+            .protocol_config()
+            .include_consensus_digest_in_prologue()
+        {
+            true => self.consensus_commit_prologue_v2_transaction(
+                round,
+                timestamp,
+                consensus_output.consensus_digest(),
+            ),
+            false => self.consensus_commit_prologue_transaction(round, timestamp),
+        };
         let empty_bytes = vec![];
         transactions.push((
             empty_bytes.as_slice(),
@@ -343,10 +355,9 @@ impl<T: ObjectStore + Send + Sync, C: CheckpointServiceNotify + Send + Sync>
                     ) = &transaction.kind
                     {
                         if self.epoch_store.randomness_state_enabled() {
-                            debug!("adding RandomnessStateUpdate tx for round {round:?}");
+                            debug!("adding RandomnessStateUpdate tx for commit round {round:?}, randomness round {randomness_round:?}");
                             let randomness_state_update_transaction = self
                                 .randomness_state_update_transaction(
-                                    round,
                                     *randomness_round,
                                     bytes.clone(),
                                 );
@@ -359,7 +370,7 @@ impl<T: ObjectStore + Send + Sync, C: CheckpointServiceNotify + Send + Sync>
                                 consensus_output.leader_author_index(),
                             ));
                         } else {
-                            debug!("ignoring RandomnessStateUpdate tx for round {round:?}: randomness state is not enabled on this node")
+                            debug!("ignoring RandomnessStateUpdate tx for commit round {round:?}, randomness round {randomness_round:?}: randomness state is not enabled on this node")
                         }
                     } else {
                         let transaction = SequencedConsensusTransactionKind::External(transaction);
@@ -542,6 +553,21 @@ impl<T, C> ConsensusHandler<T, C> {
         VerifiedExecutableTransaction::new_system(transaction, self.epoch())
     }
 
+    fn consensus_commit_prologue_v2_transaction(
+        &self,
+        round: u64,
+        commit_timestamp_ms: u64,
+        consensus_digest: ConsensusCommitDigest,
+    ) -> VerifiedExecutableTransaction {
+        let transaction = VerifiedTransaction::new_consensus_commit_prologue_v2(
+            self.epoch(),
+            round,
+            commit_timestamp_ms,
+            consensus_digest,
+        );
+        VerifiedExecutableTransaction::new_system(transaction, self.epoch())
+    }
+
     fn authenticator_state_update_transaction(
         &self,
         round: u64,
@@ -565,14 +591,12 @@ impl<T, C> ConsensusHandler<T, C> {
 
     fn randomness_state_update_transaction(
         &self,
-        round: u64,
         randomness_round: u64,
         random_bytes: Vec<u8>,
     ) -> VerifiedExecutableTransaction {
         assert!(self.epoch_store.randomness_state_enabled());
         let transaction = VerifiedTransaction::new_randomness_state_update(
             self.epoch(),
-            round,
             randomness_round,
             random_bytes,
             self.epoch_store
@@ -580,7 +604,10 @@ impl<T, C> ConsensusHandler<T, C> {
                 .randomness_obj_initial_shared_version()
                 .expect("randomness state obj must exist"),
         );
-        debug!("created randomness state update transaction: {transaction:?}");
+        debug!(
+            "created randomness state update transaction: {:?}",
+            transaction.digest()
+        );
         VerifiedExecutableTransaction::new_system(transaction, self.epoch())
     }
 
@@ -742,6 +769,13 @@ impl SequencedConsensusTransaction {
         }
     }
 
+    pub fn is_system(&self) -> bool {
+        matches!(
+            self.transaction,
+            SequencedConsensusTransactionKind::System(_)
+        )
+    }
+
     pub fn as_shared_object_txn(&self) -> Option<&SenderSignedData> {
         match &self.transaction {
             SequencedConsensusTransactionKind::External(ConsensusTransaction {
@@ -791,19 +825,19 @@ mod tests {
         Batch, Certificate, CommittedSubDag, Header, HeaderV2Builder, ReputationScores,
     };
     use prometheus::Registry;
-    use scalar_types::base_types::{random_object_ref, AuthorityName, SuiAddress};
-    use scalar_types::committee::Committee;
-    use scalar_types::messages_consensus::{
-        AuthorityCapabilities, ConsensusTransaction, ConsensusTransactionKind,
-    };
-    use scalar_types::object::Object;
-    use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-    use scalar_types::transaction::{
-        CertifiedTransaction, SenderSignedData, TransactionData, TransactionDataAPI,
-    };
     use shared_crypto::intent::Intent;
     use std::collections::BTreeSet;
     use sui_protocol_config::{ConsensusTransactionOrdering, SupportedProtocolVersions};
+    use sui_types::base_types::{random_object_ref, AuthorityName, SuiAddress};
+    use sui_types::committee::Committee;
+    use sui_types::messages_consensus::{
+        AuthorityCapabilities, ConsensusTransaction, ConsensusTransactionKind,
+    };
+    use sui_types::object::Object;
+    use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+    use sui_types::transaction::{
+        CertifiedTransaction, SenderSignedData, TransactionData, TransactionDataAPI,
+    };
 
     #[tokio::test]
     pub async fn test_consensus_handler() {
@@ -814,7 +848,7 @@ mod tests {
         let latest_protocol_config = &latest_protocol_version();
 
         let network_config =
-            scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
+            sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
                 .with_objects(objects.clone())
                 .build();
 

@@ -3,13 +3,13 @@
 
 use anyhow::anyhow;
 use anyhow::Result;
+use scalar_node::SuiNodeHandle;
 use std::sync::Mutex;
 use sui_config::NodeConfig;
 use sui_types::base_types::AuthorityName;
+use sui_types::base_types::ConciseableName;
 use tap::TapFallible;
 use tracing::{error, info};
-
-use crate::node::ScalarNodeHandle;
 
 use super::container::Container;
 
@@ -78,7 +78,7 @@ impl Node {
             .map_or(false, |c| c.is_alive())
     }
 
-    pub fn get_node_handle(&self) -> Option<ScalarNodeHandle> {
+    pub fn get_node_handle(&self) -> Option<SuiNodeHandle> {
         self.container
             .lock()
             .unwrap()
@@ -146,7 +146,7 @@ pub enum RuntimeType {
 
 #[cfg(test)]
 mod test {
-    use crate::swarm::Swarm;
+    use crate::memory::Swarm;
 
     #[tokio::test]
     async fn start_and_stop() {

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use prometheus::Registry;
+use scalar_node::{SuiNode, SuiNodeHandle};
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{Arc, Weak};
 use sui_config::NodeConfig;
-use sui_node::{SuiNode, SuiNodeHandle};
 use tokio::sync::watch;
 use tracing::{info, trace};
 

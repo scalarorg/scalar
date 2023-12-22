@@ -19,9 +19,9 @@ prometheus.workspace = true
 serde.workspace = true
 bcs.workspace = true
 tracing.workspace = true
-mysten-metrics.workspace = true
-scalar-core.workspace = true
-scalar-types.workspace = true
-scalar-config.workspace = true
-scalar-storage.workspace = true
-workspace-hack.workspace = true
+mysten-metrics = { path = "../../sui/crates/mysten-metrics" }
+scalar-core = { path = "../scalar-core" }
+sui-types = { path = "../../sui/crates/sui-types" }
+sui-config = { path = "../../sui/crates/sui-config" }
+sui-storage = { path = "../../sui/crates/sui-storage" }
+workspace-hack = { path = "../../sui/crates/workspace-hack" }

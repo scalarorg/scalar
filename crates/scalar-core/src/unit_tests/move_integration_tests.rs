@@ -14,7 +14,7 @@ use move_core_types::{
     u256::U256,
 };
 
-use scalar_types::{
+use sui_types::{
     base_types::{RESOLVED_ASCII_STR, RESOLVED_STD_OPTION, RESOLVED_UTF8_STR},
     error::ExecutionErrorKind,
     programmable_transaction_builder::ProgrammableTransactionBuilder,
@@ -24,18 +24,16 @@ use scalar_types::{
 
 use move_core_types::language_storage::TypeTag;
 
-use scalar_types::{
+use sui_move_build::{BuildConfig, SuiPackageHooks};
+use sui_types::{
     crypto::{get_key_pair, AccountKeyPair},
     error::SuiError,
 };
-use sui_move_build::{BuildConfig, SuiPackageHooks};
 
-use scalar_types::execution_status::{
-    CommandArgumentError, ExecutionFailureStatus, ExecutionStatus,
-};
-use scalar_types::move_package::UpgradeCap;
 use std::{collections::HashSet, path::PathBuf};
 use std::{env, str::FromStr};
+use sui_types::execution_status::{CommandArgumentError, ExecutionFailureStatus, ExecutionStatus};
+use sui_types::move_package::UpgradeCap;
 
 #[tokio::test]
 #[cfg_attr(msim, ignore)]
@@ -2521,7 +2519,7 @@ make_vec_tests_for_type!(
 make_vec_tests_for_type!(
     test_make_move_vec_address_id,
     ObjectID,
-    TypeTag::Struct(Box::new(scalar_types::id::ID::type_())),
+    TypeTag::Struct(Box::new(sui_types::id::ID::type_())),
     ObjectID::ZERO
 );
 make_vec_tests_for_type!(test_make_move_vec_utf8, &str, utf8_tag(), "❤️🧀");
@@ -2709,7 +2707,7 @@ make_vec_error_tests_for_type!(
 make_vec_error_tests_for_type!(
     test_error_make_move_vec_address_id,
     ObjectID,
-    TypeTag::Struct(Box::new(scalar_types::id::ID::type_())),
+    TypeTag::Struct(Box::new(sui_types::id::ID::type_())),
     ObjectID::ZERO
 );
 make_vec_error_tests_for_type!(test_error_make_move_vec_utf8, &str, utf8_tag(), "❤️🧀");

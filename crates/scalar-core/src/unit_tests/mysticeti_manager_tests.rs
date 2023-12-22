@@ -13,9 +13,9 @@ use crate::mysticeti_adapter::LazyMysticetiClient;
 use fastcrypto::traits::KeyPair;
 use mysten_metrics::RegistryService;
 use prometheus::Registry;
-use scalar_swarm_config::network_config_builder::ConfigBuilder;
 use std::sync::Arc;
 use std::time::Duration;
+use sui_swarm_config::network_config_builder::ConfigBuilder;
 use tokio::time::sleep;
 
 #[tokio::test(flavor = "current_thread", start_paused = true)]

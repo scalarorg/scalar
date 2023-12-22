@@ -11,6 +11,7 @@ use std::{
 use indexmap::IndexMap;
 use lru::LruCache;
 use mysten_metrics::monitored_scope;
+use narwhal_types::Transaction;
 use parking_lot::RwLock;
 use sui_types::executable_transaction::VerifiedExecutableTransaction;
 use sui_types::{base_types::TransactionDigest, error::SuiResult, fp_ensure};
@@ -23,10 +24,13 @@ use sui_types::{
     transaction::{TransactionDataAPI, VerifiedCertificate},
 };
 use tokio::sync::mpsc::UnboundedSender;
-use tracing::{error, instrument, trace, warn};
+use tracing::{error, info, instrument, trace, warn};
 
-use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::core::authority::{AuthorityMetrics, AuthorityStore};
+use crate::{
+    consensus::consensus_types::NsTransaction,
+    core::authority::authority_per_epoch_store::AuthorityPerEpochStore,
+};
 use sui_types::transaction::SenderSignedData;
 use tap::TapOptional;
 
@@ -45,6 +49,43 @@ pub(crate) const MAX_TM_QUEUE_LENGTH: usize = 100_000;
 // is above the threshold.
 pub(crate) const MAX_PER_OBJECT_QUEUE_LENGTH: usize = 200;
 
+#[derive(Default, Clone)]
+struct EpochTxHashes {
+    epoch: EpochId,
+    tx_hashes: HashSet<Transaction>,
+}
+impl EpochTxHashes {
+    fn filter_transactions(
+        &mut self,
+        epoch: EpochId,
+        transactions: Vec<NsTransaction>,
+    ) -> Vec<NsTransaction> {
+        let mut filtered_transactions = vec![];
+        info!(
+            "Epoch {}. Filter for {} transactions at epoch {}",
+            self.epoch,
+            transactions.len(),
+            epoch
+        );
+        if self.epoch != epoch {
+            self.epoch = epoch;
+            self.tx_hashes.clear();
+        }
+        for ns_tran in transactions.into_iter() {
+            info!("Current hash {:?}", &self.tx_hashes);
+            info!("Current transaction {:?}", &ns_tran);
+            if !self.tx_hashes.contains(&ns_tran.transaction) {
+                info!("Put into filtered transactions output");
+                self.tx_hashes.insert(ns_tran.transaction.clone());
+                filtered_transactions.push(ns_tran);
+            } else {
+                info!("Transaction already exists");
+            }
+        }
+        info!("Filtered commited transaction {:?}", &filtered_transactions);
+        filtered_transactions
+    }
+}
 /// TransactionManager is responsible for managing object dependencies of pending transactions,
 /// and publishing a stream of certified transactions (certificates) ready to execute.
 /// It receives certificates from Narwhal, validator RPC handlers, and checkpoint executor.
@@ -58,8 +99,11 @@ pub struct TransactionManager {
         VerifiedExecutableTransaction,
         Option<TransactionEffectsDigest>,
     )>,
+    tx_commited_transactions: UnboundedSender<Vec<NsTransaction>>,
     metrics: Arc<AuthorityMetrics>,
     inner: RwLock<Inner>,
+    // Scalar Todo: Store setof transaction in each epoch. Makesure send out transactions are different
+    // epoch_tx_cache: RwLock<EpochTxHashes>,
 }
 
 #[derive(Clone, Debug)]
@@ -336,6 +380,7 @@ impl TransactionManager {
             VerifiedExecutableTransaction,
             Option<TransactionEffectsDigest>,
         )>,
+        tx_commited_transactions: UnboundedSender<Vec<NsTransaction>>,
         metrics: Arc<AuthorityMetrics>,
     ) -> TransactionManager {
         let transaction_manager = TransactionManager {
@@ -343,13 +388,32 @@ impl TransactionManager {
             metrics: metrics.clone(),
             inner: RwLock::new(Inner::new(epoch_store.epoch(), metrics)),
             tx_ready_certificates,
+            tx_commited_transactions,
+            // epoch_tx_cache: Default::default(),
         };
         transaction_manager
             .enqueue(epoch_store.all_pending_execution().unwrap(), epoch_store)
             .expect("Initialize TransactionManager with pending certificates failed.");
         transaction_manager
     }
-
+    //Publish external transaction to other service via the opened gRpc stream
+    #[instrument(level = "trace", skip_all)]
+    pub(crate) fn publish_ns_transactions(
+        &self,
+        transactions: Vec<NsTransaction>,
+        epoch_store: &AuthorityPerEpochStore,
+    ) -> SuiResult<()> {
+        warn!("publish_ns_transactions {:?}", &transactions);
+        // let filtered_transactions = self
+        //     .epoch_tx_cache
+        //     .write()
+        //     .filter_transactions(epoch_store.epoch(), transactions);
+        // if (filtered_transactions.len() > 0) {
+        //     self.tx_commited_transactions.send(filtered_transactions);
+        // }
+        self.tx_commited_transactions.send(transactions);
+        Ok(())
+    }
     /// Enqueues certificates / verified transactions into TransactionManager. Once all of the input objects are available
     /// locally for a certificate, the certified transaction will be sent to execution driver.
     ///
@@ -422,7 +486,7 @@ impl TransactionManager {
                 }
             })
             .collect();
-
+        let mut pending_certificates = vec![];
         let mut object_availability: HashMap<InputKey, Option<bool>> = HashMap::new();
         let mut receiving_objects: HashSet<InputKey> = HashSet::new();
         let certs: Vec<_> = certs
@@ -612,6 +676,7 @@ impl TransactionManager {
                     .with_label_values(&["ready"])
                     .inc();
                 // Send to execution driver for execution.
+                pending_certificates.push(pending_cert.clone());
                 self.certificate_ready(&mut inner, pending_cert);
                 continue;
             }
@@ -639,7 +704,6 @@ impl TransactionManager {
             .set(inner.pending_certificates.len() as i64);
 
         inner.maybe_reserve_capacity();
-
         Ok(())
     }
 

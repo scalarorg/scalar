@@ -1,20 +1,18 @@
 [package]
 name = "scalar-node"
 version.workspace = true
-authors = ["Codelight <tai=@codelight.co>"]
+authors = ["Mysten Labs <build@mystenlabs.com>"]
 license = "Apache-2.0"
 publish = false
 edition = "2021"
 
 [dependencies]
-
 anemo.workspace = true
 anemo-tower.workspace = true
 arc-swap.workspace = true
 axum.workspace = true
 anyhow.workspace = true
 clap.workspace = true
-jsonrpsee.workspace = true
 prometheus.workspace = true
 tokio = { workspace = true, features = ["full"] }
 tracing.workspace = true
@@ -29,31 +27,33 @@ const-str.workspace = true
 url.workspace = true
 humantime.workspace = true
 
-scalar-archival.workspace = true
-scalar-config.workspace = true
-scalar-types.workspace = true
-scalar-core.workspace = true
-scalar-json-rpc.workspace = true
-scalar-kvstore.workspace = true
-scalar-network.workspace = true
-scalar-storage.workspace = true
-scalar-snapshot.workspace = true
-scalar-telemetry.workspace = true
-scalar-consensus-adapter.workspace = true
+scalar-core = { path = "../scalar-core" }
+scalar-kvstore = { path = "../scalar-kvstore" }
 
-sui-macros.workspace = true
-sui-protocol-config.workspace = true
-sui-tls.workspace = true
+sui-archival = { path = "../../sui/crates/sui-archival" }
+sui-tls = { path = "../../sui/crates/sui-tls" }
+sui-macros = { path = "../../sui/crates/sui-macros" }
+sui-config = { path = "../../sui/crates/sui-config" }
+sui-rest-api = { path = "../../sui/crates/sui-rest-api" }
+sui-storage = { path = "../../sui/crates/sui-storage" }
+sui-network = { path = "../../sui/crates/sui-network" }
+sui-json-rpc = { path = "../../sui/crates/sui-json-rpc" }
+sui-json-rpc-api = { path = "../../sui/crates/sui-json-rpc-api" }
+sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
+sui-snapshot = { path = "../../sui/crates/sui-snapshot" }
+sui-telemetry = { path = "../../sui/crates/sui-telemetry" }
+sui-types = { path = "../../sui/crates/sui-types" }
+sui-kvstore = { path = "../../sui/crates/sui-kvstore" }
+mysten-metrics = { path = "../../sui/crates/mysten-metrics" }
+mysten-common = { path = "../../sui/crates/mysten-common" }
+narwhal-network = { path = "../../sui/narwhal/network" }
+typed-store = { path = "../../sui/crates/typed-store" }
+mysten-network = { path = "../../sui/crates/mysten-network" }
+telemetry-subscribers = { path = "../../sui/crates/telemetry-subscribers" }
 
-mysten-metrics.workspace = true
-mysten-common.workspace = true
-narwhal-network.workspace = true
-typed-store.workspace = true
-mysten-network.workspace = true
-telemetry-subscribers.workspace = true
 fastcrypto.workspace = true
 fastcrypto-zkp.workspace = true
-workspace-hack.workspace = true
+workspace-hack = { path = "../../sui/crates/workspace-hack" }
 
-#[target.'cfg(msim)'.dependencies]
-#sui-simulator.workspace = true
+[target.'cfg(msim)'.dependencies]
+sui-simulator = { path = "../../sui/crates/sui-simulator" }

@@ -5,6 +5,7 @@ use itertools::Itertools;
 use mysten_metrics::monitored_scope;
 use serde::Serialize;
 use sui_protocol_config::ProtocolConfig;
+use sui_simulator::fastcrypto::hash::MultisetHash;
 use sui_types::base_types::{ObjectID, ObjectRef, SequenceNumber, VersionNumber};
 use sui_types::committee::EpochId;
 use sui_types::digests::{ObjectDigest, TransactionDigest};

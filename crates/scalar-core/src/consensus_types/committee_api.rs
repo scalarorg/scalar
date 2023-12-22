@@ -3,8 +3,8 @@
 
 use crate::consensus_types::AuthorityIndex;
 use narwhal_config::committee::AuthorityIdentifier;
-use scalar_types::base_types::AuthorityName;
-use scalar_types::committee::StakeUnit;
+use sui_types::base_types::AuthorityName;
+use sui_types::committee::StakeUnit;
 
 pub(crate) trait CommitteeAPI {
     fn total_stake(&self) -> StakeUnit;

@@ -10,14 +10,14 @@ use move_core_types::{
     language_storage::StructTag,
 };
 
-use scalar_json_rpc_types::SuiMoveStruct;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
+use sui_json_rpc_types::SuiMoveStruct;
 
-use scalar_types::base_types::ObjectID;
-use scalar_types::gas_coin::GasCoin;
-use scalar_types::{MOVE_STDLIB_ADDRESS, SUI_FRAMEWORK_ADDRESS};
+use sui_types::base_types::ObjectID;
+use sui_types::gas_coin::GasCoin;
+use sui_types::{MOVE_STDLIB_ADDRESS, SUI_FRAMEWORK_ADDRESS};
 
 #[test]
 fn test_to_json_value() {

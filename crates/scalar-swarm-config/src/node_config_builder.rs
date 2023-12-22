@@ -6,24 +6,25 @@ use crate::network_config::NetworkConfig;
 use fastcrypto::encoding::{Encoding, Hex};
 use fastcrypto::traits::KeyPair;
 use narwhal_config::{NetworkAdminServerParameters, PrometheusMetricsParameters};
-use scalar_config::node::{
-    default_enable_index_processing, default_end_of_epoch_broadcast_channel_capacity,
-    AuthorityKeyPairWithPath, AuthorityStorePruningConfig, DBCheckpointConfig,
-    ExpensiveSafetyCheckConfig, Genesis, KeyPairWithPath, StateArchiveConfig, StateSnapshotConfig,
-    DEFAULT_GRPC_CONCURRENCY_LIMIT,
-};
-use scalar_config::node::{default_zklogin_oauth_providers, ConsensusProtocol};
-use scalar_config::p2p::{P2pConfig, SeedPeer};
-use scalar_config::{
-    local_ip_utils, ConsensusConfig, NodeConfig, AUTHORITIES_DB_NAME, CONSENSUS_DB_NAME,
-    FULL_NODE_DB_PATH,
-};
-use scalar_types::crypto::{AuthorityKeyPair, AuthorityPublicKeyBytes, NetworkKeyPair, SuiKeyPair};
-use scalar_types::multiaddr::Multiaddr;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
+use sui_config::node::{
+    default_enable_index_processing, default_end_of_epoch_broadcast_channel_capacity,
+    AuthorityKeyPairWithPath, AuthorityStorePruningConfig, CheckpointExecutorConfig,
+    DBCheckpointConfig, ExpensiveSafetyCheckConfig, Genesis, KeyPairWithPath,
+    OverloadThresholdConfig, StateArchiveConfig, StateSnapshotConfig,
+    DEFAULT_GRPC_CONCURRENCY_LIMIT,
+};
+use sui_config::node::{default_zklogin_oauth_providers, ConsensusProtocol};
+use sui_config::p2p::{P2pConfig, SeedPeer};
+use sui_config::{
+    local_ip_utils, ConsensusConfig, NodeConfig, AUTHORITIES_DB_NAME, CONSENSUS_DB_NAME,
+    FULL_NODE_DB_PATH,
+};
 use sui_protocol_config::SupportedProtocolVersions;
+use sui_types::crypto::{AuthorityKeyPair, AuthorityPublicKeyBytes, NetworkKeyPair, SuiKeyPair};
+use sui_types::multiaddr::Multiaddr;
 
 /// This builder contains information that's not included in ValidatorGenesisConfig for building
 /// a validator NodeConfig. It can be used to build either a genesis validator or a new validator.
@@ -33,6 +34,8 @@ pub struct ValidatorConfigBuilder {
     supported_protocol_versions: Option<SupportedProtocolVersions>,
     force_unpruned_checkpoints: bool,
     jwk_fetch_interval: Option<Duration>,
+    overload_threshold_config: Option<OverloadThresholdConfig>,
+    data_ingestion_dir: Option<PathBuf>,
 }
 
 impl ValidatorConfigBuilder {
@@ -65,10 +68,20 @@ impl ValidatorConfigBuilder {
         self
     }
 
+    pub fn with_overload_threshold_config(mut self, config: OverloadThresholdConfig) -> Self {
+        self.overload_threshold_config = Some(config);
+        self
+    }
+
+    pub fn with_data_ingestion_dir(mut self, path: PathBuf) -> Self {
+        self.data_ingestion_dir = Some(path);
+        self
+    }
+
     pub fn build(
         self,
         validator: ValidatorGenesisConfig,
-        genesis: scalar_config::genesis::Genesis,
+        genesis: sui_config::genesis::Genesis,
     ) -> NodeConfig {
         let key_path = get_key_path(&validator.key_pair);
         let config_directory = self
@@ -118,11 +131,15 @@ impl ValidatorConfigBuilder {
             ..Default::default()
         };
 
-        let mut pruning_config = AuthorityStorePruningConfig::validator_config();
+        let mut pruning_config = AuthorityStorePruningConfig::default();
         if self.force_unpruned_checkpoints {
             pruning_config.set_num_epochs_to_retain_for_checkpoints(None);
         }
         let pruning_config = pruning_config;
+        let checkpoint_executor_config = CheckpointExecutorConfig {
+            data_ingestion_dir: self.data_ingestion_dir,
+            ..Default::default()
+        };
 
         NodeConfig {
             protocol_key_pair: AuthorityKeyPairWithPath::new(validator.key_pair),
@@ -136,20 +153,17 @@ impl ValidatorConfigBuilder {
             json_rpc_address: local_ip_utils::new_tcp_address_for_testing(&localhost)
                 .to_socket_addr()
                 .unwrap(),
-            consensus_rpc_address: local_ip_utils::new_tcp_address_for_testing(&localhost)
-                .to_socket_addr()
-                .unwrap(),
             consensus_config: Some(consensus_config),
             enable_event_processing: false,
             enable_index_processing: default_enable_index_processing(),
-            genesis: scalar_config::node::Genesis::new(genesis),
+            genesis: sui_config::node::Genesis::new(genesis),
             grpc_load_shed: None,
             grpc_concurrency_limit: Some(DEFAULT_GRPC_CONCURRENCY_LIMIT),
             p2p_config,
             authority_store_pruning_config: pruning_config,
             end_of_epoch_broadcast_channel_capacity:
                 default_end_of_epoch_broadcast_channel_capacity(),
-            checkpoint_executor_config: Default::default(),
+            checkpoint_executor_config,
             metrics: None,
             supported_protocol_versions: self.supported_protocol_versions,
             db_checkpoint_config: Default::default(),
@@ -174,7 +188,7 @@ impl ValidatorConfigBuilder {
                 .map(|i| i.as_secs())
                 .unwrap_or(3600),
             zklogin_oauth_providers: default_zklogin_oauth_providers(),
-            overload_threshold_config: Default::default(),
+            overload_threshold_config: self.overload_threshold_config.unwrap_or_default(),
         }
     }
 
@@ -200,8 +214,6 @@ pub struct FullnodeConfigBuilder {
     db_path: Option<PathBuf>,
     network_address: Option<Multiaddr>,
     json_rpc_address: Option<SocketAddr>,
-    consensus_rpc_address: Option<SocketAddr>,
-    consensus_rpc_port: Option<u16>,
     metrics_address: Option<SocketAddr>,
     admin_interface_port: Option<u16>,
     genesis: Option<Genesis>,
@@ -354,12 +366,7 @@ impl FullnodeConfigBuilder {
                 .unwrap_or_else(|| local_ip_utils::get_available_port(&ip));
             format!("{}:{}", ip, rpc_port).parse().unwrap()
         });
-        let consensus_rpc_address = self.rpc_addr.unwrap_or_else(|| {
-            let rpc_port = self
-                .consensus_rpc_port
-                .unwrap_or_else(|| local_ip_utils::get_available_port(&ip));
-            format!("{}:{}", ip, rpc_port).parse().unwrap()
-        });
+
         NodeConfig {
             protocol_key_pair: AuthorityKeyPairWithPath::new(validator_config.key_pair),
             account_key_pair: KeyPairWithPath::new(validator_config.account_key_pair),
@@ -382,17 +389,16 @@ impl FullnodeConfigBuilder {
                 .admin_interface_port
                 .unwrap_or(local_ip_utils::get_available_port(&localhost)),
             json_rpc_address: self.json_rpc_address.unwrap_or(json_rpc_address),
-            consensus_rpc_address: self.consensus_rpc_address.unwrap_or(consensus_rpc_address),
             consensus_config: None,
             enable_event_processing: true, // This is unused.
             enable_index_processing: default_enable_index_processing(),
-            genesis: self.genesis.unwrap_or(scalar_config::node::Genesis::new(
+            genesis: self.genesis.unwrap_or(sui_config::node::Genesis::new(
                 network_config.genesis.clone(),
             )),
             grpc_load_shed: None,
             grpc_concurrency_limit: None,
             p2p_config,
-            authority_store_pruning_config: AuthorityStorePruningConfig::fullnode_config(),
+            authority_store_pruning_config: AuthorityStorePruningConfig::default(),
             end_of_epoch_broadcast_channel_capacity:
                 default_end_of_epoch_broadcast_channel_capacity(),
             checkpoint_executor_config: Default::default(),

@@ -26,9 +26,6 @@ use prometheus::{
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use scalar_types::base_types::TransactionDigest;
-use scalar_types::committee::Committee;
-use scalar_types::error::{SuiError, SuiResult};
 use std::collections::{HashMap, VecDeque};
 use std::future::Future;
 use std::ops::Deref;
@@ -36,6 +33,9 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Instant;
+use sui_types::base_types::TransactionDigest;
+use sui_types::committee::{Committee, CommitteeTrait};
+use sui_types::error::{SuiError, SuiResult};
 
 use tap::prelude::*;
 use tokio::sync::{Semaphore, SemaphorePermit};
@@ -47,13 +47,13 @@ use crate::consensus_handler::{classify, SequencedConsensusTransactionKey};
 use crate::consensus_throughput_calculator::{ConsensusThroughputProfiler, Level};
 use crate::epoch::reconfiguration::{ReconfigState, ReconfigurationInitiator};
 use mysten_metrics::{spawn_monitored_task, GaugeGuard, GaugeGuardFutureExt};
-use scalar_types::base_types::AuthorityName;
-use scalar_types::fp_ensure;
-use scalar_types::messages_consensus::ConsensusTransaction;
-use scalar_types::messages_consensus::ConsensusTransactionKind;
 use sui_protocol_config::ProtocolConfig;
 use sui_simulator::anemo::PeerId;
 use sui_simulator::narwhal_network::connectivity::ConnectionStatus;
+use sui_types::base_types::AuthorityName;
+use sui_types::fp_ensure;
+use sui_types::messages_consensus::ConsensusTransaction;
+use sui_types::messages_consensus::ConsensusTransactionKind;
 use tokio::time::Duration;
 use tracing::{debug, info, warn};
 
@@ -189,7 +189,7 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
 }
 
 #[async_trait::async_trait]
-impl SubmitToConsensus for TransactionsClient<scalar_network::tonic::transport::Channel> {
+impl SubmitToConsensus for TransactionsClient<sui_network::tonic::transport::Channel> {
     async fn submit_to_consensus(
         &self,
         transaction: &ConsensusTransaction,
@@ -819,16 +819,32 @@ impl ConsensusAdapter {
         let send_end_of_publish = if let ConsensusTransactionKind::UserTransaction(_cert) =
             &transaction.kind
         {
-            let reconfig_guard = epoch_store.get_reconfig_state_read_lock_guard();
             // If we are in RejectUserCerts state and we just drained the list we need to
             // send EndOfPublish to signal other validators that we are not submitting more certificates to the epoch.
             // Note that there could be a race condition here where we enter this check in RejectAllCerts state.
             // In that case we don't need to send EndOfPublish because condition to enter
             // RejectAllCerts is when 2f+1 other validators already sequenced their EndOfPublish message.
-            if reconfig_guard.is_reject_user_certs() {
+            // Also note that we could sent multiple EndOfPublish due to that multiple tasks can enter here with
+            // pending_count == 0. This doesn't affect correctness.
+            if epoch_store
+                .get_reconfig_state_read_lock_guard()
+                .is_reject_user_certs()
+            {
                 let pending_count = epoch_store.pending_consensus_certificates_count();
                 debug!(epoch=?epoch_store.epoch(), ?pending_count, "Deciding whether to send EndOfPublish");
-                pending_count == 0 // send end of epoch if empty
+                // Send end of epoch if empty and all deferred tx are procesed.
+                if pending_count > 0 {
+                    false
+                } else {
+                    // Don't check deferred table until pending_count is already 0, since it may
+                    // require scanning through a bunch of deletion markers.
+                    let deferred_is_empty = epoch_store.deferred_transactions_empty();
+                    debug!(
+                        ?deferred_is_empty,
+                        "Deciding whether to block EndOfPublish on deferred tx"
+                    );
+                    deferred_is_empty
+                }
             } else {
                 false
             }
@@ -947,6 +963,7 @@ impl ReconfigurationInitiator for Arc<ConsensusAdapter> {
             let send_end_of_publish = pending_count == 0;
             epoch_store.close_user_certs(reconfig_guard);
             send_end_of_publish
+            // reconfig_guard lock is dropped here.
         };
         if send_end_of_publish {
             if let Err(err) = self.submit(
@@ -1135,13 +1152,13 @@ mod adapter_tests {
     use fastcrypto::traits::KeyPair;
     use rand::Rng;
     use rand::{rngs::StdRng, SeedableRng};
-    use scalar_types::{
+    use std::sync::Arc;
+    use std::time::Duration;
+    use sui_types::{
         base_types::TransactionDigest,
         committee::Committee,
         crypto::{get_key_pair_from_rng, AuthorityKeyPair, AuthorityPublicKeyBytes},
     };
-    use std::sync::Arc;
-    use std::time::Duration;
 
     fn test_committee(rng: &mut StdRng, size: usize) -> Committee {
         let authorities = (0..size)

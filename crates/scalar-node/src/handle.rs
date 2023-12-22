@@ -20,8 +20,8 @@
 //!
 //! ```ignore
 //!     let node_handle = start_node(config, registry).await;
-//!     node_handle.with_async(|scalar_node| async move {
-//!         spawn_checkpoint_processes(config, &[scalar_node]).await;
+//!     node_handle.with_async(|sui_node| async move {
+//!         spawn_checkpoint_processes(config, &[sui_node]).await;
 //!     });
 //! ```
 //!
@@ -35,7 +35,7 @@
 //! It is possible to exfiltrate state:
 //!
 //! ```ignore
-//!    let state = node_handle.with(|scalar_node| scalar_node.state);
+//!    let state = node_handle.with(|sui_node| sui_node.state);
 //!    // DO NOT DO THIS!
 //!    do_stuff_with_state(state)
 //! ```
@@ -71,7 +71,7 @@ impl SuiNodeHandle {
     }
 
     pub fn state(&self) -> Arc<AuthorityState> {
-        self.with(|scalar_node| scalar_node.state())
+        self.with(|sui_node| sui_node.state())
     }
 
     pub fn shutdown_on_drop(&mut self) {

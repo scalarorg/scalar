@@ -1,11 +1,11 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use scalar_types::base_types::TransactionDigest;
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::effects::{InputSharedObject, TransactionEffects};
-use scalar_types::storage::ObjectKey;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use sui_types::base_types::TransactionDigest;
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::effects::{InputSharedObject, TransactionEffects};
+use sui_types::storage::ObjectKey;
 use tracing::trace;
 
 pub struct CausalOrder {
@@ -210,9 +210,9 @@ impl InsertState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scalar_types::base_types::ObjectDigest;
-    use scalar_types::base_types::{ObjectID, SequenceNumber};
-    use scalar_types::effects::TransactionEffects;
+    use sui_types::base_types::ObjectDigest;
+    use sui_types::base_types::{ObjectID, SequenceNumber};
+    use sui_types::effects::TransactionEffects;
 
     #[test]
     pub fn test_causal_order() {

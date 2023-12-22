@@ -6,17 +6,17 @@ use std::net::{IpAddr, SocketAddr};
 use anyhow::Result;
 use fastcrypto::traits::KeyPair;
 use rand::{rngs::StdRng, SeedableRng};
-use scalar_config::genesis::{GenesisCeremonyParameters, TokenAllocation};
-use scalar_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
-use scalar_config::{local_ip_utils, Config};
-use scalar_genesis_builder::validator_info::{GenesisValidatorInfo, ValidatorInfo};
-use scalar_types::base_types::SuiAddress;
-use scalar_types::crypto::{
+use serde::{Deserialize, Serialize};
+use sui_config::genesis::{GenesisCeremonyParameters, TokenAllocation};
+use sui_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
+use sui_config::{local_ip_utils, Config};
+use sui_genesis_builder::validator_info::{GenesisValidatorInfo, ValidatorInfo};
+use sui_types::base_types::SuiAddress;
+use sui_types::crypto::{
     generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
     AuthorityPublicKeyBytes, NetworkKeyPair, NetworkPublicKey, PublicKey, SuiKeyPair,
 };
-use scalar_types::multiaddr::Multiaddr;
-use serde::{Deserialize, Serialize};
+use sui_types::multiaddr::Multiaddr;
 use tracing::info;
 
 // All information needed to build a NodeConfig for a state sync fullnode.
@@ -207,7 +207,7 @@ impl ValidatorGenesisConfigBuilder {
             narwhal_worker_address,
             consensus_address,
             consensus_internal_worker_address: None,
-            stake: scalar_types::governance::VALIDATOR_LOW_STAKE_THRESHOLD_MIST,
+            stake: sui_types::governance::VALIDATOR_LOW_STAKE_THRESHOLD_MIST,
         }
     }
 }
@@ -267,7 +267,7 @@ fn default_multiaddr_address() -> Multiaddr {
 }
 
 fn default_stake() -> u64 {
-    scalar_types::governance::VALIDATOR_LOW_STAKE_THRESHOLD_MIST
+    sui_types::governance::VALIDATOR_LOW_STAKE_THRESHOLD_MIST
 }
 
 fn default_bls12381_key_pair() -> AuthorityKeyPair {

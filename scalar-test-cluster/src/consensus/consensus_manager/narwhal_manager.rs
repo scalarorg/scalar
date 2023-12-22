@@ -9,11 +9,13 @@ use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use async_trait::async_trait;
 use fastcrypto::traits::KeyPair;
 use mysten_metrics::RegistryService;
+use mysticeti_core::block_validator::BlockVerifier;
 use narwhal_config::{Parameters, WorkerId};
 use narwhal_network::client::NetworkClient;
 use narwhal_node::primary_node::PrimaryNode;
 use narwhal_node::worker_node::WorkerNodes;
 use narwhal_node::{CertificateStoreCacheMetrics, NodeStorage};
+use narwhal_worker::TransactionValidator;
 use std::path::PathBuf;
 use std::sync::Arc;
 use sui_config::NodeConfig;
@@ -96,7 +98,7 @@ impl ConsensusManagerTrait for NarwhalManager {
         config: &NodeConfig,
         epoch_store: Arc<AuthorityPerEpochStore>,
         consensus_handler_initializer: ConsensusHandlerInitializer,
-        tx_validator: SuiTxValidator,
+        tx_validator: impl TransactionValidator + BlockVerifier,
     ) {
         let chain = epoch_store.get_chain_identifier();
         let system_state = epoch_store.epoch_start_state();

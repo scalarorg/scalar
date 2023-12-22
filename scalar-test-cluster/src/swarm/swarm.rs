@@ -1,19 +1,20 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::node::ScalarNodeHandle;
+use scalar_node::SuiNodeHandle;
 
-use super::config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
-use super::config::network_config::NetworkConfig;
-use super::config::network_config_builder::{
-    CommitteeConfig, ConfigBuilder, ProtocolVersionsConfig, SupportedProtocolVersionsCallback,
-};
-use super::config::node_config_builder::FullnodeConfigBuilder;
 use super::Node;
 use anyhow::Result;
 use futures::future::try_join_all;
 use rand::rngs::OsRng;
+use scalar_swarm_config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
+use scalar_swarm_config::network_config::NetworkConfig;
+use scalar_swarm_config::network_config_builder::{
+    CommitteeConfig, ConfigBuilder, ProtocolVersionsConfig, SupportedProtocolVersionsCallback,
+};
+use scalar_swarm_config::node_config_builder::FullnodeConfigBuilder;
 use std::collections::HashMap;
+use std::net::Ipv4Addr;
 use std::net::SocketAddr;
 use std::num::NonZeroUsize;
 use std::time::Duration;
@@ -23,7 +24,6 @@ use std::{
 };
 use sui_config::node::DBCheckpointConfig;
 use sui_config::NodeConfig;
-use std::net::Ipv4Addr;
 use sui_protocol_config::{ProtocolVersion, SupportedProtocolVersions};
 use sui_types::base_types::AuthorityName;
 use sui_types::object::Object;
@@ -261,15 +261,23 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
                 )
                 .build()
         });
-        info!("Validators config size {:?}", network_config.validator_configs().len());
+        info!(
+            "Validators config size {:?}",
+            network_config.validator_configs().len()
+        );
         let grpc_port = self.consensus_rpc_port.clone();
         let mut nodes: HashMap<_, _> = network_config
             .validator_configs()
-            .iter().enumerate()
-            .map(|(ind,config)| {
+            .iter()
+            .enumerate()
+            .map(|(ind, config)| {
                 let mut config = config.to_owned();
                 if let Some(port) = grpc_port.as_ref() {
-                    let network_address = format!("/ip4/{}/tcp/{}/http", Ipv4Addr::LOCALHOST, port.clone() + (ind as u16));
+                    let network_address = format!(
+                        "/ip4/{}/tcp/{}/http",
+                        Ipv4Addr::LOCALHOST,
+                        port.clone() + (ind as u16)
+                    );
                     info!("Network address {network_address}");
                     config.network_address = network_address.parse().unwrap();
                 }
@@ -348,7 +356,6 @@ impl Swarm {
 
     /// Start all nodes associated with this Swarm
     pub async fn launch(&mut self) -> Result<()> {
-        
         try_join_all(self.nodes_iter_mut().map(|node| node.start())).await?;
         tracing::info!("Successfully launched Swarm");
         Ok(())
@@ -397,7 +404,7 @@ impl Swarm {
             .filter(|node| node.config.consensus_config.is_some())
     }
 
-    pub fn validator_node_handles(&self) -> Vec<ScalarNodeHandle> {
+    pub fn validator_node_handles(&self) -> Vec<SuiNodeHandle> {
         self.validator_nodes()
             .map(|node| node.get_node_handle().unwrap())
             .collect()
@@ -420,7 +427,7 @@ impl Swarm {
             .filter(|node| node.config.consensus_config.is_none())
     }
 
-    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> ScalarNodeHandle {
+    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> SuiNodeHandle {
         let name = config.protocol_public_key();
         let node = Node::new(config);
         node.start().await.unwrap();

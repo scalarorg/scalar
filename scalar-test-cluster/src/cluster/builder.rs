@@ -1,13 +1,13 @@
-use crate::swarm::genesis_config::{
-    AccountConfig, GenesisConfig, ValidatorGenesisConfig, DEFAULT_GAS_AMOUNT,
-};
-use crate::swarm::network_config::NetworkConfig;
-use crate::swarm::network_config_builder::{
-    ProtocolVersionsConfig, SupportedProtocolVersionsCallback,
-};
-use crate::swarm::node_config_builder::{FullnodeConfigBuilder, ValidatorConfigBuilder};
 use crate::swarm::{Swarm, SwarmBuilder};
 use crate::{FullNodeHandle, TestCluster};
+use scalar_swarm_config::genesis_config::{
+    AccountConfig, GenesisConfig, ValidatorGenesisConfig, DEFAULT_GAS_AMOUNT,
+};
+use scalar_swarm_config::network_config::NetworkConfig;
+use scalar_swarm_config::network_config_builder::{
+    ProtocolVersionsConfig, SupportedProtocolVersionsCallback,
+};
+use scalar_swarm_config::node_config_builder::{FullnodeConfigBuilder, ValidatorConfigBuilder};
 use std::num::NonZeroUsize;
 use std::{path::PathBuf, time::Duration};
 use sui_config::node::DBCheckpointConfig;
@@ -209,7 +209,7 @@ impl LocalClusterBuilder {
         swarm.config().save(&network_path)?;
         let mut keystore = Keystore::from(FileBasedKeystore::new(&keystore_path)?);
         for key in &swarm.config().account_keys {
-            keystore.add_key(SuiKeyPair::Ed25519(key.copy()))?;
+            keystore.add_key(None, SuiKeyPair::Ed25519(key.copy()))?;
         }
 
         let active_address = keystore.addresses().first().cloned();

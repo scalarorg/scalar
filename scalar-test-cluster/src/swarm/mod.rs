@@ -8,8 +8,8 @@
 //! is extremely difficult or down right impossible to do if all the nodes are running on the same
 //! runtime.
 
-mod config;
-pub use config::*;
+// pub mod config;
+// pub use config::*;
 
 mod node;
 pub use node::{Node, RuntimeType};

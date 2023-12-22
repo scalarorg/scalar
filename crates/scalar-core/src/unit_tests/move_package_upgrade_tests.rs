@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use move_core_types::{ident_str, language_storage::StructTag};
-use scalar_types::{
+use sui_move_build::BuildConfig;
+use sui_protocol_config::ProtocolConfig;
+use sui_types::{
     base_types::{ObjectID, ObjectRef, SuiAddress},
     crypto::{get_key_pair, AccountKeyPair},
     move_package::UpgradePolicy,
@@ -12,15 +14,13 @@ use scalar_types::{
     transaction::{Argument, ObjectArg, ProgrammableTransaction, TEST_ONLY_GAS_UNIT_FOR_PUBLISH},
     MOVE_STDLIB_PACKAGE_ID, SUI_FRAMEWORK_PACKAGE_ID,
 };
-use sui_move_build::BuildConfig;
-use sui_protocol_config::ProtocolConfig;
 
-use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
-use scalar_types::error::{SuiError, UserInputError};
-use scalar_types::execution_status::{
+use std::{collections::BTreeSet, path::PathBuf, str::FromStr, sync::Arc};
+use sui_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use sui_types::error::{SuiError, UserInputError};
+use sui_types::execution_status::{
     CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, PackageUpgradeError,
 };
-use std::{collections::BTreeSet, path::PathBuf, str::FromStr, sync::Arc};
 
 use crate::authority::authority_tests::init_state_with_ids;
 use crate::authority::move_integration_tests::{

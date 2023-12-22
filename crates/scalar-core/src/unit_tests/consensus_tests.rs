@@ -9,13 +9,13 @@ use move_core_types::{account_address::AccountAddress, ident_str};
 use narwhal_types::Transactions;
 use narwhal_types::TransactionsServer;
 use narwhal_types::{Empty, TransactionProto};
-use scalar_network::tonic;
-use scalar_types::crypto::deterministic_random_account_key;
-use scalar_types::multiaddr::Multiaddr;
-use scalar_types::transaction::TEST_ONLY_GAS_UNIT_FOR_OBJECT_BASICS;
-use scalar_types::utils::to_sender_signed_transaction;
-use scalar_types::SUI_FRAMEWORK_PACKAGE_ID;
-use scalar_types::{
+use sui_network::tonic;
+use sui_types::crypto::deterministic_random_account_key;
+use sui_types::multiaddr::Multiaddr;
+use sui_types::transaction::TEST_ONLY_GAS_UNIT_FOR_OBJECT_BASICS;
+use sui_types::utils::to_sender_signed_transaction;
+use sui_types::SUI_FRAMEWORK_PACKAGE_ID;
+use sui_types::{
     base_types::ObjectID,
     object::Object,
     transaction::{CallArg, CertifiedTransaction, ObjectArg, TransactionData},
@@ -80,7 +80,7 @@ pub async fn test_certificates(authority: &AuthorityState) -> Vec<CertifiedTrans
         )
         .unwrap();
 
-        let transaction = authority
+        let transaction = epoch_store
             .verify_transaction(to_sender_signed_transaction(data, &keypair))
             .unwrap();
 
@@ -109,7 +109,7 @@ async fn submit_transaction_to_consensus_adapter() {
     objects.push(Object::shared_for_testing());
     let state = init_state_with_objects(objects).await;
     let certificate = test_certificates(&state).await.pop().unwrap();
-    let epoch_store: arc_swap::Guard<Arc<AuthorityPerEpochStore>> = state.epoch_store_for_testing();
+    let epoch_store = state.epoch_store_for_testing();
 
     let metrics = ConsensusAdapterMetrics::new_test();
 

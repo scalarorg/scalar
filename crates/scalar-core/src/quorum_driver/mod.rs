@@ -7,15 +7,15 @@ pub use metrics::*;
 pub mod reconfig_observer;
 
 use arc_swap::ArcSwap;
-use scalar_types::base_types::{AuthorityName, ObjectRef, TransactionDigest};
-use scalar_types::committee::{Committee, EpochId, StakeUnit};
-use scalar_types::quorum_driver_types::{
-    QuorumDriverEffectsQueueResult, QuorumDriverError, QuorumDriverResponse, QuorumDriverResult,
-};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 use std::time::Duration;
+use sui_types::base_types::{AuthorityName, ObjectRef, TransactionDigest};
+use sui_types::committee::{Committee, EpochId, StakeUnit};
+use sui_types::quorum_driver_types::{
+    QuorumDriverEffectsQueueResult, QuorumDriverError, QuorumDriverResponse, QuorumDriverResult,
+};
 use tap::TapFallible;
 use tokio::sync::Semaphore;
 use tokio::time::{sleep_until, Instant};
@@ -32,10 +32,10 @@ use crate::authority_aggregator::{
 use crate::authority_client::AuthorityAPI;
 use mysten_common::sync::notify_read::{NotifyRead, Registration};
 use mysten_metrics::{spawn_monitored_task, GaugeGuard};
-use scalar_types::error::{SuiError, SuiResult};
-use scalar_types::messages_safe_client::PlainTransactionInfoResponse;
-use scalar_types::transaction::{CertifiedTransaction, Transaction};
 use std::fmt::Write;
+use sui_types::error::{SuiError, SuiResult};
+use sui_types::messages_safe_client::PlainTransactionInfoResponse;
+use sui_types::transaction::{CertifiedTransaction, Transaction};
 
 use self::reconfig_observer::ReconfigObserver;
 

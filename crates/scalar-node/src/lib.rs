@@ -1,15 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::{BTreeSet, HashMap, HashSet};
-use std::fmt;
-use std::path::PathBuf;
-use std::str::FromStr;
-#[cfg(msim)]
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
-use std::time::Duration;
-
 use anemo::Network;
 use anemo_tower::callback::CallbackLayer;
 use anemo_tower::trace::DefaultMakeSpan;
@@ -21,29 +12,34 @@ use arc_swap::ArcSwap;
 use fastcrypto_zkp::bn254::zk_login::JwkId;
 use fastcrypto_zkp::bn254::zk_login::OIDCProvider;
 use futures::TryFutureExt;
-use jsonrpsee::RpcModule;
 use prometheus::Registry;
-use scalar_consensus_adapter::grpc::ConsensusNode;
-use scalar_core::authority::{CommitedCertificates, CHAIN_IDENTIFIER};
+use scalar_core::authority::CHAIN_IDENTIFIER;
 use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
-use scalar_json_rpc::api::JsonRpcMetrics;
-use scalar_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
-use scalar_types::digests::ChainIdentifier;
-use scalar_types::message_envelope::get_google_jwk_bytes;
-use scalar_types::randomness_state::get_randomness_state_obj_initial_shared_version;
-use scalar_types::sui_system_state::SuiSystemState;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::fmt;
+use std::path::PathBuf;
+use std::str::FromStr;
+#[cfg(msim)]
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use std::time::Duration;
+use sui_json_rpc_api::JsonRpcMetrics;
+use sui_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
+use sui_types::base_types::ConciseableName;
+use sui_types::digests::ChainIdentifier;
+use sui_types::message_envelope::get_google_jwk_bytes;
+use sui_types::randomness_state::get_randomness_state_obj_initial_shared_version;
+use sui_types::sui_system_state::SuiSystemState;
 use tap::tap::TapFallible;
 use tokio::runtime::Handle;
 use tokio::sync::broadcast;
-use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::oneshot;
-use tokio::sync::{mpsc, watch, Mutex};
+use tokio::sync::{watch, Mutex};
 use tokio::task::JoinHandle;
 use tower::ServiceBuilder;
 use tracing::{debug, error, warn};
 use tracing::{error_span, info, Instrument};
 
-use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
 use checkpoint_executor::CheckpointExecutor;
 use fastcrypto_zkp::bn254::zk_login::JWK;
 pub use handle::SuiNodeHandle;
@@ -51,12 +47,6 @@ use mysten_metrics::{spawn_monitored_task, RegistryService};
 use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
 use narwhal_network::metrics::{NetworkConnectionMetrics, NetworkMetrics};
-use scalar_archival::reader::ArchiveReaderBalancer;
-use scalar_archival::writer::ArchiveWriter;
-use scalar_config::node::{ConsensusProtocol, DBCheckpointConfig};
-use scalar_config::node_config_metrics::NodeConfigMetrics;
-use scalar_config::{ConsensusConfig, NodeConfig};
-use scalar_consensus_adapter::{api::ConsensusMetrics, consensus_api::ConsensusApi};
 use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
@@ -90,43 +80,49 @@ use scalar_core::{
     authority::{AuthorityState, AuthorityStore},
     authority_client::NetworkAuthorityClient,
 };
-use scalar_json_rpc::coin_api::CoinReadApi;
-use scalar_json_rpc::governance_api::GovernanceReadApi;
-use scalar_json_rpc::indexer_api::IndexerApi;
-use scalar_json_rpc::move_utils::MoveUtils;
-use scalar_json_rpc::read_api::ReadApi;
-use scalar_json_rpc::transaction_builder_api::TransactionBuilderApi;
-use scalar_json_rpc::transaction_execution_api::TransactionExecutionApi;
-use scalar_json_rpc::JsonRpcServerBuilder;
 use scalar_kvstore::writer::setup_key_value_store_uploader;
-use scalar_network::api::ValidatorServer;
-use scalar_network::discovery;
-use scalar_network::discovery::TrustedPeerChangeEvent;
-use scalar_network::state_sync;
-use scalar_snapshot::uploader::StateSnapshotUploader;
-use scalar_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
-use scalar_storage::{
+use sui_archival::reader::ArchiveReaderBalancer;
+use sui_archival::writer::ArchiveWriter;
+use sui_config::node::{ConsensusProtocol, DBCheckpointConfig};
+use sui_config::node_config_metrics::NodeConfigMetrics;
+use sui_config::{ConsensusConfig, NodeConfig};
+use sui_json_rpc::coin_api::CoinReadApi;
+use sui_json_rpc::governance_api::GovernanceReadApi;
+use sui_json_rpc::indexer_api::IndexerApi;
+use sui_json_rpc::move_utils::MoveUtils;
+use sui_json_rpc::read_api::ReadApi;
+use sui_json_rpc::transaction_builder_api::TransactionBuilderApi;
+use sui_json_rpc::transaction_execution_api::TransactionExecutionApi;
+use sui_json_rpc::JsonRpcServerBuilder;
+use sui_macros::{fail_point_async, replay_log};
+use sui_network::api::ValidatorServer;
+use sui_network::discovery;
+use sui_network::discovery::TrustedPeerChangeEvent;
+use sui_network::state_sync;
+use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
+use sui_snapshot::uploader::StateSnapshotUploader;
+use sui_storage::object_store::{ObjectStoreConfig, ObjectStoreType};
+use sui_storage::{
     http_key_value_store::HttpKVStore,
     key_value_store::{FallbackTransactionKVStore, TransactionKeyValueStore},
     key_value_store_metrics::KeyValueStoreMetrics,
 };
-use scalar_storage::{FileCompression, IndexStore, StorageFormat};
-use scalar_types::base_types::{AuthorityName, EpochId};
-use scalar_types::committee::Committee;
-use scalar_types::crypto::KeypairTraits;
-use scalar_types::error::{SuiError, SuiResult};
-use scalar_types::messages_consensus::{
+use sui_storage::{FileCompression, IndexStore, StorageFormat};
+use sui_types::base_types::{AuthorityName, EpochId};
+use sui_types::committee::Committee;
+use sui_types::crypto::KeypairTraits;
+use sui_types::error::{SuiError, SuiResult};
+use sui_types::messages_consensus::{
     check_total_jwk_size, AuthorityCapabilities, ConsensusTransaction,
 };
-use scalar_types::quorum_driver_types::QuorumDriverEffectsQueueResult;
-use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
-use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-use scalar_types::sui_system_state::SuiSystemStateTrait;
-use sui_macros::fail_point_async;
-use sui_protocol_config::{Chain, ProtocolConfig, SupportedProtocolVersions};
+use sui_types::quorum_driver_types::QuorumDriverEffectsQueueResult;
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+use sui_types::sui_system_state::SuiSystemStateTrait;
 use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
+use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
 pub mod admin;
 mod handle;
 pub mod metrics;
@@ -176,7 +172,7 @@ mod simulator {
         use fastcrypto_zkp::bn254::zk_login::parse_jwks;
         // Just load a default Twitch jwk for testing.
         parse_jwks(
-            scalar_types::zk_login_util::DEFAULT_JWK_BYTES,
+            sui_types::zk_login_util::DEFAULT_JWK_BYTES,
             &OIDCProvider::Twitch,
         )
         .map_err(|_| SuiError::JWKRetrievalError)
@@ -232,7 +228,7 @@ pub struct SuiNode {
 
     _state_archive_handle: Option<broadcast::Sender<()>>,
 
-    _state_snapshot_uploader_handle: Option<oneshot::Sender<()>>,
+    _state_snapshot_uploader_handle: Option<broadcast::Sender<()>>,
     _kv_store_uploader_handle: Option<oneshot::Sender<()>>,
 }
 
@@ -251,15 +247,8 @@ impl SuiNode {
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
-        consensus_runtime: Option<Handle>,
     ) -> Result<Arc<SuiNode>> {
-        Self::start_async(
-            config,
-            registry_service,
-            custom_rpc_runtime,
-            consensus_runtime,
-        )
-        .await
+        Self::start_async(config, registry_service, custom_rpc_runtime).await
     }
 
     fn start_jwk_updater(
@@ -401,7 +390,6 @@ impl SuiNode {
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
-        consensus_runtime: Option<Handle>,
     ) -> Result<Arc<SuiNode>> {
         NodeConfigMetrics::new(&registry_service.default_registry()).record_metrics(config);
         let mut config = config.clone();
@@ -477,6 +465,12 @@ impl SuiNode {
             signature_verifier_metrics,
             &config.expensive_safety_check_config,
             ChainIdentifier::from(*genesis.checkpoint().digest()),
+        );
+
+        replay_log!(
+            "Beginning replay run. Epoch: {:?}, Protocol config: {:?}",
+            epoch_store.epoch(),
+            epoch_store.protocol_config()
         );
 
         // the database is empty at genesis time
@@ -580,15 +574,10 @@ impl SuiNode {
             .protocol_config()
             .simplified_unwrap_then_delete()
         {
-            pruning_config.set_enable_pruning_tombstones(false);
+            // We cannot prune tombstones if simplified_unwrap_then_delete is not enabled.
+            pruning_config.set_killswitch_tombstone_pruning(true);
         }
-        /*
-         * 231127 - Taivv
-         * Output from consensus commit được xử lý trong struct AuthorityState.
-         * Modify struct này để thêm vào kênh trao đổi dữ liệu giữa Consensus với Reth
-         * Tags CONSENSUS COMMIT
-         */
-        let (tx_ready_certificates, rx_ready_certificates) = mpsc::unbounded_channel();
+
         let state = AuthorityState::new(
             config.protocol_public_key(),
             secret,
@@ -609,8 +598,6 @@ impl SuiNode {
             config.state_debug_dump_config.clone(),
             config.overload_threshold_config.clone(),
             archive_readers,
-            //For receiving commited transactions from Consensus layer
-            tx_ready_certificates,
         )
         .await;
         // ensure genesis txn was executed
@@ -618,10 +605,10 @@ impl SuiNode {
             let txn = &genesis.transaction();
             let span = error_span!("genesis_txn", tx_digest = ?txn.digest());
             let transaction =
-                scalar_types::executable_transaction::VerifiedExecutableTransaction::new_unchecked(
-                    scalar_types::executable_transaction::ExecutableTransaction::new_from_data_and_sig(
+                sui_types::executable_transaction::VerifiedExecutableTransaction::new_unchecked(
+                    sui_types::executable_transaction::ExecutableTransaction::new_from_data_and_sig(
                         genesis.transaction().data().clone(),
-                        scalar_types::executable_transaction::CertificateProof::Checkpoint(0, 0),
+                        sui_types::executable_transaction::CertificateProof::Checkpoint(0, 0),
                     ),
                 );
             state
@@ -657,39 +644,13 @@ impl SuiNode {
             None
         };
 
-        let http_server = build_http_server(
+        let http_server: Option<JoinHandle<()>> = build_http_server(
             state.clone(),
             &transaction_orchestrator.clone(),
             &config,
             &prometheus_registry,
             custom_rpc_runtime,
         )?;
-        /*
-         * 231123 - Taivv
-         * Using new registry
-         */
-        // let prometheus_registry = registry_service.default_registry();
-        // let consensus_server = build_consensus_server(
-        //     state.clone(),
-        //     &transaction_orchestrator.clone(),
-        //     &config,
-        //     &prometheus_registry,
-        //     consensus_runtime,
-        // )?;
-        /*
-         * 231123 - Taivv
-         * Try using grpc server
-         */
-
-        let grpc_handle = build_grpc_server(
-            state.clone(),
-            &transaction_orchestrator,
-            rx_ready_certificates,
-            &config,
-            &prometheus_registry,
-            consensus_runtime,
-        )
-        .await?;
 
         let accumulator = Arc::new(StateAccumulator::new(store));
 
@@ -851,7 +812,7 @@ impl SuiNode {
     fn start_state_snapshot(
         config: &NodeConfig,
         prometheus_registry: &Registry,
-    ) -> Result<Option<oneshot::Sender<()>>> {
+    ) -> Result<Option<tokio::sync::broadcast::Sender<()>>> {
         if let Some(remote_store_config) = &config.state_snapshot_write_config.object_store_config {
             let snapshot_uploader = StateSnapshotUploader::new(
                 &config.db_checkpoint_path(),
@@ -1570,6 +1531,10 @@ impl SuiNode {
             };
             *self.validator_components.lock().await = new_validator_components;
 
+            // Force releasing current epoch store DB handle, because the
+            // Arc<AuthorityPerEpochStore> may linger.
+            cur_epoch_store.release_db_handles();
+
             #[cfg(msim)]
             if !matches!(
                 self.config
@@ -1663,7 +1628,7 @@ impl SuiNode {
 
 #[cfg(msim)]
 impl SuiNode {
-    pub fn get_sim_node_id(&self) -> scalar_simulator::task::NodeId {
+    pub fn get_sim_node_id(&self) -> sui_simulator::task::NodeId {
         self.sim_state.sim_node.id()
     }
 
@@ -1763,26 +1728,27 @@ pub fn build_http_server(
         let kv_store = build_kv_store(&state, config, prometheus_registry)?;
 
         let metrics = Arc::new(JsonRpcMetrics::new(prometheus_registry));
-        server.register_module(ReadApi::new(
-            state.clone(),
-            kv_store.clone(),
-            metrics.clone(),
-        ))?;
-        server.register_module(CoinReadApi::new(
-            state.clone(),
-            kv_store.clone(),
-            metrics.clone(),
-        ))?;
-        server.register_module(TransactionBuilderApi::new(state.clone()))?;
-        server.register_module(GovernanceReadApi::new(state.clone(), metrics.clone()))?;
+        //Scalar Todo: Define scalar rpc api
+        // server.register_module(ReadApi::new(
+        //     state.clone(),
+        //     kv_store.clone(),
+        //     metrics.clone(),
+        // ))?;
+        // server.register_module(CoinReadApi::new(
+        //     state.clone(),
+        //     kv_store.clone(),
+        //     metrics.clone(),
+        // ))?;
+        // server.register_module(TransactionBuilderApi::new(state.clone()))?;
+        // server.register_module(GovernanceReadApi::new(state.clone(), metrics.clone()))?;
 
-        if let Some(transaction_orchestrator) = transaction_orchestrator {
-            server.register_module(TransactionExecutionApi::new(
-                state.clone(),
-                transaction_orchestrator.clone(),
-                metrics.clone(),
-            ))?;
-        }
+        // if let Some(transaction_orchestrator) = transaction_orchestrator {
+        //     server.register_module(TransactionExecutionApi::new(
+        //         state.clone(),
+        //         transaction_orchestrator.clone(),
+        //         metrics.clone(),
+        //     ))?;
+        // }
 
         let name_service_config =
             if let (Some(package_address), Some(registry_id), Some(reverse_registry_id)) = (
@@ -1790,24 +1756,24 @@ pub fn build_http_server(
                 config.name_service_registry_id,
                 config.name_service_reverse_registry_id,
             ) {
-                scalar_json_rpc::name_service::NameServiceConfig::new(
+                sui_json_rpc::name_service::NameServiceConfig::new(
                     package_address,
                     registry_id,
                     reverse_registry_id,
                 )
             } else {
-                scalar_json_rpc::name_service::NameServiceConfig::default()
+                sui_json_rpc::name_service::NameServiceConfig::default()
             };
 
-        server.register_module(IndexerApi::new(
-            state.clone(),
-            ReadApi::new(state.clone(), kv_store.clone(), metrics.clone()),
-            kv_store,
-            name_service_config,
-            metrics,
-            config.indexer_max_subscriptions,
-        ))?;
-        server.register_module(MoveUtils::new(state.clone()))?;
+        // server.register_module(IndexerApi::new(
+        //     state.clone(),
+        //     ReadApi::new(state.clone(), kv_store.clone(), metrics.clone()),
+        //     kv_store,
+        //     name_service_config,
+        //     metrics,
+        //     config.indexer_max_subscriptions,
+        // ))?;
+        // server.register_module(MoveUtils::new(state.clone()))?;
 
         server.to_router(None)?
     };
@@ -1825,73 +1791,6 @@ pub fn build_http_server(
     let handle = tokio::spawn(async move { server.await.unwrap() });
 
     info!(local_addr =? addr, "Sui JSON-RPC server listening on {addr}");
-
-    Ok(Some(handle))
-}
-/*
- * 231123-TaiVV
- * Add consensus grpc server
- */
-pub async fn build_grpc_server(
-    state: Arc<AuthorityState>,
-    transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
-    rx_ready_certificates: UnboundedReceiver<CommitedCertificates>,
-    config: &NodeConfig,
-    prometheus_registry: &Registry,
-    consensus_runtime: Option<Handle>,
-) -> Result<Option<tokio::task::JoinHandle<()>>> {
-    Ok(transaction_orchestrator.as_ref().map(|trans_orches| {
-        let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
-        let consensus_node = ConsensusNode::new(state, trans_orches.clone(), metrics.clone());
-        let grpc_address = config.consensus_rpc_address.clone();
-        let handle = tokio::spawn(async move {
-            consensus_node
-                .start(grpc_address, rx_ready_certificates)
-                .await
-                .unwrap()
-        });
-        info!("Consensus Grpc server listenning on {:?}", &grpc_address);
-        handle
-    }))
-    //Ok(Some(handle))
-}
-/*
- * 231121-TaiVV
- * Add consensus server
- */
-pub fn build_consensus_server(
-    state: Arc<AuthorityState>,
-    transaction_orchestrator: &Option<Arc<TransactiondOrchestrator<NetworkAuthorityClient>>>,
-    config: &NodeConfig,
-    prometheus_registry: &Registry,
-    consensus_runtime: Option<Handle>,
-) -> Result<Option<tokio::task::JoinHandle<()>>> {
-    // Validators do not expose these APIs
-    // if config.consensus_config().is_some() {
-    //     return Ok(None);
-    // }
-    let prometheus_registry = &Registry::new();
-    let mut router = axum::Router::new();
-
-    let consensus_router = {
-        let mut server = JsonRpcServerBuilder::new(env!("CARGO_PKG_VERSION"), prometheus_registry);
-
-        let metrics = Arc::new(ConsensusMetrics::new(prometheus_registry));
-        server.register_module(ConsensusApi::new(metrics.clone()))?;
-        server.to_router(None)?
-    };
-    router = router.merge(consensus_router);
-
-    let server =
-        axum::Server::bind(&config.consensus_rpc_address).serve(router.into_make_service());
-
-    let addr = server.local_addr();
-    let handle = if let Some(handle) = consensus_runtime {
-        handle.spawn(async move { server.await.unwrap() })
-    } else {
-        tokio::spawn(async move { server.await.unwrap() })
-    };
-    info!(local_addr =? addr, "Scalar consensus JSON-RPC server listening on {addr}");
 
     Ok(Some(handle))
 }

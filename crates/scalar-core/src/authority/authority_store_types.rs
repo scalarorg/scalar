@@ -1,17 +1,17 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use scalar_types::base_types::MoveObjectType;
-use scalar_types::base_types::{ObjectDigest, SequenceNumber, TransactionDigest};
-use scalar_types::coin::Coin;
-use scalar_types::crypto::{default_hash, Signable};
-use scalar_types::error::SuiError;
-use scalar_types::move_package::MovePackage;
-use scalar_types::object::{Data, MoveObject, Object, Owner};
-use scalar_types::storage::ObjectKey;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use serde_with::Bytes;
+use sui_types::base_types::MoveObjectType;
+use sui_types::base_types::{ObjectDigest, SequenceNumber, TransactionDigest};
+use sui_types::coin::Coin;
+use sui_types::crypto::{default_hash, Signable};
+use sui_types::error::SuiError;
+use sui_types::move_package::MovePackage;
+use sui_types::object::{Data, MoveObject, Object, ObjectInner, Owner};
+use sui_types::storage::ObjectKey;
 
 pub type ObjectContentDigest = ObjectDigest;
 
@@ -89,7 +89,7 @@ pub enum StoreObjectV1 {
     Wrapped,
 }
 
-/// Forked version of [`scalar_types::object::Object`]
+/// Forked version of [`sui_types::object::Object`]
 /// Used for efficient storing of move objects in the database
 #[derive(Eq, PartialEq, Debug, Clone, Deserialize, Serialize, Hash)]
 pub struct StoreObjectValue {
@@ -99,7 +99,7 @@ pub struct StoreObjectValue {
     pub storage_rebate: u64,
 }
 
-/// Forked version of [`scalar_types::object::Data`]
+/// Forked version of [`sui_types::object::Data`]
 /// Adds extra enum value `IndirectObject`, which represents a reference to an object stored separately
 #[derive(Eq, PartialEq, Debug, Clone, Deserialize, Serialize, Hash)]
 pub enum StoreData {
@@ -196,6 +196,8 @@ pub struct StoreObjectPair(pub StoreObjectWrapper, pub Option<StoreMoveObjectWra
 pub fn get_store_object_pair(object: Object, indirect_objects_threshold: usize) -> StoreObjectPair {
     let mut indirect_object = None;
 
+    let object = object.into_inner();
+
     let data = match object.data {
         Data::Package(package) => StoreData::Package(package),
         Data::Move(move_obj) => {
@@ -272,10 +274,11 @@ pub(crate) fn try_construct_object(
         }
     };
 
-    Ok(Object {
+    Ok(ObjectInner {
         data,
         owner: store_object.owner,
         previous_transaction: store_object.previous_transaction,
         storage_rebate: store_object.storage_rebate,
-    })
+    }
+    .into())
 }

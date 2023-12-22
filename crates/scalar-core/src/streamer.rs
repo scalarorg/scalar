@@ -1,26 +1,18 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- * 2023-11-06 TaiVV
- * copy and modify from sui-core/src/streamer.rs
- * đóng vai trò là đầu mối để thực hiện gửi dữ liệu tới các subscriber
- * mỗi khi nhận được message từ channel
- * Tags: SCALAR_HANDLER, SCALAR_SUBSCRIPTION
- */
-
 use crate::subscription_handler::{SubscriptionMetrics, EVENT_DISPATCH_BUFFER_SIZE};
 use futures::Stream;
 use mysten_metrics::metered_channel::Sender;
 use mysten_metrics::spawn_monitored_task;
 use parking_lot::RwLock;
 use prometheus::Registry;
-use scalar_json_rpc_types::Filter;
-use scalar_types::base_types::ObjectID;
-use scalar_types::error::SuiError;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::sync::Arc;
+use sui_json_rpc_types::Filter;
+use sui_types::base_types::ObjectID;
+use sui_types::error::SuiError;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tracing::{debug, warn};

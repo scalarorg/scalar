@@ -2,27 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use scalar_config::node::ExpensiveSafetyCheckConfig;
-use scalar_types::gas::GasCostSummary;
+use sui_config::node::ExpensiveSafetyCheckConfig;
+use sui_types::gas::GasCostSummary;
 use tempfile::tempdir;
 
 use std::{sync::Arc, time::Duration};
 
 use crate::authority::epoch_start_configuration::EpochStartConfiguration;
 use broadcast::{Receiver, Sender};
-use scalar_types::committee::ProtocolVersion;
-use scalar_types::messages_checkpoint::{
-    ECMHLiveObjectSetDigest, EndOfEpochData, VerifiedCheckpoint,
-};
 use sui_protocol_config::SupportedProtocolVersions;
+use sui_types::committee::ProtocolVersion;
+use sui_types::messages_checkpoint::{ECMHLiveObjectSetDigest, EndOfEpochData, VerifiedCheckpoint};
 use tokio::{sync::broadcast, time::timeout};
 
 use crate::authority::test_authority_builder::TestAuthorityBuilder;
 use crate::{
     authority::AuthorityState, checkpoints::CheckpointStore, state_accumulator::StateAccumulator,
 };
-use scalar_swarm_config::test_utils::{empty_contents, CommitteeFixture};
-use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
+use sui_swarm_config::test_utils::{empty_contents, CommitteeFixture};
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
 
 /// Test checkpoint executor happy path, test that checkpoint executor correctly
 /// picks up where it left off in the event of a mid-epoch node crash.
@@ -382,7 +380,7 @@ async fn init_executor_test(
     CommitteeFixture,
 ) {
     let network_config =
-        scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir().build();
+        sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir().build();
     let state = TestAuthorityBuilder::new()
         .with_network_config(&network_config)
         .build()

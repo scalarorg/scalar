@@ -1,6 +1,3 @@
-use crate::genesis_config::GenesisConfig;
-use crate::network_config::NetworkConfig;
-use crate::node::ScalarNodeHandle;
 use crate::swarm::Swarm;
 use crate::{Env, LocalClusterBuilder, LocalClusterConfig};
 use async_trait::async_trait;
@@ -10,6 +7,9 @@ use jsonrpsee::{
     ws_client::{WsClient, WsClientBuilder},
 };
 use move_binary_format::access::ModuleAccess;
+use scalar_node::SuiNodeHandle;
+use scalar_swarm_config::genesis_config::GenesisConfig;
+use scalar_swarm_config::network_config::NetworkConfig;
 use std::{net::SocketAddr, path::Path};
 use sui_config::{Config, PersistedConfig, SUI_KEYSTORE_FILENAME, SUI_NETWORK_CONFIG};
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore, Keystore};
@@ -51,7 +51,7 @@ pub trait Cluster {
         Self: Sized;
 
     // fn fullnode_url(&self) -> &str;
-    
+
     // fn indexer_url(&self) -> &Option<String>;
 
     // /// Returns faucet url in a remote cluster.
@@ -133,7 +133,7 @@ impl Cluster for RemoteRunningCluster {
     // fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
     //     None
     // }
-    
+
     fn user_key(&self) -> AccountKeyPair {
         get_key_pair().1
     }
@@ -144,7 +144,7 @@ impl Cluster for RemoteRunningCluster {
 }
 
 pub struct FullNodeHandle {
-    pub sui_node: ScalarNodeHandle,
+    pub sui_node: SuiNodeHandle,
     pub sui_client: SuiClient,
     pub rpc_client: HttpClient,
     pub rpc_url: String,
@@ -152,7 +152,7 @@ pub struct FullNodeHandle {
 }
 
 impl FullNodeHandle {
-    pub async fn new(sui_node: ScalarNodeHandle, json_rpc_address: SocketAddr) -> Self {
+    pub async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
         let rpc_url = format!("http://{}", json_rpc_address);
         let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
 
@@ -215,22 +215,22 @@ impl Cluster for LocalNewCluster {
         if let Some(size) = options.cluster_size.as_ref() {
             cluster_builder = cluster_builder.with_num_validators(size.clone());
         }
-        cluster_builder = cluster_builder.with_consensus_grpc_port(options.consensus_grpc_port.clone());
+        cluster_builder =
+            cluster_builder.with_consensus_grpc_port(options.consensus_grpc_port.clone());
         // Check if we already have a config directory that is passed
         if let Some(config_dir) = options.config_dir.clone() {
             assert!(options.epoch_duration_ms.is_none());
             // Load the config of the Sui authority.
             let network_config_path = config_dir.join(SUI_NETWORK_CONFIG);
-            match PersistedConfig::read(&network_config_path)
-                .map_err(|err| {
-                    err.context(format!(
-                        "Cannot open Scalar network config file at {:?}",
-                        network_config_path
-                    ))
-                }) {
+            match PersistedConfig::read(&network_config_path).map_err(|err| {
+                err.context(format!(
+                    "Cannot open Scalar network config file at {:?}",
+                    network_config_path
+                ))
+            }) {
                 Ok(network_config) => {
                     cluster_builder = cluster_builder.set_network_config(network_config);
-                },
+                }
                 Err(err) => {
                     error!("{:?}", err);
                     // Let the faucet account hold 1000 gas objects on genesis
@@ -241,7 +241,7 @@ impl Cluster for LocalNewCluster {
                     if let Some(epoch_duration_ms) = options.epoch_duration_ms {
                         cluster_builder = cluster_builder.with_epoch_duration_ms(epoch_duration_ms);
                     }
-                },      
+                }
             }
             cluster_builder = cluster_builder.with_config_dir(config_dir);
         } else {

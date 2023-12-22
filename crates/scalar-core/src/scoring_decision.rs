@@ -5,9 +5,9 @@ use crate::consensus_types::committee_api::CommitteeAPI;
 use crate::consensus_types::AuthorityIndex;
 use arc_swap::ArcSwap;
 use narwhal_config::Stake;
-use scalar_types::base_types::AuthorityName;
 use std::collections::HashMap;
 use std::sync::Arc;
+use sui_types::base_types::AuthorityName;
 use tracing::debug;
 
 /// Updates list of authorities that are deemed to have low reputation scores by consensus

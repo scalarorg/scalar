@@ -7,17 +7,15 @@ use crate::test_authority_clients::LocalAuthorityClient;
 use crate::test_utils::make_transfer_sui_transaction;
 use crate::{quorum_driver::QuorumDriverMetrics, test_utils::init_local_authorities};
 use mysten_common::sync::notify_read::{NotifyRead, Registration};
-use scalar_types::base_types::SuiAddress;
-use scalar_types::base_types::TransactionDigest;
-use scalar_types::crypto::{deterministic_random_account_key, get_key_pair, AccountKeyPair};
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::object::{generate_test_gas_objects, Object};
-use scalar_types::quorum_driver_types::{
-    QuorumDriverError, QuorumDriverResponse, QuorumDriverResult,
-};
-use scalar_types::transaction::Transaction;
 use std::sync::Arc;
 use std::time::Duration;
+use sui_types::base_types::SuiAddress;
+use sui_types::base_types::TransactionDigest;
+use sui_types::crypto::{deterministic_random_account_key, get_key_pair, AccountKeyPair};
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::object::{generate_test_gas_objects, Object};
+use sui_types::quorum_driver_types::{QuorumDriverError, QuorumDriverResponse, QuorumDriverResult};
+use sui_types::transaction::Transaction;
 
 async fn setup() -> (AuthorityAggregator<LocalAuthorityClient>, Transaction) {
     let (sender, keypair): (_, AccountKeyPair) = get_key_pair();

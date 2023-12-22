@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::network_config::NetworkConfig;
-use scalar_types::{
+use shared_crypto::intent::{Intent, IntentMessage, IntentScope};
+use std::collections::HashMap;
+use sui_types::{
     base_types::AuthorityName,
     committee::{Committee, EpochId, StakeUnit},
     crypto::{
@@ -14,8 +16,6 @@ use scalar_types::{
         EndOfEpochData, FullCheckpointContents, VerifiedCheckpoint, VerifiedCheckpointContents,
     },
 };
-use shared_crypto::intent::{Intent, IntentMessage, IntentScope};
-use std::collections::HashMap;
 
 pub struct CommitteeFixture {
     epoch: EpochId,
@@ -37,7 +37,7 @@ impl CommitteeFixture {
         committee_size: usize,
     ) -> Self {
         let validators = (0..committee_size)
-            .map(|_| scalar_types::crypto::get_key_pair_from_rng::<AuthorityKeyPair, _>(&mut rng).1)
+            .map(|_| sui_types::crypto::get_key_pair_from_rng::<AuthorityKeyPair, _>(&mut rng).1)
             .map(|keypair| (keypair.public().into(), (keypair, 1)))
             .collect::<HashMap<_, _>>();
 

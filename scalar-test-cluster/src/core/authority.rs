@@ -147,6 +147,10 @@ use crate::core::transaction_manager::TransactionManager;
 pub mod authority_tests;
 
 #[cfg(test)]
+#[path = "unit_tests/transaction_tests.rs"]
+pub mod transaction_tests;
+
+#[cfg(test)]
 #[path = "unit_tests/batch_transaction_tests.rs"]
 mod batch_transaction_tests;
 
@@ -192,7 +196,7 @@ pub struct AuthorityMetrics {
     num_shared_objects: Histogram,
     batch_size: Histogram,
 
-    handle_transaction_latency: Histogram,
+    authority_state_handle_transaction_latency: Histogram,
 
     execute_certificate_latency_single_writer: Histogram,
     execute_certificate_latency_shared_object: Histogram,
@@ -348,7 +352,7 @@ impl AuthorityMetrics {
                 registry,
             )
             .unwrap(),
-            handle_transaction_latency: register_histogram_with_registry!(
+            authority_state_handle_transaction_latency: register_histogram_with_registry!(
                 "authority_state_handle_transaction_latency",
                 "Latency of handling transactions",
                 LATENCY_SEC_BUCKETS.to_vec(),
@@ -663,6 +667,7 @@ impl AuthorityState {
     pub fn get_consensus_listeners(&self) -> Arc<ConsensusListener> {
         return self.consensus_listeners.clone();
     }
+
     pub fn is_validator(&self, epoch_store: &AuthorityPerEpochStore) -> bool {
         epoch_store.committee().authority_exists(&self.name)
     }
@@ -792,8 +797,10 @@ impl AuthorityState {
             SuiError::InvalidSystemTransaction
         );
 
-        let _metrics_guard = self.metrics.handle_transaction_latency.start_timer();
-
+        let _metrics_guard = self
+            .metrics
+            .authority_state_handle_transaction_latency
+            .start_timer();
         self.metrics.tx_orders.inc();
 
         // The should_accept_user_certs check here is best effort, because
@@ -1182,7 +1189,7 @@ impl AuthorityState {
                 self.metrics.authenticator_state_update_failed.inc();
             }
             debug_assert!(execution_error_opt.is_none());
-            epoch_store.update_authenticator_state(auth_state);
+            epoch_store.update_authenticator_state(&auth_state);
 
             // double check that the signature verifier always matches the authenticator state
             if cfg!(debug_assertions) {
@@ -2155,10 +2162,12 @@ impl AuthorityState {
 
         let metrics = Arc::new(AuthorityMetrics::new(prometheus_registry));
         let (tx_ready_certificates, rx_ready_certificates) = unbounded_channel();
+        let (tx_commited_transactions, rx_commited_transactions) = unbounded_channel();
         let transaction_manager = Arc::new(TransactionManager::new(
             store.clone(),
             &epoch_store,
             tx_ready_certificates,
+            tx_commited_transactions,
             metrics.clone(),
         ));
         let (tx_execution_shutdown, rx_execution_shutdown) = oneshot::channel();
@@ -2170,6 +2179,7 @@ impl AuthorityState {
             checkpoint_store.clone(),
             store.objects_lock_table.clone(),
             pruning_config,
+            epoch_store.committee().authority_exists(&name),
             epoch_store.epoch_start_state().epoch_duration_ms(),
             prometheus_registry,
             indirect_objects_threshold,
@@ -2200,17 +2210,17 @@ impl AuthorityState {
             consensus_listeners: Arc::new(ConsensusListener::default()),
         });
         /*
-         * 231207 TaiVV
+         * 231213 TaiVV
          * Start consensus result notifier
          */
         let consensus_listeners = state.get_consensus_listeners();
         consensus_listeners
-            .start_notifier(rx_ready_certificates)
+            .start_notifier(rx_commited_transactions)
             .await;
-        let (tx_ready_certificates, rx_ready_certificates) = unbounded_channel();
-        consensus_listeners
-            .add_listener(tx_ready_certificates)
-            .await;
+        // let (tx_ready_certificates, rx_ready_certificates) = unbounded_channel();
+        // consensus_listeners
+        //     .add_listener(tx_ready_certificates)
+        //     .await;
         // Start a task to execute ready certificates.
         let authority_state = Arc::downgrade(&state);
         spawn_monitored_task!(execution_process(
@@ -4315,7 +4325,6 @@ impl AuthorityState {
     pub async fn prune_objects_and_compact_for_testing(&self) {
         let pruning_config = AuthorityStorePruningConfig {
             num_epochs_to_retain: 0,
-            enable_pruning_tombstones: true,
             ..Default::default()
         };
         let _ = AuthorityStorePruner::prune_objects_for_eligible_epochs(
@@ -4668,7 +4677,7 @@ impl NodeStateDump {
             input_objects: inner_temporary_store
                 .input_objects
                 .values()
-                .map(|o| (**o).clone())
+                .map(|o| (*o).clone())
                 .collect(),
             computed_effects: effects.clone(),
             expected_effects_digest,

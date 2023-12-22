@@ -1,17 +1,6 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
-// use crate::authority::authority_store_tables::AuthorityPerpetualTables;
-// use crate::authority::epoch_start_configuration::EpochStartConfiguration;
-// use crate::authority::{AuthorityState};
-// use crate::checkpoints::CheckpointStore;
-// use crate::epoch::committee_store::CommitteeStore;
-// use crate::epoch::epoch_metrics::EpochMetrics;
-use crate::genesis_config::AccountConfig;
-// use crate::module_cache_metrics::ResolverMetrics;
-use crate::network_config::NetworkConfig;
-// use crate::signature_verifier::SignatureVerifierMetrics;
 use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::core::authority::authority_store_tables::AuthorityPerpetualTables;
 use crate::core::authority::epoch_start_configuration::EpochStartConfiguration;
@@ -36,6 +25,8 @@ use sui_config::transaction_deny_config::TransactionDenyConfig;
 use sui_macros::nondeterministic;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
 use sui_storage::IndexStore;
+use crate::swarm::config::genesis_config::AccountConfig;
+use crate::swarm::config::network_config::NetworkConfig;
 use sui_types::base_types::{AuthorityName, ObjectID};
 use sui_types::crypto::AuthorityKeyPair;
 use sui_types::digests::ChainIdentifier;
@@ -160,7 +151,7 @@ impl<'a> TestAuthorityBuilder<'a> {
 
     pub async fn build(self) -> Arc<AuthorityState> {
         let mut local_network_config_builder =
-            crate::network_config_builder::ConfigBuilder::new_with_temp_dir()
+            crate::swarm::config::network_config_builder::ConfigBuilder::new_with_temp_dir()
                 .with_accounts(self.accounts)
                 .with_reference_gas_price(self.reference_gas_price.unwrap_or(500));
         if let Some(protocol_config) = &self.protocol_config {
@@ -262,7 +253,8 @@ impl<'a> TestAuthorityBuilder<'a> {
             .protocol_config()
             .simplified_unwrap_then_delete()
         {
-            pruning_config.set_enable_pruning_tombstones(false);
+            // We cannot prune tombstones if simplified_unwrap_then_delete is not enabled.
+            pruning_config.set_killswitch_tombstone_pruning(true);
         }
         let state = AuthorityState::new(
             name,

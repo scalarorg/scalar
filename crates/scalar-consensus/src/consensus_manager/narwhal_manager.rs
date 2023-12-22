@@ -1,32 +1,32 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-
-#[cfg(test)]
-#[path = "../unit_tests/narwhal_manager_tests.rs"]
-pub mod narwhal_manager_tests;
-
+use crate::consensus::consensus_handler::ConsensusHandlerInitializer;
+use crate::consensus::consensus_manager::{
+    ConsensusManagerMetrics, ConsensusManagerTrait, Running, RunningLockGuard,
+};
+use crate::consensus::consensus_validator::SuiTxValidator;
+use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
+use async_trait::async_trait;
 use fastcrypto::traits::KeyPair;
 use mysten_metrics::RegistryService;
-use narwhal_config::{Committee, Epoch, Parameters, WorkerCache, WorkerId};
-use narwhal_executor::ExecutionState;
+use mysticeti_core::block_validator::BlockVerifier;
+use narwhal_config::{Parameters, WorkerId};
 use narwhal_network::client::NetworkClient;
 use narwhal_node::primary_node::PrimaryNode;
 use narwhal_node::worker_node::WorkerNodes;
 use narwhal_node::{CertificateStoreCacheMetrics, NodeStorage};
 use narwhal_worker::TransactionValidator;
-use prometheus::{register_int_gauge_with_registry, IntGauge, Registry};
-use scalar_types::crypto::{AuthorityKeyPair, NetworkKeyPair};
-use scalar_types::digests::ChainIdentifier;
 use std::path::PathBuf;
-use std::time::Instant;
-use sui_protocol_config::{ProtocolConfig, ProtocolVersion};
+use std::sync::Arc;
+use sui_config::NodeConfig;
+use sui_types::committee::EpochId;
+use sui_types::crypto::{AuthorityKeyPair, NetworkKeyPair};
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use tokio::sync::Mutex;
 
-#[derive(PartialEq)]
-enum Running {
-    True(Epoch, ProtocolVersion),
-    False,
-}
+#[cfg(test)]
+#[path = "../unit_tests/narwhal_manager_tests.rs"]
+pub mod narwhal_manager_tests;
 
 pub struct NarwhalConfiguration {
     pub primary_keypair: AuthorityKeyPair,
@@ -38,44 +38,6 @@ pub struct NarwhalConfiguration {
     pub registry_service: RegistryService,
 }
 
-pub struct NarwhalManagerMetrics {
-    start_latency: IntGauge,
-    shutdown_latency: IntGauge,
-    start_primary_retries: IntGauge,
-    start_worker_retries: IntGauge,
-}
-
-impl NarwhalManagerMetrics {
-    pub fn new(registry: &Registry) -> Self {
-        Self {
-            start_latency: register_int_gauge_with_registry!(
-                "narwhal_manager_start_latency",
-                "The latency of starting up narwhal nodes",
-                registry,
-            )
-            .unwrap(),
-            shutdown_latency: register_int_gauge_with_registry!(
-                "narwhal_manager_shutdown_latency",
-                "The latency of shutting down narwhal nodes",
-                registry,
-            )
-            .unwrap(),
-            start_primary_retries: register_int_gauge_with_registry!(
-                "narwhal_manager_start_primary_retries",
-                "The number of retries took to start narwhal primary node",
-                registry
-            )
-            .unwrap(),
-            start_worker_retries: register_int_gauge_with_registry!(
-                "narwhal_manager_start_worker_retries",
-                "The number of retries took to start narwhal worker node",
-                registry
-            )
-            .unwrap(),
-        }
-    }
-}
-
 pub struct NarwhalManager {
     primary_keypair: AuthorityKeyPair,
     network_keypair: NetworkKeyPair,
@@ -84,12 +46,12 @@ pub struct NarwhalManager {
     worker_nodes: WorkerNodes,
     storage_base_path: PathBuf,
     running: Mutex<Running>,
-    metrics: NarwhalManagerMetrics,
+    metrics: ConsensusManagerMetrics,
     store_cache_metrics: CertificateStoreCacheMetrics,
 }
 
 impl NarwhalManager {
-    pub fn new(config: NarwhalConfiguration, metrics: NarwhalManagerMetrics) -> Self {
+    pub fn new(config: NarwhalConfiguration, metrics: ConsensusManagerMetrics) -> Self {
         // Create the Narwhal Primary with configuration
         let primary_node =
             PrimaryNode::new(config.parameters.clone(), config.registry_service.clone());
@@ -114,6 +76,15 @@ impl NarwhalManager {
         }
     }
 
+    fn get_store_path(&self, epoch: EpochId) -> PathBuf {
+        let mut store_path = self.storage_base_path.clone();
+        store_path.push(format!("{}", epoch));
+        store_path
+    }
+}
+
+#[async_trait]
+impl ConsensusManagerTrait for NarwhalManager {
     // Starts the Narwhal (primary & worker(s)) - if not already running.
     // Note: After a binary is updated with the new protocol version and the node
     // is restarted, the protocol config does not take effect until we have a quorum
@@ -122,43 +93,45 @@ impl NarwhalManager {
     // is not recreated which is why we pass protocol config in at start and not at creation.
     // To ensure correct behavior an updated protocol config must be passed in at the
     // start of EACH epoch.
-    pub async fn start<State, StateInitializer, TxValidator: TransactionValidator>(
+    async fn start(
         &self,
-        committee: Committee,
-        chain: ChainIdentifier,
-        protocol_config: ProtocolConfig,
-        worker_cache: WorkerCache,
-        execution_state: StateInitializer,
-        tx_validator: TxValidator,
-    ) where
-        State: ExecutionState + Send + Sync + 'static,
-        StateInitializer: Fn() -> State,
-    {
-        let mut running = self.running.lock().await;
+        config: &NodeConfig,
+        epoch_store: Arc<AuthorityPerEpochStore>,
+        consensus_handler_initializer: ConsensusHandlerInitializer,
+        tx_validator: impl TransactionValidator + BlockVerifier,
+    ) {
+        let chain = epoch_store.get_chain_identifier();
+        let system_state = epoch_store.epoch_start_state();
+        let epoch = epoch_store.epoch();
+        let committee = system_state.get_narwhal_committee();
+        let protocol_config = epoch_store.protocol_config();
 
-        if let Running::True(epoch, version) = *running {
-            tracing::warn!(
-                "Narwhal node is already Running for epoch {epoch:?} & protocol version {version:?} - shutdown first before starting",
-            );
+        let Some(_guard) = RunningLockGuard::acquire_start(
+            &self.metrics,
+            &self.running,
+            epoch,
+            protocol_config.version,
+        )
+        .await
+        else {
             return;
-        }
+        };
 
-        let now = Instant::now();
+        let transactions_addr = &config
+            .consensus_config
+            .as_ref()
+            .expect("Validator is missing consensus config")
+            .address;
+        let worker_cache = system_state.get_narwhal_worker_cache(transactions_addr);
 
         // Create a new store
-        let store_path = self.get_store_path(committee.epoch());
+        let store_path = self.get_store_path(epoch);
         let store = NodeStorage::reopen(store_path, Some(self.store_cache_metrics.clone()));
 
         // Create a new client.
         let network_client = NetworkClient::new_from_keypair(&self.network_keypair);
 
         let name = self.primary_keypair.public().clone();
-
-        tracing::info!(
-            "Starting up Narwhal for epoch {} & protocol version {:?}",
-            committee.epoch(),
-            protocol_config.version
-        );
 
         // start primary
         const MAX_PRIMARY_RETRIES: u32 = 2;
@@ -175,7 +148,7 @@ impl NarwhalManager {
                     worker_cache.clone(),
                     network_client.clone(),
                     &store,
-                    execution_state(),
+                    consensus_handler_initializer.new_consensus_handler(),
                 )
                 .await
             {
@@ -232,66 +205,29 @@ impl NarwhalManager {
             }
         }
 
-        tracing::info!(
-            "Starting up Narwhal for epoch {} & protocol version {:?} is complete - took {} seconds",
-            committee.epoch(),
-            protocol_config.version,
-            now.elapsed().as_secs_f64()
-        );
-
-        self.metrics
-            .start_latency
-            .set(now.elapsed().as_secs_f64() as i64);
-
         self.metrics
             .start_primary_retries
             .set(primary_retries as i64);
         self.metrics.start_worker_retries.set(worker_retries as i64);
-
-        *running = Running::True(committee.epoch(), protocol_config.version);
     }
 
-    // Shuts down whole Narwhal (primary & worker(s)) and waits until nodes
-    // have shutdown.
-    pub async fn shutdown(&self) {
-        let mut running = self.running.lock().await;
+    // Shuts down whole Narwhal (primary & worker(s)) and waits until nodes have shutdown.
+    async fn shutdown(&self) {
+        let Some(_guard) = RunningLockGuard::acquire_shutdown(&self.metrics, &self.running).await
+        else {
+            return;
+        };
 
-        match *running {
-            Running::True(epoch, version) => {
-                let now = Instant::now();
-                tracing::info!(
-                    "Shutting down Narwhal for epoch {epoch:?} & protocol version {version:?}"
-                );
-
-                self.primary_node.shutdown().await;
-                self.worker_nodes.shutdown().await;
-
-                tracing::info!(
-                    "Narwhal shutdown for epoch {epoch:?} & protocol version {version:?} is complete - took {} seconds",
-                    now.elapsed().as_secs_f64()
-                );
-
-                self.metrics
-                    .shutdown_latency
-                    .set(now.elapsed().as_secs_f64() as i64);
-            }
-            Running::False => {
-                tracing::info!(
-                    "Narwhal Manager shutdown was called but Narwhal node is not running"
-                );
-            }
-        }
-
-        *running = Running::False;
+        self.primary_node.shutdown().await;
+        self.worker_nodes.shutdown().await;
     }
 
-    fn get_store_path(&self, epoch: Epoch) -> PathBuf {
-        let mut store_path = self.storage_base_path.clone();
-        store_path.push(format!("{}", epoch));
-        store_path
+    async fn is_running(&self) -> bool {
+        let running = self.running.lock().await;
+        Running::False != *running
     }
 
-    pub fn get_storage_base_path(&self) -> PathBuf {
+    fn get_storage_base_path(&self) -> PathBuf {
         self.storage_base_path.clone()
     }
 }

@@ -7,7 +7,7 @@ use crate::authority::{
 };
 
 use move_binary_format::CompiledModule;
-use scalar_types::{
+use sui_types::{
     base_types::ObjectID,
     error::UserInputError,
     object::{Data, ObjectRead, Owner},
@@ -16,24 +16,24 @@ use scalar_types::{
 };
 
 use move_package::source_package::manifest_parser;
-use scalar_types::{
+use sui_move_build::{check_unpublished_dependencies, gather_published_ids, BuildConfig};
+use sui_types::{
     crypto::{get_key_pair, AccountKeyPair},
     error::SuiError,
 };
-use sui_move_build::{check_unpublished_dependencies, gather_published_ids, BuildConfig};
 
 use crate::authority::move_integration_tests::{
     build_multi_publish_txns, build_package, run_multi_txns,
 };
 use expect_test::expect;
-use scalar_framework::BuiltInFramework;
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::{collections::HashSet, path::PathBuf};
+use sui_framework::BuiltInFramework;
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 
 #[tokio::test]
 #[cfg_attr(msim, ignore)]
@@ -59,7 +59,7 @@ async fn test_publishing_with_unpublished_deps() {
     };
 
     assert_eq!(package, read_ref);
-    let Data::Package(move_package) = package_obj.data else {
+    let Data::Package(move_package) = package_obj.into_inner().data else {
         panic!("Not a package")
     };
 
@@ -151,10 +151,6 @@ async fn test_publish_empty_package() {
     )
 }
 
-/*
- * 23-11-07 TaiVV
- * Comment out Related Move Package
- */
 #[tokio::test]
 #[cfg_attr(msim, ignore)]
 async fn test_publish_duplicate_modules() {
@@ -203,8 +199,14 @@ async fn test_generate_lock_file() {
     let mut build_config = BuildConfig::new_for_testing();
     build_config.config.lock_file = Some(lock_file_path.clone());
     build_config
-        .build(path)
+        .clone()
+        .build(path.clone())
         .expect("Move package did not build");
+    // Update the lock file with placeholder compiler version so this isn't bumped every release.
+    build_config
+        .config
+        .update_lock_file_toolchain_version(&path, "0.0.1".into())
+        .expect("Could not update lock file");
 
     let mut lock_file_contents = String::new();
     File::open(lock_file_path)
@@ -244,6 +246,11 @@ async fn test_generate_lock_file() {
         dependencies = [
           { name = "MoveStdlib" },
         ]
+
+        [move.toolchain-version]
+        compiler-version = "0.0.1"
+        edition = "legacy"
+        flavor = "sui"
     "#]];
     expected.assert_eq(lock_file_contents.as_str());
 }

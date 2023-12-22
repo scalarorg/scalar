@@ -19,16 +19,16 @@ huitseeker@Garillots-MBP.localdomain➜~/tmp/sui(main)» git checkout main      
 Already on 'main'
 Your branch is up to date with 'origin/main'.
 huitseeker@Garillots-MBP.localdomain➜~/tmp/sui(main)» ruplacer --subvert 'CertificateAuthorityReuse' 'CertificateAuthorityDuplicate' --go                                                                                                                                                                                                                                                                                                                                             [8:42:33]
-./scalar_types/src/error.rs:103 - CertificateAuthorityReuse,
-./scalar_types/src/error.rs:103 + CertificateAuthorityDuplicate,
+./sui_types/src/error.rs:103 - CertificateAuthorityReuse,
+./sui_types/src/error.rs:103 + CertificateAuthorityDuplicate,
 
-./scalar_types/src/messages.rs:610 - SuiError::CertificateAuthorityReuse
-./scalar_types/src/messages.rs:610 + SuiError::CertificateAuthorityDuplicate
-./scalar_types/src/messages.rs:638 - SuiError::CertificateAuthorityReuse
-./scalar_types/src/messages.rs:638 + SuiError::CertificateAuthorityDuplicate
+./sui_types/src/messages.rs:610 - SuiError::CertificateAuthorityReuse
+./sui_types/src/messages.rs:610 + SuiError::CertificateAuthorityDuplicate
+./sui_types/src/messages.rs:638 - SuiError::CertificateAuthorityReuse
+./sui_types/src/messages.rs:638 + SuiError::CertificateAuthorityDuplicate
 
-./scalar_core/tests/staged/sui.yaml:390 - CertificateAuthorityReuse: UNIT
-./scalar_core/tests/staged/sui.yaml:390 + CertificateAuthorityDuplicate: UNIT
+./sui_core/tests/staged/sui.yaml:390 - CertificateAuthorityReuse: UNIT
+./sui_core/tests/staged/sui.yaml:390 + CertificateAuthorityDuplicate: UNIT
 
 Performed 4 replacements on 196 matching files
 ```
@@ -36,16 +36,16 @@ Performed 4 replacements on 196 matching files
 Now our code is modified in a way that will make the format test fail: let's update the manifest.
 
 ```
-huitseeker@Garillots-MBP.localdomain➜~/tmp/sui(main✗)» cd scalar_core                                                                                                                                                                                                                                                                                                                                                                                                                    [8:43:38]
-huitseeker@Garillots-MBP.localdomain➜tmp/sui/scalar_core(main✗)» cargo -q run --example generate-format -- print > tests/staged/sui.yaml
+huitseeker@Garillots-MBP.localdomain➜~/tmp/sui(main✗)» cd sui_core                                                                                                                                                                                                                                                                                                                                                                                                                    [8:43:38]
+huitseeker@Garillots-MBP.localdomain➜tmp/sui/sui_core(main✗)» cargo -q run --example generate-format -- print > tests/staged/sui.yaml
 ```
 
 
 Let's check that we pass the test again:
 ```
-huitseeker@Garillots-MBP.localdomain➜tmp/sui/scalar_core(main✗)» cargo test format 2>&1 |tail -n 40                                                                                                                                                                                                                                                                                                                                                                                      [8:47:22]
+huitseeker@Garillots-MBP.localdomain➜tmp/sui/sui_core(main✗)» cargo test format 2>&1 |tail -n 40                                                                                                                                                                                                                                                                                                                                                                                      [8:47:22]
     Finished test [unoptimized + debuginfo] target(s) in 0.35s
-     Running unittests (/Users/huitseeker/tmp/sui/target/debug/deps/scalar_core-5796871991341984)
+     Running unittests (/Users/huitseeker/tmp/sui/target/debug/deps/sui_core-5796871991341984)
 
 running 0 tests
 
@@ -59,8 +59,8 @@ running 1 test
 test test_format ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
-huitseeker@Garillots-MBP.localdomain➜tmp/sui/scalar_core(main✗)» git status -s                                                                                                                                                                                                                                                                                                                                                                                                           [8:47:38]
+huitseeker@Garillots-MBP.localdomain➜tmp/sui/sui_core(main✗)» git status -s                                                                                                                                                                                                                                                                                                                                                                                                           [8:47:38]
  M tests/staged/sui.yaml
- M ../scalar_types/src/error.rs
- M ../scalar_types/src/messages.rs
+ M ../sui_types/src/error.rs
+ M ../sui_types/src/messages.rs
  ```

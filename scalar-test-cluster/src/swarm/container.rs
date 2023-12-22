@@ -1,23 +1,22 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use super::node::RuntimeType;
 use futures::FutureExt;
+use scalar_node::{SuiNode, SuiNodeHandle};
 use std::sync::{Arc, Weak};
 use std::thread;
 use sui_config::NodeConfig;
+use sui_types::base_types::ConciseableName;
 use sui_types::crypto::{AuthorityPublicKeyBytes, KeypairTraits};
 use telemetry_subscribers::get_global_telemetry_config;
-use tracing::{info, trace, error};
-
-use crate::node::{ScalarNode, ScalarNodeHandle};
-
-use super::node::RuntimeType;
+use tracing::{info, trace};
 
 #[derive(Debug)]
 pub(crate) struct Container {
     join_handle: Option<thread::JoinHandle<()>>,
     cancel_sender: Option<tokio::sync::oneshot::Sender<()>>,
-    node: Weak<ScalarNode>,
+    node: Weak<SuiNode>,
 }
 
 /// When dropped, stop and wait for the node running in this Container to completely shutdown.
@@ -96,17 +95,13 @@ impl Container {
                     "Started Prometheus HTTP endpoint. To query metrics use\n\tcurl -s http://{}/metrics",
                     config.metrics_address
                 );
-                match ScalarNode::start(&config, registry_service).await {
-                    Ok(server) => {
-                        // Notify that we've successfully started the node
-                        let _ = startup_sender.send(Arc::downgrade(&server));
-                        // run until canceled
-                        cancel_receiver.map(|_| ()).await;
+                let server = SuiNode::start(&config, registry_service, None).await.unwrap();
+                // Notify that we've successfully started the node
+                let _ = startup_sender.send(Arc::downgrade(&server));
+                // run until canceled
+                cancel_receiver.map(|_| ()).await;
 
-                        trace!("cancellation received; shutting down thread");
-                    },
-                    Err(err) => error!("{:?}", err),
-                }
+                trace!("cancellation received; shutting down thread");
             });
         });
 
@@ -120,8 +115,8 @@ impl Container {
     }
 
     /// Get a SuiNodeHandle to the node owned by the container.
-    pub fn get_node_handle(&self) -> Option<ScalarNodeHandle> {
-        Some(ScalarNodeHandle::new(self.node.upgrade()?))
+    pub fn get_node_handle(&self) -> Option<SuiNodeHandle> {
+        Some(SuiNodeHandle::new(self.node.upgrade()?))
     }
 
     /// Check to see that the Node is still alive by checking if the receiving side of the

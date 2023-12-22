@@ -6,7 +6,7 @@ use crate::{
     authority::authority_tests::init_state_with_object_id,
     authority_client::{AuthorityAPI, NetworkAuthorityClient},
 };
-use scalar_types::{
+use sui_types::{
     base_types::{dbg_addr, dbg_object_id},
     messages_grpc::LayoutGenerationOption,
 };

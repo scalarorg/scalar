@@ -14,12 +14,12 @@ use narwhal_network::client::NetworkClient;
 use narwhal_node::primary_node::PrimaryNode;
 use narwhal_node::worker_node::WorkerNodes;
 use narwhal_node::{CertificateStoreCacheMetrics, NodeStorage};
-use scalar_config::NodeConfig;
-use scalar_types::committee::EpochId;
-use scalar_types::crypto::{AuthorityKeyPair, NetworkKeyPair};
-use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use std::path::PathBuf;
 use std::sync::Arc;
+use sui_config::NodeConfig;
+use sui_types::committee::EpochId;
+use sui_types::crypto::{AuthorityKeyPair, NetworkKeyPair};
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use tokio::sync::Mutex;
 
 #[cfg(test)]

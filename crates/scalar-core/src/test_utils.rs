@@ -14,25 +14,33 @@ use futures::future::join_all;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use prometheus::Registry;
-use scalar_config::genesis::Genesis;
-use scalar_config::local_ip_utils;
-use scalar_config::node::OverloadThresholdConfig;
-use scalar_framework::BuiltInFramework;
-use scalar_types::base_types::{random_object_ref, ObjectID};
-use scalar_types::crypto::{
+use shared_crypto::intent::{Intent, IntentScope};
+use std::collections::{BTreeMap, HashMap};
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
+use sui_config::genesis::Genesis;
+use sui_config::local_ip_utils;
+use sui_config::node::OverloadThresholdConfig;
+use sui_framework::BuiltInFramework;
+use sui_genesis_builder::validator_info::ValidatorInfo;
+use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
+use sui_protocol_config::ProtocolConfig;
+use sui_types::base_types::{random_object_ref, ObjectID};
+use sui_types::crypto::{
     generate_proof_of_possession, get_key_pair, AccountKeyPair, AuthorityPublicKeyBytes,
     NetworkKeyPair, SuiKeyPair,
 };
-use scalar_types::crypto::{AuthorityKeyPair, Signer};
-use scalar_types::effects::{SignedTransactionEffects, TransactionEffects};
-use scalar_types::error::SuiError;
-use scalar_types::transaction::ObjectArg;
-use scalar_types::transaction::{
+use sui_types::crypto::{AuthorityKeyPair, Signer};
+use sui_types::effects::{SignedTransactionEffects, TransactionEffects};
+use sui_types::error::SuiError;
+use sui_types::transaction::ObjectArg;
+use sui_types::transaction::{
     CallArg, SignedTransaction, Transaction, TransactionData, TEST_ONLY_GAS_UNIT_FOR_TRANSFER,
 };
-use scalar_types::utils::create_fake_transaction;
-use scalar_types::utils::to_sender_signed_transaction;
-use scalar_types::{
+use sui_types::utils::create_fake_transaction;
+use sui_types::utils::to_sender_signed_transaction;
+use sui_types::{
     base_types::{AuthorityName, ExecutionDigests, ObjectRef, SuiAddress, TransactionDigest},
     committee::Committee,
     crypto::{AuthoritySignInfo, AuthoritySignature},
@@ -40,14 +48,6 @@ use scalar_types::{
     object::Object,
     transaction::CertifiedTransaction,
 };
-use shared_crypto::intent::{Intent, IntentScope};
-use std::collections::{BTreeMap, HashMap};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
-use sui_genesis_builder::validator_info::ValidatorInfo;
-use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
-use sui_protocol_config::ProtocolConfig;
 use tokio::time::timeout;
 use tracing::{info, warn};
 
@@ -60,7 +60,7 @@ pub async fn send_and_confirm_transaction(
 ) -> Result<(CertifiedTransaction, SignedTransactionEffects), SuiError> {
     // Make the initial request
     let epoch_store = authority.load_epoch_store_one_call_per_task();
-    let transaction = authority.verify_transaction(transaction)?;
+    let transaction = epoch_store.verify_transaction(transaction)?;
     let response = authority
         .handle_transaction(&epoch_store, transaction.clone())
         .await?;
@@ -109,7 +109,7 @@ where
     R: rand::CryptoRng + rand::RngCore,
 {
     let dir = tempfile::TempDir::new().unwrap();
-    let network_config = scalar_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
+    let network_config = sui_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
         .rng(rng)
         .build();
     let genesis = network_config.genesis;
@@ -216,7 +216,7 @@ async fn init_genesis(
     let genesis_move_packages: Vec<_> = BuiltInFramework::genesis_move_packages().collect();
     let pkg = Object::new_package(
         &modules,
-        TransactionDigest::genesis(),
+        TransactionDigest::genesis_marker(),
         ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
         &genesis_move_packages,
     )
@@ -433,7 +433,6 @@ pub fn make_dummy_tx(
             TEST_ONLY_GAS_UNIT_FOR_TRANSFER * 10,
             10,
         ),
-        Intent::sui_transaction(),
         vec![sender_sec],
     )
 }

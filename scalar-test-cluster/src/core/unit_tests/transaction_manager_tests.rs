@@ -38,10 +38,12 @@ fn make_transaction_manager(
     // Create a new transaction manager instead of reusing the authority's, to examine
     // transaction_manager output from rx_ready_certificates.
     let (tx_ready_certificates, rx_ready_certificates) = unbounded_channel();
+    let (tx_commited_transactions, rx_commited_transactions) = unbounded_channel();
     let transaction_manager = TransactionManager::new(
         state.database.clone(),
         &state.epoch_store_for_testing(),
         tx_ready_certificates,
+        tx_commited_transactions,
         state.metrics.clone(),
     );
 

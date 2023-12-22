@@ -1,4 +1,4 @@
-on// Copyright (c) Scalar, org.
+// Copyright (c) Scalar, org.
 // SPDX-License-Identifier: Apache-2.0
 /*
  * Consensus node only
@@ -17,7 +17,7 @@ use crate::consensus::{
     consensus_throughput_calculator::{
         ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
     },
-    consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics},
+    scalar_validator::{ScalarTxValidator, ScalarTxValidatorMetrics},
 };
 use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::core::authority::AuthorityState;
@@ -36,6 +36,7 @@ use fastcrypto_zkp::bn254::zk_login::JWK;
 use futures::TryFutureExt;
 use mysten_metrics::{spawn_monitored_task, RegistryService};
 use mysten_network::server::ServerBuilder;
+use narwhal_worker::TrivialTransactionValidator;
 use prometheus::Registry;
 use std::collections::BTreeSet;
 use std::collections::HashSet;
@@ -68,7 +69,7 @@ pub struct ValidatorNode {
     // channel. When the sender is dropped, a change is triggered and those tasks will exit.
     checkpoint_service_exit: watch::Sender<()>,
     checkpoint_metrics: Arc<CheckpointMetrics>,
-    sui_tx_validator_metrics: Arc<SuiTxValidatorMetrics>,
+    sui_tx_validator_metrics: Arc<ScalarTxValidatorMetrics>,
 }
 
 impl ValidatorNode {
@@ -133,7 +134,7 @@ impl ValidatorNode {
 
         let checkpoint_metrics = CheckpointMetrics::new(&registry_service.default_registry());
         let sui_tx_validator_metrics =
-            SuiTxValidatorMetrics::new(&registry_service.default_registry());
+            ScalarTxValidatorMetrics::new(&registry_service.default_registry());
 
         let validator_server_handle = Self::start_grpc_validator_service(
             config,
@@ -308,7 +309,7 @@ impl ValidatorNode {
         validator_server_handle: JoinHandle<Result<()>>,
         checkpoint_metrics: Arc<CheckpointMetrics>,
         sui_node_metrics: Arc<SuiNodeMetrics>,
-        sui_tx_validator_metrics: Arc<SuiTxValidatorMetrics>,
+        sui_tx_validator_metrics: Arc<ScalarTxValidatorMetrics>,
     ) -> Result<ValidatorNode> {
         let (checkpoint_service, checkpoint_service_exit) = Self::start_checkpoint_service(
             config,
@@ -350,13 +351,13 @@ impl ValidatorNode {
             low_scoring_authorities,
             throughput_calculator,
         );
-
+        // Scalar Todo: Disable TxValidator for testing
         consensus_manager
             .start(
                 config,
                 epoch_store.clone(),
                 consensus_handler_initializer,
-                SuiTxValidator::new(
+                ScalarTxValidator::new(
                     epoch_store.clone(),
                     checkpoint_service.clone(),
                     state.transaction_manager().clone(),

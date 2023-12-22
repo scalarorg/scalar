@@ -12,30 +12,29 @@ use crate::module_cache_metrics::ResolverMetrics;
 use crate::signature_verifier::SignatureVerifierMetrics;
 use fastcrypto::traits::KeyPair;
 use prometheus::Registry;
-use scalar_archival::reader::ArchiveReaderBalancer;
-use scalar_config::certificate_deny_config::CertificateDenyConfig;
-use scalar_config::genesis::Genesis;
-use scalar_config::node::{
-    AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
-};
-use scalar_config::node::{OverloadThresholdConfig, StateDebugDumpConfig};
-use scalar_config::transaction_deny_config::TransactionDenyConfig;
-use scalar_storage::IndexStore;
 use scalar_swarm_config::genesis_config::AccountConfig;
 use scalar_swarm_config::network_config::NetworkConfig;
-use scalar_types::base_types::{AuthorityName, ObjectID};
-use scalar_types::crypto::AuthorityKeyPair;
-use scalar_types::digests::ChainIdentifier;
-use scalar_types::executable_transaction::VerifiedExecutableTransaction;
-use scalar_types::object::Object;
-use scalar_types::sui_system_state::SuiSystemStateTrait;
-use scalar_types::transaction::VerifiedTransaction;
 use std::path::PathBuf;
 use std::sync::Arc;
+use sui_archival::reader::ArchiveReaderBalancer;
+use sui_config::certificate_deny_config::CertificateDenyConfig;
+use sui_config::genesis::Genesis;
+use sui_config::node::{
+    AuthorityStorePruningConfig, DBCheckpointConfig, ExpensiveSafetyCheckConfig,
+};
+use sui_config::node::{OverloadThresholdConfig, StateDebugDumpConfig};
+use sui_config::transaction_deny_config::TransactionDenyConfig;
 use sui_macros::nondeterministic;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
+use sui_storage::IndexStore;
+use sui_types::base_types::{AuthorityName, ObjectID};
+use sui_types::crypto::AuthorityKeyPair;
+use sui_types::digests::ChainIdentifier;
+use sui_types::executable_transaction::VerifiedExecutableTransaction;
+use sui_types::object::Object;
+use sui_types::sui_system_state::SuiSystemStateTrait;
+use sui_types::transaction::VerifiedTransaction;
 use tempfile::tempdir;
-use tokio::sync::mpsc;
 
 #[derive(Default, Clone)]
 pub struct TestAuthorityBuilder<'a> {
@@ -254,9 +253,9 @@ impl<'a> TestAuthorityBuilder<'a> {
             .protocol_config()
             .simplified_unwrap_then_delete()
         {
-            pruning_config.set_enable_pruning_tombstones(false);
+            // We cannot prune tombstones if simplified_unwrap_then_delete is not enabled.
+            pruning_config.set_killswitch_tombstone_pruning(true);
         }
-        let (tx_ready_certificates, rx_ready_certificates) = mpsc::unbounded_channel();
         let state = AuthorityState::new(
             name,
             secret,
@@ -279,7 +278,6 @@ impl<'a> TestAuthorityBuilder<'a> {
             },
             overload_threshold_config,
             ArchiveReaderBalancer::default(),
-            tx_ready_certificates,
         )
         .await;
         // For any type of local testing that does not actually spawn a node, the checkpoint executor

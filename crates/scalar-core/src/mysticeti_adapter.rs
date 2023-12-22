@@ -5,14 +5,14 @@ use arc_swap::{ArcSwapOption, Guard};
 use std::sync::Arc;
 use std::time::Duration;
 
-use scalar_types::error::{SuiError, SuiResult};
+use sui_types::error::{SuiError, SuiResult};
 use tap::prelude::*;
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::{sleep, timeout};
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::consensus_adapter::SubmitToConsensus;
-use scalar_types::messages_consensus::ConsensusTransaction;
+use sui_types::messages_consensus::ConsensusTransaction;
 use tracing::warn;
 
 #[derive(Clone)]

@@ -7,13 +7,13 @@ use either::Either;
 use futures::future::join_all;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
-use scalar_types::base_types::{TransactionDigest, TransactionEffectsDigest};
-use scalar_types::effects::TransactionEffects;
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::error::SuiResult;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
+use sui_types::base_types::{TransactionDigest, TransactionEffectsDigest};
+use sui_types::effects::TransactionEffects;
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::error::SuiResult;
 use tracing::{debug, instrument};
 
 #[async_trait]

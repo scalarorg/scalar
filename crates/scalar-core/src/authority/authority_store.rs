@@ -16,20 +16,20 @@ use either::Either;
 use fastcrypto::hash::{HashFunction, MultisetHash, Sha3_256};
 use futures::stream::FuturesUnordered;
 use move_core_types::resolver::ModuleResolver;
-use scalar_storage::mutex_table::{MutexGuard, MutexTable, RwLockGuard, RwLockTable};
-use scalar_types::accumulator::Accumulator;
-use scalar_types::digests::TransactionEventsDigest;
-use scalar_types::error::UserInputError;
-use scalar_types::message_envelope::Message;
-use scalar_types::messages_checkpoint::ECMHLiveObjectSetDigest;
-use scalar_types::object::Owner;
-use scalar_types::storage::{
-    get_module, BackingPackageStore, ChildObjectResolver, InputKey, MarkerValue, ObjectKey,
-    ObjectStore, PackageObjectArc,
-};
-use scalar_types::sui_system_state::get_sui_system_state;
-use scalar_types::{base_types::SequenceNumber, fp_bail, fp_ensure, storage::ParentSync};
 use serde::{Deserialize, Serialize};
+use sui_storage::mutex_table::{MutexGuard, MutexTable, RwLockGuard, RwLockTable};
+use sui_types::accumulator::Accumulator;
+use sui_types::digests::TransactionEventsDigest;
+use sui_types::error::UserInputError;
+use sui_types::message_envelope::Message;
+use sui_types::messages_checkpoint::ECMHLiveObjectSetDigest;
+use sui_types::object::Owner;
+use sui_types::storage::{
+    get_module, BackingPackageStore, ChildObjectResolver, InputKey, MarkerValue, ObjectKey,
+    ObjectStore, PackageObject,
+};
+use sui_types::sui_system_state::get_sui_system_state;
+use sui_types::{base_types::SequenceNumber, fp_bail, fp_ensure, storage::ParentSync};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use tokio::time::Instant;
 use tracing::{debug, info, trace};
@@ -43,9 +43,9 @@ use typed_store::{
 use super::authority_store_tables::LiveObject;
 use super::{authority_store_tables::AuthorityPerpetualTables, *};
 use mysten_common::sync::notify_read::NotifyRead;
-use scalar_storage::package_object_cache::PackageObjectCache;
-use scalar_types::effects::{TransactionEffects, TransactionEvents};
-use scalar_types::gas_coin::TOTAL_SUPPLY_MIST;
+use sui_storage::package_object_cache::PackageObjectCache;
+use sui_types::effects::{TransactionEffects, TransactionEvents};
+use sui_types::gas_coin::TOTAL_SUPPLY_MIST;
 use typed_store::rocks::util::is_ref_count_value;
 
 const NUM_SHARDS: usize = 4096;
@@ -346,9 +346,9 @@ impl AuthorityStore {
         let data = self
             .perpetual_tables
             .events
-            .range_iter((*event_digest, 0)..=(*event_digest, usize::MAX))
-            .map(|(_, e)| e)
-            .collect::<Vec<_>>();
+            .safe_range_iter((*event_digest, 0)..=(*event_digest, usize::MAX))
+            .map_ok(|(_, event)| event)
+            .collect::<Result<Vec<_>, TypedStoreError>>()?;
         Ok(data.is_empty().not().then_some(TransactionEvents { data }))
     }
 
@@ -595,6 +595,47 @@ impl AuthorityStore {
         Ok(ret)
     }
 
+    /// Load a list of objects from the store by object reference.
+    /// If they exist in the store, they are returned directly.
+    /// If any object missing, we try to figure out the best error to return.
+    /// If the object we are asking is currently locked at a future version, we know this
+    /// transaction is out-of-date and we return a ObjectVersionUnavailableForConsumption,
+    /// which indicates this is not retriable.
+    /// Otherwise, we return a ObjectNotFound error, which indicates this is retriable.
+    pub fn multi_get_object_with_more_accurate_error_return(
+        &self,
+        object_refs: &[ObjectRef],
+    ) -> Result<Vec<Object>, SuiError> {
+        let objects = self.multi_get_object_by_key(
+            &object_refs.iter().map(ObjectKey::from).collect::<Vec<_>>(),
+        )?;
+        let mut result = Vec::new();
+        for (object_opt, object_ref) in objects.into_iter().zip(object_refs) {
+            match object_opt {
+                None => {
+                    let lock = self.get_latest_lock_for_object_id(object_ref.0)?;
+                    let error = if lock.1 >= object_ref.1 {
+                        UserInputError::ObjectVersionUnavailableForConsumption {
+                            provided_obj_ref: *object_ref,
+                            current_version: lock.1,
+                        }
+                    } else {
+                        UserInputError::ObjectNotFound {
+                            object_id: object_ref.0,
+                            version: Some(object_ref.1),
+                        }
+                    };
+                    return Err(SuiError::UserInputError { error });
+                }
+                Some(object) => {
+                    result.push(object);
+                }
+            }
+        }
+        assert_eq!(result.len(), object_refs.len());
+        Ok(result)
+    }
+
     /// Get many objects
     pub fn get_objects(&self, objects: &[ObjectID]) -> Result<Vec<Option<Object>>, SuiError> {
         let mut result = Vec::new();
@@ -801,7 +842,7 @@ impl AuthorityStore {
     /// TODO: delete this method entirely (still used by authority_tests.rs)
     pub(crate) fn insert_genesis_object(&self, object: Object) -> SuiResult {
         // We only side load objects with a genesis parent transaction.
-        debug_assert!(object.previous_transaction == TransactionDigest::genesis());
+        debug_assert!(object.previous_transaction == TransactionDigest::genesis_marker());
         let object_ref = object.compute_object_reference();
         self.insert_object_direct(object_ref, &object)
     }
@@ -860,7 +901,7 @@ impl AuthorityStore {
                 ref_and_objects.iter().map(|(oref, o)| {
                     (
                         ObjectKey::from(oref),
-                        get_store_object_pair((**o).clone(), self.indirect_objects_threshold).0,
+                        get_store_object_pair((*o).clone(), self.indirect_objects_threshold).0,
                     )
                 }),
             )?
@@ -868,7 +909,7 @@ impl AuthorityStore {
                 &self.perpetual_tables.indirect_move_objects,
                 ref_and_objects.iter().filter_map(|(_, o)| {
                     let StoreObjectPair(_, indirect_object) =
-                        get_store_object_pair((**o).clone(), self.indirect_objects_threshold);
+                        get_store_object_pair((*o).clone(), self.indirect_objects_threshold);
                     indirect_object.map(|obj| (obj.inner().digest(), obj))
                 }),
             )?;
@@ -2009,7 +2050,7 @@ impl AuthorityStore {
 }
 
 impl BackingPackageStore for AuthorityStore {
-    fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<PackageObjectArc>> {
+    fn get_package_object(&self, package_id: &ObjectID) -> SuiResult<Option<PackageObject>> {
         self.package_cache.get_package_object(package_id, self)
     }
 }

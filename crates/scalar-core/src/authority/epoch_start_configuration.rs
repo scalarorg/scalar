@@ -4,13 +4,13 @@
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 
-use scalar_types::base_types::SequenceNumber;
-use scalar_types::epoch_data::EpochData;
-use scalar_types::messages_checkpoint::{CheckpointDigest, CheckpointTimestamp};
-use scalar_types::sui_system_state::epoch_start_sui_system_state::{
+use std::fmt;
+use sui_types::base_types::SequenceNumber;
+use sui_types::epoch_data::EpochData;
+use sui_types::messages_checkpoint::{CheckpointDigest, CheckpointTimestamp};
+use sui_types::sui_system_state::epoch_start_sui_system_state::{
     EpochStartSystemState, EpochStartSystemStateTrait,
 };
-use std::fmt;
 
 #[enum_dispatch]
 pub trait EpochStartConfigTrait {

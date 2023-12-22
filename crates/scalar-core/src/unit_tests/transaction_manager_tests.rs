@@ -3,9 +3,10 @@
 
 use std::{time::Duration, vec};
 
-use scalar_types::executable_transaction::VerifiedExecutableTransaction;
-use scalar_types::transaction::VerifiedTransaction;
-use scalar_types::{
+use sui_test_transaction_builder::TestTransactionBuilder;
+use sui_types::executable_transaction::VerifiedExecutableTransaction;
+use sui_types::transaction::VerifiedTransaction;
+use sui_types::{
     base_types::ObjectID,
     crypto::deterministic_random_account_key,
     digests::TransactionEffectsDigest,
@@ -14,7 +15,6 @@ use scalar_types::{
     transaction::{CallArg, ObjectArg},
     SUI_FRAMEWORK_PACKAGE_ID,
 };
-use sui_test_transaction_builder::TestTransactionBuilder;
 use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedReceiver},
     time::sleep,
@@ -141,7 +141,7 @@ async fn transaction_manager_basics() {
 
     // Notify TM about availability of the gas object.
     transaction_manager.objects_available(
-        get_input_keys(&vec![gas_object_new]),
+        get_input_keys(&[gas_object_new]),
         &state.epoch_store_for_testing(),
     );
     // TM should output the transaction eventually.
@@ -407,7 +407,7 @@ async fn transaction_manager_receiving_notify_commit() {
 
     // Start things off by notifying TM that the receiving object 0 is available.
     transaction_manager.objects_available(
-        get_input_keys(&vec![object_arguments[0].0.clone()]),
+        get_input_keys(&[object_arguments[0].0.clone()]),
         &state.epoch_store_for_testing(),
     );
 
@@ -519,7 +519,7 @@ async fn transaction_manager_receiving_object_ready_notifications() {
 
     // Notify TM that the receiving object 0 is available.
     transaction_manager.objects_available(
-        get_input_keys(&vec![receiving_object_new0.clone()]),
+        get_input_keys(&[receiving_object_new0.clone()]),
         &state.epoch_store_for_testing(),
     );
 
@@ -529,7 +529,7 @@ async fn transaction_manager_receiving_object_ready_notifications() {
 
     // Notify TM that the receiving object 0 is available.
     transaction_manager.objects_available(
-        get_input_keys(&vec![receiving_object_new1.clone()]),
+        get_input_keys(&[receiving_object_new1.clone()]),
         &state.epoch_store_for_testing(),
     );
 
@@ -625,7 +625,7 @@ async fn transaction_manager_receiving_object_ready_notifications_multiple_of_sa
 
     // Notify TM that the receiving object 0 is available.
     transaction_manager.objects_available(
-        get_input_keys(&vec![receiving_object_new0.clone()]),
+        get_input_keys(&[receiving_object_new0.clone()]),
         &state.epoch_store_for_testing(),
     );
 
@@ -648,7 +648,7 @@ async fn transaction_manager_receiving_object_ready_notifications_multiple_of_sa
 
     // Notify TM that the receiving object 0 is available.
     transaction_manager.objects_available(
-        get_input_keys(&vec![receiving_object_new1.clone()]),
+        get_input_keys(&[receiving_object_new1.clone()]),
         &state.epoch_store_for_testing(),
     );
 

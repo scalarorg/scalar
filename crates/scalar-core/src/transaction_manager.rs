@@ -12,9 +12,9 @@ use indexmap::IndexMap;
 use lru::LruCache;
 use mysten_metrics::monitored_scope;
 use parking_lot::RwLock;
-use scalar_types::executable_transaction::VerifiedExecutableTransaction;
-use scalar_types::{base_types::TransactionDigest, error::SuiResult, fp_ensure};
-use scalar_types::{
+use sui_types::executable_transaction::VerifiedExecutableTransaction;
+use sui_types::{base_types::TransactionDigest, error::SuiResult, fp_ensure};
+use sui_types::{
     base_types::{ObjectID, SequenceNumber},
     committee::EpochId,
     digests::TransactionEffectsDigest,
@@ -27,7 +27,7 @@ use tracing::{error, instrument, trace, warn};
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::authority::{AuthorityMetrics, AuthorityStore};
-use scalar_types::transaction::SenderSignedData;
+use sui_types::transaction::SenderSignedData;
 use tap::TapOptional;
 
 #[cfg(test)]
@@ -367,11 +367,7 @@ impl TransactionManager {
             .collect();
         self.enqueue(executable_txns, epoch_store)
     }
-    /*
-     * 231127 TaiVV
-     * Method này được gọi khi N&B Commit vertexes
-     * Tags: SCALAR CONSENSUS
-     */
+
     #[instrument(level = "trace", skip_all)]
     pub(crate) fn enqueue(
         &self,
@@ -696,12 +692,6 @@ impl TransactionManager {
             .set(inner.executing_certificates.len() as i64);
     }
 
-    /*
-     * 231127 - TaiVV
-     * Sau khi các node make consensus, đây là function cuối cùng được gọi.
-     * Modify function này để gửi transactions tới Reth
-     * Tags: CONSENSUS COMMIT
-     */
     /// Notifies TransactionManager about a transaction that has been committed.
     #[instrument(level = "trace", skip_all)]
     pub(crate) fn notify_commit(
@@ -735,12 +725,7 @@ impl TransactionManager {
 
         let _ = epoch_store.remove_pending_execution(digest);
     }
-    /*
-     * 231127 TaiVV
-     * Đây là output endpoint của consensus.
-     * Để nhận được dữ liệu output cần implement từ điểm tạo rx_ready_certificates
-     * Sui nhận dữ liệu từ rx_ready_certificates để xử lý data trong buffer như Transaction Effects
-     */
+
     /// Sends the ready certificate for execution.
     fn certificate_ready(&self, inner: &mut Inner, pending_certificate: PendingCertificate) {
         let cert = pending_certificate.certificate;

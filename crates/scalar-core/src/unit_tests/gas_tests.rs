@@ -10,15 +10,15 @@ use crate::authority::test_authority_builder::TestAuthorityBuilder;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use once_cell::sync::Lazy;
-use scalar_types::crypto::AccountKeyPair;
-use scalar_types::effects::TransactionEvents;
-use scalar_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
-use scalar_types::gas_coin::GasCoin;
-use scalar_types::object::GAS_VALUE_FOR_TESTING;
-use scalar_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use scalar_types::utils::to_sender_signed_transaction;
-use scalar_types::{base_types::dbg_addr, crypto::get_key_pair};
 use sui_protocol_config::ProtocolConfig;
+use sui_types::crypto::AccountKeyPair;
+use sui_types::effects::TransactionEvents;
+use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus};
+use sui_types::gas_coin::GasCoin;
+use sui_types::object::GAS_VALUE_FOR_TESTING;
+use sui_types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use sui_types::utils::to_sender_signed_transaction;
+use sui_types::{base_types::dbg_addr, crypto::get_key_pair};
 
 // The cost table is used only to get the max budget available which is not dependent on
 // the gas price
@@ -913,6 +913,83 @@ async fn test_tx_gas_price_less_than_reference_gas_price() {
     ));
 }
 
+#[tokio::test]
+async fn test_tx_gas_coins_input_coins() {
+    let (sender, sender_key): (_, AccountKeyPair) = get_key_pair();
+    let authority_state = TestAuthorityBuilder::new().build().await;
+    let rgp = authority_state.reference_gas_price_for_testing().unwrap();
+
+    // create coins for transaction
+    let gas_coins = (0..250)
+        .map(|_| Object::with_owner_for_testing(sender))
+        .collect::<Vec<_>>();
+    let gas_coin_refs = gas_coins
+        .iter()
+        .map(|obj| obj.compute_object_reference())
+        .collect::<Vec<_>>();
+    authority_state.insert_genesis_objects(&gas_coins).await;
+    let coins = (0..260)
+        .map(|_| Object::with_owner_for_testing(sender))
+        .collect::<Vec<_>>();
+    let coin_refs = coins
+        .iter()
+        .map(|obj| obj.compute_object_reference())
+        .collect::<Vec<_>>();
+    authority_state.insert_genesis_objects(&coins).await;
+    let coin = Object::with_owner_for_testing(sender);
+    let coin_ref = coin.compute_object_reference();
+    authority_state.insert_genesis_object(coin).await;
+
+    async fn run_merge(
+        authority_state: &AuthorityState,
+        sender: SuiAddress,
+        sender_key: &AccountKeyPair,
+        gas_coin_refs: Vec<ObjectRef>,
+        coin_ref: ObjectRef,
+        coin_refs: Vec<ObjectRef>,
+        rgp: u64,
+    ) -> TransactionEffects {
+        // build the programmale transaction
+        let pt = {
+            let mut builder = ProgrammableTransactionBuilder::new();
+            let coin_arg = builder.obj(ObjectArg::ImmOrOwnedObject(coin_ref)).unwrap();
+            let coin_args = coin_refs
+                .iter()
+                .map(|obj_ref| builder.obj(ObjectArg::ImmOrOwnedObject(*obj_ref)).unwrap())
+                .collect::<Vec<_>>();
+            builder.command(Command::MergeCoins(coin_arg, coin_args));
+            builder.finish()
+        };
+        let kind = TransactionKind::ProgrammableTransaction(pt);
+        let data = TransactionData::new_with_gas_coins(
+            kind,
+            sender,
+            gas_coin_refs.clone(),
+            // use a reasonable about of gas to make the transaction succeed
+            *MIN_GAS_BUDGET_PRE_RGP * 100 * rgp,
+            rgp,
+        );
+        let tx = to_sender_signed_transaction(data, sender_key);
+        send_and_confirm_transaction(authority_state, tx)
+            .await
+            .unwrap()
+            .1
+            .into_data()
+    }
+
+    let effects = run_merge(
+        &authority_state,
+        sender,
+        &sender_key,
+        gas_coin_refs.clone(),
+        coin_ref,
+        coin_refs.clone(),
+        rgp,
+    )
+    .await;
+    assert!(effects.status().is_ok());
+}
+
 struct TransferResult {
     pub authority_state: Arc<AuthorityState>,
     pub gas_object_id: ObjectID,
@@ -979,7 +1056,7 @@ async fn execute_transfer_with_price(
                 )
             })
     } else {
-        let tx = authority_state.verify_transaction(tx).unwrap();
+        let tx = epoch_store.verify_transaction(tx).unwrap();
 
         authority_state
             .handle_transaction(&epoch_store, tx)

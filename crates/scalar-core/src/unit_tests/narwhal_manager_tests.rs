@@ -16,14 +16,14 @@ use mysten_metrics::RegistryService;
 use narwhal_config::{Epoch, WorkerCache};
 use narwhal_types::{TransactionProto, TransactionsClient};
 use prometheus::Registry;
-use scalar_swarm_config::network_config_builder::ConfigBuilder;
-use scalar_types::messages_checkpoint::{
-    CertifiedCheckpointSummary, CheckpointContents, CheckpointSummary,
-};
-use scalar_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
-use scalar_types::sui_system_state::SuiSystemStateTrait;
 use std::sync::Arc;
 use std::time::Duration;
+use sui_swarm_config::network_config_builder::ConfigBuilder;
+use sui_types::messages_checkpoint::{
+    CertifiedCheckpointSummary, CheckpointContents, CheckpointSummary,
+};
+use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+use sui_types::sui_system_state::SuiSystemStateTrait;
 use tokio::sync::{broadcast, mpsc};
 use tokio::time::{interval, sleep};
 
