@@ -3,11 +3,11 @@
 
 use std::collections::BTreeMap;
 
-use scalar_json_rpc_types::ObjectChange;
-use scalar_types::base_types::{ObjectID, ObjectRef, SequenceNumber, SuiAddress};
-use scalar_types::effects::ObjectRemoveKind;
-use scalar_types::object::Owner;
-use scalar_types::storage::WriteKind;
+use sui_json_rpc_types::ObjectChange;
+use sui_types::base_types::{ObjectID, ObjectRef, SequenceNumber, SuiAddress};
+use sui_types::effects::ObjectRemoveKind;
+use sui_types::object::Owner;
+use sui_types::storage::WriteKind;
 
 use crate::ObjectProvider;
 

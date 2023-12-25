@@ -10,27 +10,28 @@ use cached::SizedCache;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::RpcModule;
 use move_core_types::language_storage::{StructTag, TypeTag};
-use mysten_metrics::spawn_monitored_task;
-use scalar_core::authority::AuthorityState;
-use scalar_json_rpc_types::Balance;
-use scalar_json_rpc_types::{CoinPage, SuiCoinMetadata};
-use scalar_storage::indexes::TotalBalance;
-use scalar_storage::key_value_store::TransactionKeyValueStore;
-use scalar_types::balance::Supply;
-use scalar_types::base_types::{ObjectID, SuiAddress};
-use scalar_types::coin::{CoinMetadata, TreasuryCap};
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::gas_coin::GAS;
-use scalar_types::object::Object;
-use scalar_types::parse_sui_struct_tag;
-use sui_open_rpc::Module;
+use sui_storage::indexes::TotalBalance;
 use tap::TapFallible;
 use tracing::{debug, info, instrument};
+
+use mysten_metrics::spawn_monitored_task;
+use sui_core::authority::AuthorityState;
+use sui_json_rpc_api::{cap_page_limit, CoinReadApiOpenRpc, CoinReadApiServer, JsonRpcMetrics};
+use sui_json_rpc_types::Balance;
+use sui_json_rpc_types::{CoinPage, SuiCoinMetadata};
+use sui_open_rpc::Module;
+use sui_storage::key_value_store::TransactionKeyValueStore;
+use sui_types::balance::Supply;
+use sui_types::base_types::{ObjectID, SuiAddress};
+use sui_types::coin::{CoinMetadata, TreasuryCap};
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::gas_coin::{GAS, TOTAL_SUPPLY_MIST};
+use sui_types::object::Object;
+use sui_types::parse_sui_struct_tag;
 
 #[cfg(test)]
 use mockall::automock;
 
-use crate::api::{cap_page_limit, CoinReadApiServer, JsonRpcMetrics};
 use crate::authority_state::StateRead;
 use crate::error::{Error, RpcInterimResult, SuiRpcInputError};
 use crate::{with_tracing, SuiRpcModule};
@@ -74,7 +75,7 @@ impl SuiRpcModule for CoinReadApi {
     }
 
     fn rpc_doc_module() -> Module {
-        crate::api::CoinReadApiOpenRpc::module_doc()
+        CoinReadApiOpenRpc::module_doc()
     }
 }
 
@@ -218,7 +219,9 @@ impl CoinReadApiServer for CoinReadApi {
         with_tracing!(async move {
             let coin_struct = parse_to_struct_tag(&coin_type)?;
             Ok(if GAS::is_gas(&coin_struct) {
-                Supply { value: 0 }
+                Supply {
+                    value: TOTAL_SUPPLY_MIST,
+                }
             } else {
                 let treasury_cap_object = self
                     .internal
@@ -403,26 +406,26 @@ mod tests {
     use mockall::predicate;
     use move_core_types::account_address::AccountAddress;
     use move_core_types::language_storage::StructTag;
-    use scalar_json_rpc_types::Coin;
-    use scalar_types::balance::Supply;
-    use scalar_types::base_types::{ObjectID, SequenceNumber, SuiAddress};
-    use scalar_types::coin::TreasuryCap;
-    use scalar_types::digests::{ObjectDigest, TransactionDigest, TransactionEventsDigest};
-    use scalar_types::effects::TransactionEffects;
-    use scalar_types::error::{SuiError, SuiResult};
-    use scalar_types::gas_coin::GAS;
-    use scalar_types::id::UID;
-    use scalar_types::messages_checkpoint::{
-        CheckpointContentsDigest, CheckpointDigest, CheckpointSequenceNumber,
-    };
-    use scalar_types::object::Object;
-    use scalar_types::utils::create_fake_transaction;
-    use scalar_types::{parse_sui_struct_tag, TypeTag};
-    use scalar_storage::key_value_store::{
+    use sui_json_rpc_types::Coin;
+    use sui_storage::key_value_store::{
         KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStoreTrait,
     };
-    use scalar_storage::key_value_store_metrics::KeyValueStoreMetrics;
-    use typed_store::TypedStoreError;
+    use sui_storage::key_value_store_metrics::KeyValueStoreMetrics;
+    use sui_types::balance::Supply;
+    use sui_types::base_types::{ObjectID, SequenceNumber, SuiAddress};
+    use sui_types::coin::TreasuryCap;
+    use sui_types::digests::{ObjectDigest, TransactionDigest, TransactionEventsDigest};
+    use sui_types::effects::TransactionEffects;
+    use sui_types::error::{SuiError, SuiResult};
+    use sui_types::gas_coin::GAS;
+    use sui_types::id::UID;
+    use sui_types::messages_checkpoint::{
+        CheckpointContentsDigest, CheckpointDigest, CheckpointSequenceNumber,
+    };
+    use sui_types::object::Object;
+    use sui_types::utils::create_fake_transaction;
+    use sui_types::{parse_sui_struct_tag, TypeTag};
+    use typed_store_error::TypedStoreError;
 
     mock! {
         pub KeyValueStore {}
@@ -810,7 +813,7 @@ mod tests {
     }
 
     mod get_all_coins_tests {
-        use scalar_types::object::{MoveObject, Owner};
+        use sui_types::object::{MoveObject, Owner};
 
         use super::super::*;
         use super::*;
@@ -1176,7 +1179,7 @@ mod tests {
         use super::super::*;
         use super::*;
         use mockall::predicate;
-        use scalar_types::id::UID;
+        use sui_types::id::UID;
 
         // Success scenarios
         #[tokio::test]
@@ -1282,7 +1285,7 @@ mod tests {
         use super::super::*;
         use super::*;
         use mockall::predicate;
-        use scalar_types::id::UID;
+        use sui_types::id::UID;
 
         #[tokio::test]
         async fn test_success_response_for_gas_coin() {
@@ -1295,7 +1298,7 @@ mod tests {
             let response = coin_read_api.get_total_supply(coin_type.to_string()).await;
 
             let supply = response.unwrap();
-            let expected = expect!["0"];
+            let expected = expect!["10000000000000000000"];
             expected.assert_eq(&supply.value.to_string());
         }
 

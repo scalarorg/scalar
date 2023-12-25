@@ -10595,6 +10595,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-json-rpc"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-trait",
+ "axum",
+ "bcs",
+ "cached",
+ "expect-test",
+ "eyre",
+ "fastcrypto",
+ "futures",
+ "hyper",
+ "indexmap 2.1.0",
+ "itertools 0.10.5",
+ "jsonrpsee",
+ "mockall",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "move-package",
+ "mysten-metrics",
+ "once_cell",
+ "prometheus",
+ "scalar-core",
+ "serde",
+ "serde_json",
+ "shared-crypto",
+ "signature 1.6.4",
+ "sui-json",
+ "sui-json-rpc-api",
+ "sui-json-rpc-types",
+ "sui-open-rpc",
+ "sui-open-rpc-macros",
+ "sui-protocol-config",
+ "sui-storage",
+ "sui-transaction-builder",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "typed-store-error",
+ "workspace-hack 0.1.0",
+]
+
+[[package]]
 name = "scalar-kvstore"
 version = "0.1.0"
 dependencies = [
@@ -10641,18 +10692,18 @@ dependencies = [
  "prometheus",
  "reqwest",
  "scalar-core",
+ "scalar-json-rpc",
  "scalar-kvstore",
+ "scalar-rest-api",
  "serde",
  "snap",
  "sui-archival",
  "sui-config",
- "sui-json-rpc",
  "sui-json-rpc-api",
  "sui-kvstore",
  "sui-macros",
  "sui-network",
  "sui-protocol-config",
- "sui-rest-api",
  "sui-simulator",
  "sui-snapshot",
  "sui-storage",
@@ -10666,6 +10717,23 @@ dependencies = [
  "tracing",
  "typed-store",
  "url",
+ "workspace-hack 0.1.0",
+]
+
+[[package]]
+name = "scalar-rest-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bcs",
+ "rand 0.8.5",
+ "reqwest",
+ "scalar-core",
+ "serde",
+ "simulacrum",
+ "sui-types",
+ "tokio",
  "workspace-hack 0.1.0",
 ]
 
@@ -12065,54 +12133,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui-json-rpc"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "async-trait",
- "axum",
- "bcs",
- "cached",
- "eyre",
- "fastcrypto",
- "futures",
- "hyper",
- "indexmap 2.1.0",
- "itertools 0.10.5",
- "jsonrpsee",
- "move-binary-format",
- "move-bytecode-utils",
- "move-core-types",
- "move-package",
- "mysten-metrics",
- "once_cell",
- "prometheus",
- "serde",
- "serde_json",
- "shared-crypto",
- "signature 1.6.4",
- "sui-core",
- "sui-json",
- "sui-json-rpc-api",
- "sui-json-rpc-types",
- "sui-open-rpc",
- "sui-open-rpc-macros",
- "sui-protocol-config",
- "sui-storage",
- "sui-transaction-builder",
- "sui-types",
- "tap",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "typed-store-error",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "sui-json-rpc-api"
 version = "0.0.0"
 dependencies = [
@@ -12409,22 +12429,6 @@ dependencies = [
  "proc-macro2 1.0.69",
  "quote 1.0.33",
  "syn 1.0.109",
- "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sui-rest-api"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "bcs",
- "rand 0.8.5",
- "reqwest",
- "serde",
- "simulacrum",
- "sui-core",
- "sui-types",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

@@ -8,16 +8,16 @@ use async_trait::async_trait;
 use move_core_types::language_storage::TypeTag;
 use tokio::sync::RwLock;
 
-use scalar_json_rpc_types::BalanceChange;
-use scalar_types::base_types::{ObjectID, ObjectRef, SequenceNumber};
-use scalar_types::coin::Coin;
-use scalar_types::digests::ObjectDigest;
-use scalar_types::effects::{TransactionEffects, TransactionEffectsAPI};
-use scalar_types::execution_status::ExecutionStatus;
-use scalar_types::gas_coin::GAS;
-use scalar_types::object::{Object, Owner};
-use scalar_types::storage::WriteKind;
-use scalar_types::transaction::InputObjectKind;
+use sui_json_rpc_types::BalanceChange;
+use sui_types::base_types::{ObjectID, ObjectRef, SequenceNumber};
+use sui_types::coin::Coin;
+use sui_types::digests::ObjectDigest;
+use sui_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use sui_types::execution_status::ExecutionStatus;
+use sui_types::gas_coin::GAS;
+use sui_types::object::{Object, Owner};
+use sui_types::storage::WriteKind;
+use sui_types::transaction::InputObjectKind;
 
 pub async fn get_balance_changes_from_effect<P: ObjectProvider<Error = E>, E>(
     object_provider: &P,
