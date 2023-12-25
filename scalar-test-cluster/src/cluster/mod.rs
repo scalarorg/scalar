@@ -1,6 +1,10 @@
 mod builder;
 mod cluster;
 mod config;
+mod fullnode;
+mod consensus;
 pub use builder::*;
 pub use cluster::*;
 pub use config::*;
+pub use fullnode::*;
+pub use consensus::*;
