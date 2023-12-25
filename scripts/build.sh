@@ -9,16 +9,16 @@ SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
 # Working from 2023-12-13
-consensus_cluster() {
-    BIN_NAME=consensus-cluster
+validator_cluster() {
+    BIN_NAME=validator-cluster
     WORKING_DIR=/scalar
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
-scalar_cluster() {
-    BIN_NAME=scalar-cluster
+move_fullnode_cluster() {
+    BIN_NAME=move-fullnode-cluster
     WORKING_DIR=/scalar
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}

@@ -8,7 +8,7 @@ use jsonrpsee::{
     ws_client::{WsClient, WsClientBuilder},
 };
 use scalar_node::SuiNodeHandle;
-use scalar_swarm::fullnode::{FullnodeSwarmBuilder, FullnodeSwarm};
+use scalar_swarm::validator::{ValidatorSwarmBuilder, ValidatorSwarm};
 use scalar_swarm_config::{
     genesis_config::GenesisConfig, network_config::NetworkConfig,
     network_config_builder::ProtocolVersionsConfig,
@@ -28,7 +28,7 @@ use sui_sdk::{
 use sui_types::{base_types::SuiAddress, crypto::{AccountKeyPair, SuiKeyPair, get_key_pair, KeypairTraits}, object::Object};
 use tracing::{error, info};
 
-pub struct FullNodeHandle {
+pub struct ValidatorHandle {
     pub sui_node: SuiNodeHandle,
     pub sui_client: SuiClient,
     pub rpc_client: HttpClient,
@@ -37,7 +37,7 @@ pub struct FullNodeHandle {
 }
 
 #[async_trait]
-impl Cluster for FullNodeHandle {
+impl Cluster for ValidatorHandle {
     async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
         let rpc_url = format!("http://{}", json_rpc_address);
         let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
@@ -62,23 +62,23 @@ impl Cluster for FullNodeHandle {
     }
 }
 
-pub struct FullnodeCluster {
-    pub swarm: FullnodeSwarm,
+pub struct ValidatorCluster {
+    pub swarm: ValidatorSwarm,
     fullnode_url: String,
     // indexer_url: Option<String>,
     // faucet_key: AccountKeyPair,
     config_directory: tempfile::TempDir,
 }
 
-impl FullnodeCluster {
+impl ValidatorCluster {
     #[allow(unused)]
-    pub fn swarm(&self) -> &FullnodeSwarm {
+    pub fn swarm(&self) -> &ValidatorSwarm {
         &self.swarm
     }
 }
 
 #[async_trait]
-impl Cluster for FullnodeCluster {
+impl Cluster for ValidatorCluster {
     async fn start(options: &LocalClusterConfig) -> Result<Self> {
         // TODO: options should contain port instead of address
         let fullnode_port = options.fullnode_address.as_ref().map(|addr| {
@@ -92,7 +92,7 @@ impl Cluster for FullnodeCluster {
                 .expect("Unable to parse indexer address")
         });
 
-        let mut cluster_builder = FullnodeClusterBuilder::new(); //.enable_fullnode_events();
+        let mut cluster_builder = ValidatorClusterBuilder::new(); //.enable_fullnode_events();
         if let Some(size) = options.cluster_size.as_ref() {
             cluster_builder = cluster_builder.with_cluster_size(size.clone());
         }
@@ -241,7 +241,7 @@ impl Cluster for FullnodeCluster {
     }
 }
 
-pub struct FullnodeClusterBuilder {
+pub struct ValidatorClusterBuilder {
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
@@ -258,7 +258,7 @@ pub struct FullnodeClusterBuilder {
     default_jwks: bool,
 }
 
-impl FullnodeClusterBuilder {
+impl ValidatorClusterBuilder {
     pub fn new() -> Self {
         Self {
             genesis_config: None,
@@ -309,7 +309,7 @@ impl FullnodeClusterBuilder {
         self
     }
 
-    pub async fn build(mut self) -> Result<FullnodeCluster> {
+    pub async fn build(mut self) -> Result<ValidatorCluster> {
         // All test clusters receive a continuous stream of random JWKs.
         // If we later use zklogin authenticated transactions in tests we will need to supply
         // valid JWKs as well.
@@ -365,7 +365,7 @@ impl FullnodeClusterBuilder {
         // let wallet_conf = swarm.dir().join(SUI_CLIENT_CONFIG);
         // let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
 
-        Ok(FullnodeCluster {
+        Ok(ValidatorCluster {
             swarm,
             fullnode_url,
             config_directory: tempfile::tempdir()?,
@@ -373,8 +373,8 @@ impl FullnodeClusterBuilder {
         })
     }
     /// Start a Swarm and set up WalletConfig
-    async fn start_swarm(&mut self) -> Result<FullnodeSwarm, anyhow::Error> {
-        let mut builder: FullnodeSwarmBuilder = FullnodeSwarm::builder()
+    async fn start_swarm(&mut self) -> Result<ValidatorSwarm, anyhow::Error> {
+        let mut builder: ValidatorSwarmBuilder = ValidatorSwarm::builder()
             .committee_size(NonZeroUsize::new(self.cluster_size.unwrap_or(NUM_VALIDATOR)).unwrap())
             .with_objects(self.additional_objects.clone())
             .with_fullnode_count(1)
@@ -446,7 +446,7 @@ impl FullnodeClusterBuilder {
         self.genesis_config.as_mut().unwrap()
     }
 }
-impl Default for FullnodeClusterBuilder {
+impl Default for ValidatorClusterBuilder {
     fn default() -> Self {
         Self::new()
     }

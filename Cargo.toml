@@ -5,6 +5,7 @@ members = [
     "crates/scalar-core",
     "crates/scalar-node",
     "crates/scalar-consensus",
+    "crates/scalar-swarm",
     "crates/scalar-swarm-config",
     "crates/scalar-kvstore",
     "crates/scalar-json-rpc",

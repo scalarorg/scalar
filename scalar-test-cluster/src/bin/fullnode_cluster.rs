@@ -10,7 +10,7 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::{Cluster, Env, FullnodeClusterConfig, LocalFullnodeCluster};
+use scalar_test_cluster::{Cluster, Env, FullnodeCluster, LocalClusterConfig};
 use std::{net::SocketAddr, sync::Arc, thread, time};
 use tokio::time::Sleep;
 use tower::ServiceBuilder;
@@ -145,9 +145,10 @@ async fn main() -> Result<()> {
     } else {
         None
     };
-    let cluster_config = FullnodeClusterConfig {
+    let cluster_config = LocalClusterConfig {
         env: Env::NewLocal,
         consensus_url,
+        consensus_grpc_port: None,
         fullnode_address: Some(format!("0.0.0.0:{}", fullnode_rpc_port)),
         indexer_address: with_indexer.then_some(format!("0.0.0.0:{}", indexer_rpc_port)),
         pg_address: Some(format!(

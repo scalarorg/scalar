@@ -17,9 +17,9 @@ tonic-health.workspace = true
 tap.workspace = true
 prometheus.workspace = true
 
+sui-node = { path = "../scalar-node", package = "scalar-node" }
+sui-swarm-config = { path = "../scalar-swarm-config", package = "scalar-swarm-config" }
 sui-config = { path = "../../sui/crates/sui-config" }
-sui-swarm-config = { path = "../../sui/crates/sui-swarm-config" }
-scalar-node = { path = "../../sui/crates/sui-swarm-config" }
 sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
 sui-types = { path = "../../sui/crates/sui-types" }
 mysten-metrics = { path = "../../sui/crates/mysten-metrics" }

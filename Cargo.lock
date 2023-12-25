@@ -10785,6 +10785,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-swarm"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "mysten-metrics",
+ "mysten-network",
+ "prometheus",
+ "rand 0.8.5",
+ "scalar-node",
+ "scalar-swarm-config",
+ "sui-config",
+ "sui-protocol-config",
+ "sui-simulator",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tonic-health",
+ "tracing",
+ "workspace-hack 0.1.0",
+]
+
+[[package]]
 name = "scalar-swarm-config"
 version = "0.0.0"
 dependencies = [
@@ -10856,6 +10881,7 @@ dependencies = [
  "regex",
  "scalar-core",
  "scalar-node",
+ "scalar-swarm",
  "scalar-swarm-config",
  "serde-reflection",
  "serde_yaml 0.8.26",

@@ -74,6 +74,7 @@ jsonrpsee = { git = "https://github.com/wlmyng/jsonrpsee.git", rev = "b1b3007847
 
 scalar-node = { path = "../crates/scalar-node" }
 scalar-core = { path = "../crates/scalar-core" }
+scalar-swarm = { path = "../crates/scalar-swarm" }
 scalar-swarm-config = { path = "../crates/scalar-swarm-config" }
 
 mysten-common = { path = "../sui/crates/mysten-common" }
@@ -148,12 +149,12 @@ sui-protocol-config = { path = "../sui/crates/sui-protocol-config" }
 tonic-build.workspace = true
 
 [[bin]]
-name = "consensus-cluster"
-path = "src/bin/consensus_cluster.rs"
+name = "validator-cluster"
+path = "src/bin/validator_cluster.rs"
 
 [[bin]]
-name = "scalar-cluster"
-path = "src/bin/scalar_cluster.rs"
+name = "move-fullnode-cluster"
+path = "src/bin/fullnode_cluster.rs"
 
 [features]
 test-utils = []

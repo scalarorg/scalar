@@ -1,14 +1,14 @@
 #!/bin/sh
 
-consensus_cluster() {
-    RUST_LOG=info /usr/local/bin/consensus-cluster \
+validator_cluster() {
+    RUST_LOG=info /usr/local/bin/validator-cluster \
         --cluster-size 4 \
         --consensus-grpc-port 9090 \
         --epoch-duration-ms 3600000
 }  
 
-scalar_cluster() {
-    RUST_LOG=info /usr/local/bin/scalar-cluster \
+move_fullnode_cluster() {
+    RUST_LOG=info /usr/local/bin/move-fullnode-cluster \
         --cluster-size 4 \
         --consensus-grpc-port 9090 \
         --epoch-duration-ms 3600000

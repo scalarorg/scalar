@@ -1,4 +1,3 @@
-use crate::swarm::Swarm;
 use crate::{Env, LocalClusterBuilder, LocalClusterConfig};
 use async_trait::async_trait;
 use fastcrypto::traits::KeyPair;
@@ -8,6 +7,7 @@ use jsonrpsee::{
 };
 use move_binary_format::access::ModuleAccess;
 use scalar_node::SuiNodeHandle;
+use scalar_swarm::{fullnode::FullnodeSwarm, validator::ValidatorSwarm};
 use scalar_swarm_config::genesis_config::GenesisConfig;
 use scalar_swarm_config::network_config::NetworkConfig;
 use std::{net::SocketAddr, path::Path};
@@ -143,38 +143,6 @@ impl Cluster for RemoteRunningCluster {
     }
 }
 
-pub struct FullNodeHandle {
-    pub sui_node: SuiNodeHandle,
-    pub sui_client: SuiClient,
-    pub rpc_client: HttpClient,
-    pub rpc_url: String,
-    pub ws_url: String,
-}
-
-impl FullNodeHandle {
-    pub async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
-        let rpc_url = format!("http://{}", json_rpc_address);
-        let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
-
-        let ws_url = format!("ws://{}", json_rpc_address);
-        let sui_client = SuiClientBuilder::default().build(&rpc_url).await.unwrap();
-
-        Self {
-            sui_node,
-            sui_client,
-            rpc_client,
-            rpc_url,
-            ws_url,
-        }
-    }
-
-    pub async fn ws_client(&self) -> WsClient {
-        WsClientBuilder::default()
-            .build(&self.ws_url)
-            .await
-            .unwrap()
-    }
-}
 pub struct TestCluster {
     pub swarm: Swarm,
     // pub wallet: WalletContext,

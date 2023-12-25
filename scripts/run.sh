@@ -2,12 +2,12 @@
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 RUNNER=scalar-runner
 
-consensus_cluster() {
-  docker exec -it ${RUNNER} /entry.sh consensus_cluster
+validator_cluster() {
+  docker exec -it ${RUNNER} /entry.sh validator_cluster
 }
 
-scalar_cluster() {
-  docker exec -it ${RUNNER} /entry.sh scalar_cluster
+move_fullnode_cluster() {
+  docker exec -it ${RUNNER} /entry.sh move_fullnode_cluster
 }
 
 # HuongND 2023-12-14

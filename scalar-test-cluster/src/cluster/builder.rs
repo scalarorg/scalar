@@ -1,5 +1,6 @@
-use crate::swarm::{Swarm, SwarmBuilder};
+use crate::NUM_VALIDATOR;
 use crate::{FullNodeHandle, TestCluster};
+use scalar_swarm::fullnode::{FullnodeSwarm, FullnodeSwarmBuilder};
 use scalar_swarm_config::genesis_config::{
     AccountConfig, GenesisConfig, ValidatorGenesisConfig, DEFAULT_GAS_AMOUNT,
 };
@@ -19,7 +20,6 @@ use sui_sdk::wallet_context::WalletContext;
 use sui_types::crypto::{KeypairTraits, SuiKeyPair};
 use sui_types::object::Object;
 
-const NUM_VALIDATOR: usize = 4;
 pub struct LocalClusterBuilder {
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
