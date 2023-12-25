@@ -10,9 +10,9 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::{Env, LocalClusterConfig, Cluster, LocalNewCluster};
+use scalar_test_cluster::{Cluster, Env, FullnodeClusterConfig, LocalFullnodeCluster};
+use std::{net::SocketAddr, sync::Arc, thread, time};
 use tokio::time::Sleep;
-use std::{net::SocketAddr, sync::Arc, time, thread};
 use tower::ServiceBuilder;
 use tracing::info;
 use uuid::Uuid;
@@ -32,10 +32,12 @@ struct Args {
     #[clap(long, default_value = "4")]
     cluster_size: Option<usize>,
 
-    /// Port to start the Fullnode RPC server on
+    /// Host to access to consensus RPC server
+    #[clap(long, default_value = "http://127.0.0.1")]
+    consensus_host: Option<String>,
+    /// Port to access to the consensus RPC server
     #[clap(long, default_value = "5000")]
-    consensus_grpc_port: Option<u16>,
-
+    consensus_port: Option<u16>,
     /// Port to start the Fullnode RPC server on
     #[clap(long, default_value = "9000")]
     fullnode_rpc_port: u16,
@@ -93,8 +95,6 @@ struct Args {
     /// If we should use the new version of the indexer
     #[clap(long)]
     pub use_indexer_v2: bool,
-
-
 }
 
 #[tokio::main]
@@ -107,7 +107,8 @@ async fn main() -> Result<()> {
     let Args {
         config_dir,
         cluster_size,
-        consensus_grpc_port,
+        consensus_host,
+        consensus_port,
         fullnode_rpc_port,
         graphql_host,
         graphql_port,
@@ -139,15 +140,20 @@ async fn main() -> Result<()> {
     } else if !use_indexer_v2 {
         println!("`with_indexer` flag unset. Indexer service will run unmaintained indexer.")
     }
-    let cluster_config = LocalClusterConfig {
+    let consensus_url = if let (Some(host), Some(oprt)) = (consensus_host, consensus_port) {
+        Some(format!("{}:{}", consensus_host, consensus_port))
+    } else {
+        None
+    };
+    let cluster_config = FullnodeClusterConfig {
         env: Env::NewLocal,
-        consensus_grpc_port,
-        fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),
-        indexer_address: with_indexer.then_some(format!("127.0.0.1:{}", indexer_rpc_port)),
+        consensus_url,
+        fullnode_address: Some(format!("0.0.0.0:{}", fullnode_rpc_port)),
+        indexer_address: with_indexer.then_some(format!("0.0.0.0:{}", indexer_rpc_port)),
         pg_address: Some(format!(
             "postgres://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db_name}"
         )),
-        faucet_address: Some(format!("127.0.0.1:{}", faucet_port)),
+        faucet_address: Some(format!("0.0.0.0:{}", faucet_port)),
         epoch_duration_ms,
         use_indexer_experimental_methods,
         config_dir,
@@ -159,8 +165,8 @@ async fn main() -> Result<()> {
         "Starting local validator cluster with config: {:#?}",
         &cluster_config
     );
-    let local_cluster = LocalNewCluster::start(&cluster_config).await?;
-    let swarm = local_cluster.swarm();
+    let fullnode_cluster = FullnodeCluster::start(&cluster_config).await?;
+    let swarm = fullnode_cluster.swarm();
     // println!("Fullnode RPC URL: {}", cluster.fullnode_url());
 
     // if with_indexer {

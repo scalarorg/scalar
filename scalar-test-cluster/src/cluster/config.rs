@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use clap::*;
-//use derivative::Derivative;
+use derivative::Derivative;
 use regex::Regex;
 use std::{fmt, path::PathBuf};
 #[derive(Parser, Clone, ValueEnum, Debug)]
@@ -27,6 +27,9 @@ pub struct LocalClusterConfig {
     pub faucet_address: Option<String>,
     #[clap(long)]
     pub consensus_grpc_port: Option<u16>,
+    /// Url for connect to the consensus layer
+    #[clap(long)]
+    pub consensus_url: Option<String>,
     #[clap(long)]
     pub fullnode_address: Option<String>,
     #[clap(long)]
@@ -74,6 +77,7 @@ impl LocalClusterConfig {
             env: Env::NewLocal,
             faucet_address: None,
             consensus_grpc_port: None,
+            consensus_url: None,
             fullnode_address: None,
             epoch_duration_ms: None,
             indexer_address: None,
