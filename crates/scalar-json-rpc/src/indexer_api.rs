@@ -3,53 +3,51 @@
 
 use anyhow::bail;
 use async_trait::async_trait;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use jsonrpsee::{
-    core::RpcResult, PendingSubscriptionSink, RpcModule, SubscriptionMessage, TrySendError,
+    core::{error::SubscriptionClosed, RpcResult},
+    types::SubscriptionResult,
+    RpcModule, SubscriptionSink,
 };
-//use jsonrpsee::core::error::SubscriptionClosed;
 use move_bytecode_utils::layout::TypeLayoutBuilder;
 use move_core_types::language_storage::TypeTag;
 use mysten_metrics::spawn_monitored_task;
-use scalar_core::authority::AuthorityState;
-use scalar_json::SuiJsonValue;
-use scalar_json_rpc_types::{
+use serde::Serialize;
+use std::str::FromStr;
+use std::sync::Arc;
+use sui_core::authority::AuthorityState;
+use sui_json::SuiJsonValue;
+use sui_json_rpc_api::{
+    cap_page_limit, validate_limit, IndexerApiOpenRpc, IndexerApiServer, JsonRpcMetrics,
+    ReadApiServer, QUERY_MAX_RESULT_LIMIT,
+};
+use sui_json_rpc_types::{
     DynamicFieldPage, EventFilter, EventPage, ObjectsPage, Page, SuiObjectDataOptions,
     SuiObjectResponse, SuiObjectResponseQuery, SuiTransactionBlockResponse,
     SuiTransactionBlockResponseQuery, TransactionBlocksPage, TransactionFilter,
 };
-use scalar_storage::key_value_store::TransactionKeyValueStore;
-use scalar_types::{
+use sui_open_rpc::Module;
+use sui_storage::key_value_store::TransactionKeyValueStore;
+use sui_types::{
     base_types::{ObjectID, SuiAddress},
     digests::TransactionDigest,
     dynamic_field::{DynamicFieldName, Field},
     error::SuiObjectResponseError,
     event::EventID,
 };
-use serde::Serialize;
-use std::str::FromStr;
-use std::sync::Arc;
-use sui_open_rpc::Module;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, instrument, warn};
 
 use crate::{
-    api::{
-        cap_page_limit, validate_limit, IndexerApiServer, JsonRpcMetrics, ReadApiServer,
-        QUERY_MAX_RESULT_LIMIT,
-    },
     authority_state::StateRead,
     error::{Error, SuiRpcInputError},
     name_service::{Domain, NameRecord, NameServiceConfig},
     with_tracing, SuiRpcModule,
 };
-/*
- * 23-11-10 TaiVV
- * Upgrade to jsonrpsee 0.20.3
- */
+
 pub fn spawn_subscription<S, T>(
-    pending: PendingSubscriptionSink,
-    mut rx: S,
+    mut sink: SubscriptionSink,
+    rx: S,
     permit: Option<OwnedSemaphorePermit>,
 ) where
     S: Stream<Item = T> + Unpin + Send + 'static,
@@ -57,56 +55,22 @@ pub fn spawn_subscription<S, T>(
 {
     spawn_monitored_task!(async move {
         let _permit = permit;
-        if let Ok(mut sink) = pending.accept().await {
-            loop {
-                tokio::select! {
-                    _ = sink.closed() => break,// Err(anyhow::anyhow!("Subscription was closed")),
-                    maybe_item = rx.next() => {
-                        let item = match maybe_item {
-                            Some(item) => item,
-                            None => break,// Err(anyhow::anyhow!("Subscription was closed")),
-                        };
-                        if let Ok(msg) = SubscriptionMessage::from_json(&item) {
-                            match sink.try_send(msg) {
-                                Ok(_) => (),
-                                Err(TrySendError::Closed(_)) =>
-                                    break,// Err(anyhow::anyhow!("Subscription was closed")),
-                                // channel is full, let's be naive an just drop the message.
-                                Err(TrySendError::Full(_)) => (),
-                            }
-                        }
-                    }
-                }
+        match sink.pipe_from_stream(rx).await {
+            SubscriptionClosed::Success => {
+                debug!("Subscription completed.");
+                sink.close(SubscriptionClosed::Success);
             }
-        }
+            SubscriptionClosed::RemotePeerAborted => {
+                debug!("Subscription aborted by remote peer.");
+                sink.close(SubscriptionClosed::RemotePeerAborted);
+            }
+            SubscriptionClosed::Failed(err) => {
+                debug!("Subscription failed: {err:?}");
+                sink.close(err);
+            }
+        };
     });
 }
-// pub fn spawn_subscription<S, T>(
-//     mut sink: SubscriptionSink,
-//     rx: S,
-//     permit: Option<OwnedSemaphorePermit>,
-// ) where
-//     S: Stream<Item = T> + Unpin + Send + 'static,
-//     T: Serialize,
-// {
-//     spawn_monitored_task!(async move {
-//         let _permit = permit;
-//         match sink.pipe_from_stream(rx).await {
-//             SubscriptionClosed::Success => {
-//                 debug!("Subscription completed.");
-//                 sink.close(SubscriptionClosed::Success);
-//             }
-//             SubscriptionClosed::RemotePeerAborted => {
-//                 debug!("Subscription aborted by remote peer.");
-//                 sink.close(SubscriptionClosed::RemotePeerAborted);
-//             }
-//             SubscriptionClosed::Failed(err) => {
-//                 debug!("Subscription failed: {err:?}");
-//                 sink.close(err);
-//             }
-//         };
-//     });
-// }
 const DEFAULT_MAX_SUBSCRIPTIONS: usize = 100;
 
 pub struct IndexerApi<R> {
@@ -293,7 +257,7 @@ impl<R: ReadApiServer> IndexerApiServer for IndexerApi<R> {
                 .query_events(
                     &self.transaction_kv_store,
                     query,
-                    cursor.clone(),
+                    cursor,
                     limit + 1,
                     descending,
                 )
@@ -301,7 +265,7 @@ impl<R: ReadApiServer> IndexerApiServer for IndexerApi<R> {
                 .map_err(Error::from)?;
             let has_next_page = data.len() > limit;
             data.truncate(limit);
-            let next_cursor = data.last().map_or(cursor, |e| Some(e.id.clone()));
+            let next_cursor = data.last().map_or(cursor, |e| Some(e.id));
             self.metrics
                 .query_events_result_size
                 .report(data.len() as u64);
@@ -316,34 +280,33 @@ impl<R: ReadApiServer> IndexerApiServer for IndexerApi<R> {
         })
     }
 
-    /*
-     * 23-11-10 TaiVV
-     * Upgrade to jsonrpsee 0.20.3
-     * Todo investigate spawn_subscription function
-     */
     #[instrument(skip(self))]
-    fn subscribe_event(&self, sink: PendingSubscriptionSink, filter: EventFilter) {
-        if let Ok(permit) = self.acquire_subscribe_permit() {
-            spawn_subscription(
-                sink,
-                self.state
-                    .get_subscription_handler()
-                    .subscribe_events(filter),
-                Some(permit),
-            );
-        }
+    fn subscribe_event(&self, sink: SubscriptionSink, filter: EventFilter) -> SubscriptionResult {
+        let permit = self.acquire_subscribe_permit()?;
+        spawn_subscription(
+            sink,
+            self.state
+                .get_subscription_handler()
+                .subscribe_events(filter),
+            Some(permit),
+        );
+        Ok(())
     }
 
-    fn subscribe_transaction(&self, sink: PendingSubscriptionSink, filter: TransactionFilter) {
-        if let Ok(permit) = self.acquire_subscribe_permit() {
-            spawn_subscription(
-                sink,
-                self.state
-                    .get_subscription_handler()
-                    .subscribe_transactions(filter),
-                Some(permit),
-            );
-        }
+    fn subscribe_transaction(
+        &self,
+        sink: SubscriptionSink,
+        filter: TransactionFilter,
+    ) -> SubscriptionResult {
+        let permit = self.acquire_subscribe_permit()?;
+        spawn_subscription(
+            sink,
+            self.state
+                .get_subscription_handler()
+                .subscribe_transactions(filter),
+            Some(permit),
+        );
+        Ok(())
     }
 
     #[instrument(skip(self))]
@@ -475,6 +438,6 @@ impl<R: ReadApiServer> SuiRpcModule for IndexerApi<R> {
     }
 
     fn rpc_doc_module() -> Module {
-        crate::api::IndexerApiOpenRpc::module_doc()
+        IndexerApiOpenRpc::module_doc()
     }
 }

@@ -10,30 +10,28 @@ use cached::proc_macro::cached;
 use cached::SizedCache;
 use itertools::Itertools;
 use jsonrpsee::core::RpcResult;
-use jsonrpsee::types::error::INTERNAL_ERROR_CODE;
-use jsonrpsee::types::ErrorObjectOwned;
 use jsonrpsee::RpcModule;
 use tracing::{info, instrument};
 
 use mysten_metrics::spawn_monitored_task;
-use scalar_core::authority::AuthorityState;
-use scalar_json_rpc_types::{DelegatedStake, Stake, StakeStatus};
-use scalar_json_rpc_types::{SuiCommittee, ValidatorApy, ValidatorApys};
-use scalar_types::base_types::{ObjectID, SuiAddress};
-use scalar_types::committee::EpochId;
-use scalar_types::dynamic_field::get_dynamic_field_from_store;
-use scalar_types::error::{SuiError, UserInputError};
-use scalar_types::governance::StakedSui;
-use scalar_types::id::ID;
-use scalar_types::object::ObjectRead;
-use scalar_types::scalar_serde::BigInt;
-use scalar_types::sui_system_state::sui_system_state_summary::SuiSystemStateSummary;
-use scalar_types::sui_system_state::PoolTokenExchangeRate;
-use scalar_types::sui_system_state::SuiSystemStateTrait;
-use scalar_types::sui_system_state::{get_validator_from_table, SuiSystemState};
+use sui_core::authority::AuthorityState;
+use sui_json_rpc_api::{GovernanceReadApiOpenRpc, GovernanceReadApiServer, JsonRpcMetrics};
+use sui_json_rpc_types::{DelegatedStake, Stake, StakeStatus};
+use sui_json_rpc_types::{SuiCommittee, ValidatorApy, ValidatorApys};
 use sui_open_rpc::Module;
+use sui_types::base_types::{ObjectID, SuiAddress};
+use sui_types::committee::EpochId;
+use sui_types::dynamic_field::get_dynamic_field_from_store;
+use sui_types::error::{SuiError, UserInputError};
+use sui_types::governance::StakedSui;
+use sui_types::id::ID;
+use sui_types::object::ObjectRead;
+use sui_types::sui_serde::BigInt;
+use sui_types::sui_system_state::sui_system_state_summary::SuiSystemStateSummary;
+use sui_types::sui_system_state::PoolTokenExchangeRate;
+use sui_types::sui_system_state::SuiSystemStateTrait;
+use sui_types::sui_system_state::{get_validator_from_table, SuiSystemState};
 
-use crate::api::{GovernanceReadApiServer, JsonRpcMetrics};
 use crate::authority_state::StateRead;
 use crate::error::{Error, RpcInterimResult, SuiRpcInputError};
 use crate::{with_tracing, ObjectProvider, SuiRpcModule};
@@ -265,9 +263,7 @@ impl GovernanceReadApiServer for GovernanceReadApi {
 
         let exchange_rate_table = exchange_rates(&self.state, system_state_summary.epoch)
             .await
-            .map_err(|err| {
-                ErrorObjectOwned::owned(INTERNAL_ERROR_CODE, format!("{:?}", err), None::<()>)
-            })?;
+            .map_err(Error::from)?;
 
         let apys = calculate_apys(
             system_state_summary.stake_subsidy_start_epoch,
@@ -461,6 +457,6 @@ impl SuiRpcModule for GovernanceReadApi {
     }
 
     fn rpc_doc_module() -> Module {
-        crate::api::GovernanceReadApiOpenRpc::module_doc()
+        GovernanceReadApiOpenRpc::module_doc()
     }
 }

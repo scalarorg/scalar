@@ -1728,27 +1728,27 @@ pub fn build_http_server(
         let kv_store = build_kv_store(&state, config, prometheus_registry)?;
 
         let metrics = Arc::new(JsonRpcMetrics::new(prometheus_registry));
-        //Scalar Todo: Define scalar rpc api
-        // server.register_module(ReadApi::new(
-        //     state.clone(),
-        //     kv_store.clone(),
-        //     metrics.clone(),
-        // ))?;
-        // server.register_module(CoinReadApi::new(
-        //     state.clone(),
-        //     kv_store.clone(),
-        //     metrics.clone(),
-        // ))?;
-        // server.register_module(TransactionBuilderApi::new(state.clone()))?;
-        // server.register_module(GovernanceReadApi::new(state.clone(), metrics.clone()))?;
 
-        // if let Some(transaction_orchestrator) = transaction_orchestrator {
-        //     server.register_module(TransactionExecutionApi::new(
-        //         state.clone(),
-        //         transaction_orchestrator.clone(),
-        //         metrics.clone(),
-        //     ))?;
-        // }
+        server.register_module(ReadApi::new(
+            state.clone(),
+            kv_store.clone(),
+            metrics.clone(),
+        ))?;
+        server.register_module(CoinReadApi::new(
+            state.clone(),
+            kv_store.clone(),
+            metrics.clone(),
+        ))?;
+        server.register_module(TransactionBuilderApi::new(state.clone()))?;
+        server.register_module(GovernanceReadApi::new(state.clone(), metrics.clone()))?;
+
+        if let Some(transaction_orchestrator) = transaction_orchestrator {
+            server.register_module(TransactionExecutionApi::new(
+                state.clone(),
+                transaction_orchestrator.clone(),
+                metrics.clone(),
+            ))?;
+        }
 
         let name_service_config =
             if let (Some(package_address), Some(registry_id), Some(reverse_registry_id)) = (
@@ -1765,25 +1765,25 @@ pub fn build_http_server(
                 sui_json_rpc::name_service::NameServiceConfig::default()
             };
 
-        // server.register_module(IndexerApi::new(
-        //     state.clone(),
-        //     ReadApi::new(state.clone(), kv_store.clone(), metrics.clone()),
-        //     kv_store,
-        //     name_service_config,
-        //     metrics,
-        //     config.indexer_max_subscriptions,
-        // ))?;
-        // server.register_module(MoveUtils::new(state.clone()))?;
+        server.register_module(IndexerApi::new(
+            state.clone(),
+            ReadApi::new(state.clone(), kv_store.clone(), metrics.clone()),
+            kv_store,
+            name_service_config,
+            metrics,
+            config.indexer_max_subscriptions,
+        ))?;
+        server.register_module(MoveUtils::new(state.clone()))?;
 
         server.to_router(None)?
     };
 
     router = router.merge(json_rpc_router);
 
-    // if config.enable_experimental_rest_api {
-    //     let rest_router = sui_rest_api::rest_router(state);
-    //     router = router.nest("/rest", rest_router);
-    // }
+    if config.enable_experimental_rest_api {
+        let rest_router = sui_rest_api::rest_router(state);
+        router = router.nest("/rest", rest_router);
+    }
 
     let server = axum::Server::bind(&config.json_rpc_address).serve(router.into_make_service());
 

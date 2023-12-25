@@ -4,14 +4,14 @@
 use move_core_types::ident_str;
 use move_core_types::identifier::IdentStr;
 use move_core_types::language_storage::StructTag;
-use scalar_types::base_types::{ObjectID, SuiAddress};
-use scalar_types::collection_types::VecMap;
-use scalar_types::id::ID;
-use scalar_types::TypeTag;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::marker::PhantomData;
 use std::str::FromStr;
+use sui_types::base_types::{ObjectID, SuiAddress};
+use sui_types::collection_types::VecMap;
+use sui_types::id::ID;
+use sui_types::TypeTag;
 
 const NAME_SERVICE_DOMAIN_MODULE: &IdentStr = ident_str!("domain");
 const NAME_SERVICE_DOMAIN_STRUCT: &IdentStr = ident_str!("Domain");
@@ -88,7 +88,7 @@ impl NameServiceConfig {
     pub fn record_field_id(&self, domain: &Domain) -> ObjectID {
         let domain_bytes = bcs::to_bytes(domain).unwrap();
 
-        scalar_types::dynamic_field::derive_dynamic_field_id(
+        sui_types::dynamic_field::derive_dynamic_field_id(
             self.registry_id,
             &self.domain_type_tag,
             &domain_bytes,
@@ -97,7 +97,7 @@ impl NameServiceConfig {
     }
 
     pub fn reverse_record_field_id(&self, address: SuiAddress) -> ObjectID {
-        scalar_types::dynamic_field::derive_dynamic_field_id(
+        sui_types::dynamic_field::derive_dynamic_field_id(
             self.reverse_registry_id,
             &TypeTag::Address,
             address.as_ref(),

@@ -11,8 +11,8 @@ anyhow.workspace = true
 bcs.workspace = true
 camino.workspace = true
 fastcrypto.workspace = true
-move-binary-format.workspace = true
-move-core-types.workspace = true
+move-binary-format = { path = "../../sui/external-crates/move/crates/move-binary-format" }
+move-core-types = { path = "../../sui/external-crates/move/crates/move-core-types" }
 rand.workspace = true
 serde.workspace = true
 serde_with.workspace = true
@@ -21,18 +21,18 @@ tempfile.workspace = true
 tracing.workspace = true
 prometheus.workspace = true
 
-shared-crypto.workspace = true
-scalar-execution.workspace = true
-scalar-framework.workspace = true
-#sui-framework-snapshot.workspace = true
-sui-protocol-config.workspace = true
-scalar-config.workspace = true
-scalar-types.workspace = true
-workspace-hack.workspace = true
+shared-crypto = { path = "../../sui/crates/shared-crypto" }
+sui-execution = { path = "../../sui/sui-execution" }
+sui-framework = { path = "../../sui/crates/sui-framework" }
+sui-framework-snapshot = { path = "../../sui/crates/sui-framework-snapshot" }
+sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
+sui-config = { path = "../../sui/crates/sui-config" }
+sui-types = { path = "../../sui/crates/sui-types" }
+workspace-hack = { path = "../../sui/crates/workspace-hack" }
 [target.'cfg(msim)'.dependencies]
-sui-simulator.workspace = true
+sui-simulator = { path = "../../sui/crates/sui-simulator" }
 
 [dev-dependencies]
 insta.workspace = true
 tempfile.workspace = true
-scalar-types = { workspace = true, features = ["test-utils"] }
+sui-types = { path = "../../sui/crates/sui-types", features = ["test-utils"] }

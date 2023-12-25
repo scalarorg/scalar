@@ -6,39 +6,39 @@ use arc_swap::Guard;
 use async_trait::async_trait;
 use move_core_types::language_storage::TypeTag;
 use mysten_metrics::spawn_monitored_task;
-use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
-use scalar_core::authority::{AuthorityState, AuthorityStore};
-use scalar_core::subscription_handler::SubscriptionHandler;
-use scalar_json_rpc_types::{
+use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
+use sui_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
+use sui_core::authority::{AuthorityState, AuthorityStore};
+use sui_core::subscription_handler::SubscriptionHandler;
+use sui_json_rpc_types::{
     Coin as SuiCoin, DevInspectResults, DryRunTransactionBlockResponse, EventFilter, SuiEvent,
     SuiObjectDataFilter, TransactionFilter,
 };
-use scalar_types::base_types::{
-    MoveObjectType, ObjectID, ObjectInfo, ObjectRef, SequenceNumber, SuiAddress,
-};
-use scalar_types::committee::{Committee, EpochId};
-use scalar_types::digests::{ChainIdentifier, TransactionDigest, TransactionEventsDigest};
-use scalar_types::dynamic_field::DynamicFieldInfo;
-use scalar_types::effects::TransactionEffects;
-use scalar_types::error::{SuiError, UserInputError};
-use scalar_types::event::EventID;
-use scalar_types::governance::StakedSui;
-use scalar_types::messages_checkpoint::{
-    CheckpointContents, CheckpointContentsDigest, CheckpointDigest, CheckpointSequenceNumber,
-    VerifiedCheckpoint,
-};
-use scalar_types::object::{Object, ObjectRead, PastObjectRead};
-use scalar_types::scalar_serde::BigInt;
-use scalar_types::storage::WriteKind;
-use scalar_types::sui_system_state::SuiSystemState;
-use scalar_types::transaction::{Transaction, TransactionData, TransactionKind};
-use std::collections::{BTreeMap, HashMap};
-use std::sync::Arc;
-use scalar_storage::indexes::TotalBalance;
-use scalar_storage::key_value_store::{
+use sui_storage::indexes::TotalBalance;
+use sui_storage::key_value_store::{
     KVStoreCheckpointData, KVStoreTransactionData, TransactionKeyValueStore,
     TransactionKeyValueStoreTrait,
 };
+use sui_types::base_types::{
+    MoveObjectType, ObjectID, ObjectInfo, ObjectRef, SequenceNumber, SuiAddress,
+};
+use sui_types::committee::{Committee, EpochId};
+use sui_types::digests::{ChainIdentifier, TransactionDigest, TransactionEventsDigest};
+use sui_types::dynamic_field::DynamicFieldInfo;
+use sui_types::effects::TransactionEffects;
+use sui_types::error::{SuiError, UserInputError};
+use sui_types::event::EventID;
+use sui_types::governance::StakedSui;
+use sui_types::messages_checkpoint::{
+    CheckpointContents, CheckpointContentsDigest, CheckpointDigest, CheckpointSequenceNumber,
+    VerifiedCheckpoint,
+};
+use sui_types::object::{Object, ObjectRead, PastObjectRead};
+use sui_types::storage::WriteKind;
+use sui_types::sui_serde::BigInt;
+use sui_types::sui_system_state::SuiSystemState;
+use sui_types::transaction::{Transaction, TransactionData, TransactionKind};
 use thiserror::Error;
 use tokio::task::JoinError;
 
@@ -624,7 +624,7 @@ pub enum StateReadClientError {
 /// This context is preserved in `Internal` and `Client` variants.
 #[derive(Debug, Error)]
 pub enum StateReadError {
-    // scalar_json_rpc::Error will do the final conversion to generic error message
+    // sui_json_rpc::Error will do the final conversion to generic error message
     #[error(transparent)]
     Internal(#[from] StateReadInternalError),
 

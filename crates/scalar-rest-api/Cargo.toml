@@ -1,0 +1,21 @@
+[package]
+name = "scalar-rest-api"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+bcs.workspace = true
+reqwest.workspace = true
+axum.workspace = true
+rand.workspace = true
+simulacrum = { path = "../../sui/crates/simulacrum" }
+sui-core = { path = "../scalar-core", package = "scalar-core" }
+sui-types = { path = "../../sui/crates/sui-types" }
+workspace-hack = { path = "../../sui/crates/workspace-hack" }
+
+[dev-dependencies]
+tokio.workspace = true
