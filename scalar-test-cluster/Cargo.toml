@@ -39,14 +39,14 @@ http.workspace = true
 # parking_lot.workspace = true
 pprof.workspace = true
 prost.workspace = true
-# prometheus.workspace = true
+prometheus.workspace = true
 rand.workspace = true
 regex.workspace = true
-# reqwest.workspace = true
+reqwest.workspace = true
 # rocksdb.workspace = true
 # serde = { workspace = true, features = ["derive", "rc"] }
 # serde_bytes = "0.11.5"
-# serde_json.workspace = true
+serde_json.workspace = true
 # serde_with.workspace = true
 # serde_yaml.workspace = true
 tap.workspace = true
@@ -58,7 +58,7 @@ tokio = { workspace = true, features = ["full"] }
 tonic.workspace = true
 tonic-health.workspace = true
 tower.workspace = true
-# # tower-http.workspace = true
+tower-http.workspace = true
 tracing.workspace = true
 
 uuid.workspace = true
@@ -114,6 +114,9 @@ sui-execution = { path = "../sui/sui-execution" }
 sui-transaction-checks = { path = "../sui/crates/sui-transaction-checks" }
 sui-framework = { path = "../sui/crates/sui-framework" }
 sui-move-build = { path = "../sui/crates/sui-move-build" }
+sui-graphql-rpc = { path = "../sui/crates/sui-graphql-rpc" }
+sui-indexer = { path = "../sui/crates/sui-indexer" }
+sui-faucet = { path = "../sui/crates/sui-faucet" }
 # Import in testing only
 move-core-types = { path = "../sui/external-crates/move/crates/move-core-types" }
 move-bytecode-utils = { path = "../sui/external-crates/move/crates/move-bytecode-utils" }

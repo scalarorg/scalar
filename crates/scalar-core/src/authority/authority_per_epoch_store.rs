@@ -236,7 +236,7 @@ pub struct AuthorityPerEpochStore {
     /// Batch verifier for certificates - also caches certificates and tx sigs that are known to have
     /// valid signatures. Lives in per-epoch store because the caching/batching is only valid
     /// within for certs within the current epoch.
-    pub(crate) signature_verifier: SignatureVerifier,
+    pub signature_verifier: SignatureVerifier,
 
     pub(crate) checkpoint_state_notify_read: NotifyRead<CheckpointSequenceNumber, Accumulator>,
 
@@ -1736,7 +1736,7 @@ impl AuthorityPerEpochStore {
         Ok(())
     }
 
-    pub(crate) fn get_new_jwks(&self, round: u64) -> SuiResult<Vec<ActiveJwk>> {
+    pub fn get_new_jwks(&self, round: u64) -> SuiResult<Vec<ActiveJwk>> {
         let epoch = self.epoch();
 
         let empty_jwk_id = JwkId::new(String::new(), String::new());
@@ -2116,7 +2116,7 @@ impl AuthorityPerEpochStore {
     }
 
     #[instrument(level = "debug", skip_all)]
-    pub(crate) async fn process_consensus_transactions_and_commit_boundary<
+    pub async fn process_consensus_transactions_and_commit_boundary<
         'a,
         C: CheckpointServiceNotify,
     >(
@@ -2878,7 +2878,7 @@ impl AuthorityPerEpochStore {
             .insert(&(checkpoint_seq, index), info)?)
     }
 
-    pub(crate) fn record_epoch_pending_certs_process_time_metric(&self) {
+    pub fn record_epoch_pending_certs_process_time_metric(&self) {
         if let Some(epoch_close_time) = *self.epoch_close_time.read() {
             self.metrics
                 .epoch_pending_certs_processed_time_since_epoch_close_ms

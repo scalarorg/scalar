@@ -1,2 +1,3 @@
 // Shared modele between Reth and Scalar consensus
-pub mod proto;
+mod proto;
+pub use proto::*;

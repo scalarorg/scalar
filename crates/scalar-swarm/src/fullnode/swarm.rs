@@ -37,6 +37,7 @@ pub struct FullnodeSwarmBuilder<R = OsRng> {
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
+    consensus_url: Option<String>,
     fullnode_count: usize,
     fullnode_rpc_port: Option<u16>,
     fullnode_rpc_addr: Option<SocketAddr>,
@@ -60,6 +61,7 @@ impl FullnodeSwarmBuilder {
             genesis_config: None,
             network_config: None,
             additional_objects: vec![],
+            consensus_url: None,
             fullnode_count: 0,
             fullnode_rpc_port: None,
             fullnode_rpc_addr: None,
@@ -83,6 +85,7 @@ impl<R> FullnodeSwarmBuilder<R> {
             genesis_config: self.genesis_config,
             network_config: self.network_config,
             additional_objects: self.additional_objects,
+            consensus_url: self.consensus_url,
             fullnode_count: self.fullnode_count,
             fullnode_rpc_port: self.fullnode_rpc_port,
             fullnode_rpc_addr: self.fullnode_rpc_addr,
@@ -152,7 +155,10 @@ impl<R> FullnodeSwarmBuilder<R> {
         self.additional_objects.extend(objects);
         self
     }
-
+    pub fn with_consensus_url(mut self, consensus_url: String) -> Self {
+        self.consensus_url = Some(consensus_url);
+        self
+    }
     pub fn with_fullnode_count(mut self, fullnode_count: usize) -> Self {
         self.fullnode_count = fullnode_count;
         self
@@ -285,7 +291,12 @@ impl<R: rand::RngCore + rand::CryptoRng> FullnodeSwarmBuilder<R> {
         let mut nodes: HashMap<_, _> = network_config
             .validator_configs()
             .iter()
-            .map(|config| (config.protocol_public_key(), FullNode::new(config.to_owned())))
+            .map(|config| {
+                (
+                    config.protocol_public_key(),
+                    FullNode::new(config.to_owned()),
+                )
+            })
             .collect();
 
         let mut fullnode_config_builder = FullnodeConfigBuilder::new()
@@ -448,7 +459,7 @@ mod test {
     #[tokio::test]
     async fn launch() {
         telemetry_subscribers::init_for_testing();
-        let mut swarm = Swarm::builder()
+        let mut swarm = FullnodeSwarm::builder()
             .committee_size(NonZeroUsize::new(4).unwrap())
             .with_fullnode_count(1)
             .build();

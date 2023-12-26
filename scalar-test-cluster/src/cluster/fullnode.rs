@@ -1,4 +1,4 @@
-use super::Cluster;
+use super::{ClusterTrait, FullnodeClusterTrait};
 use crate::LocalClusterConfig;
 use crate::NUM_VALIDATOR;
 use anyhow::Result;
@@ -8,7 +8,7 @@ use jsonrpsee::{
     ws_client::{WsClient, WsClientBuilder},
 };
 use scalar_node::SuiNodeHandle;
-use scalar_swarm::fullnode::{FullnodeSwarmBuilder, FullnodeSwarm};
+use scalar_swarm::fullnode::{FullnodeSwarm, FullnodeSwarmBuilder};
 use scalar_swarm_config::{
     genesis_config::GenesisConfig, network_config::NetworkConfig,
     network_config_builder::ProtocolVersionsConfig,
@@ -21,11 +21,20 @@ use sui_config::{
     node::DBCheckpointConfig, Config, PersistedConfig, SUI_CLIENT_CONFIG, SUI_KEYSTORE_FILENAME,
     SUI_NETWORK_CONFIG,
 };
+use sui_graphql_rpc::config::ConnectionConfig;
+use sui_graphql_rpc::test_infra::cluster::start_graphql_server;
+use sui_indexer::test_utils::{start_test_indexer, start_test_indexer_v2};
+use sui_indexer::IndexerConfig;
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore, Keystore};
+use sui_sdk::sui_client_config::SuiEnv;
 use sui_sdk::{
     sui_client_config::SuiClientConfig, wallet_context::WalletContext, SuiClient, SuiClientBuilder,
 };
-use sui_types::{base_types::SuiAddress, crypto::{AccountKeyPair, SuiKeyPair, get_key_pair, KeypairTraits}, object::Object};
+use sui_types::{
+    base_types::SuiAddress,
+    crypto::{get_key_pair, AccountKeyPair, KeypairTraits, SuiKeyPair},
+    object::Object,
+};
 use tracing::{error, info};
 
 pub struct FullNodeHandle {
@@ -36,9 +45,8 @@ pub struct FullNodeHandle {
     pub ws_url: String,
 }
 
-#[async_trait]
-impl Cluster for FullNodeHandle {
-    async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
+impl FullNodeHandle {
+    pub async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
         let rpc_url = format!("http://{}", json_rpc_address);
         let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
 
@@ -54,7 +62,7 @@ impl Cluster for FullNodeHandle {
         }
     }
 
-    async fn ws_client(&self) -> WsClient {
+    pub async fn ws_client(&self) -> WsClient {
         WsClientBuilder::default()
             .build(&self.ws_url)
             .await
@@ -64,9 +72,10 @@ impl Cluster for FullNodeHandle {
 
 pub struct FullnodeCluster {
     pub swarm: FullnodeSwarm,
-    fullnode_url: String,
-    // indexer_url: Option<String>,
-    // faucet_key: AccountKeyPair,
+    pub wallet: WalletContext,
+    pub fullnode_handle: FullNodeHandle,
+    indexer_url: Option<String>,
+    faucet_key: AccountKeyPair,
     config_directory: tempfile::TempDir,
 }
 
@@ -78,7 +87,7 @@ impl FullnodeCluster {
 }
 
 #[async_trait]
-impl Cluster for FullnodeCluster {
+impl ClusterTrait for FullnodeCluster {
     async fn start(options: &LocalClusterConfig) -> Result<Self> {
         // TODO: options should contain port instead of address
         let fullnode_port = options.fullnode_address.as_ref().map(|addr| {
@@ -136,101 +145,84 @@ impl Cluster for FullnodeCluster {
             }
         }
 
-        // if let Some(rpc_port) = fullnode_port {
-        //     cluster_builder = cluster_builder.with_fullnode_rpc_port(rpc_port);
-        // }
+        if let Some(rpc_port) = fullnode_port {
+            cluster_builder = cluster_builder.with_fullnode_rpc_port(rpc_port);
+        }
 
-        let mut fullnode_cluster = cluster_builder.build().await;
-
+        let mut fullnode_cluster = cluster_builder.build().await?;
+        fullnode_cluster.indexer_url = options.indexer_address.clone();
         // Use the wealthy account for faucet
-        let faucet_key = test_cluster.swarm.config_mut().account_keys.swap_remove(0);
+        let faucet_key = fullnode_cluster
+            .swarm
+            .config_mut()
+            .account_keys
+            .swap_remove(0);
         let faucet_address = SuiAddress::from(faucet_key.public());
         info!(?faucet_address, "faucet_address");
 
         // This cluster has fullnode handle, safe to unwrap
-        // let fullnode_url = test_cluster.fullnode_handle.rpc_url.clone();
-        //Khong chay indexer va graphql
-        // if let (Some(pg_address), Some(indexer_address)) =
-        //     (options.pg_address.clone(), indexer_address)
-        // {
-        //     if options.use_indexer_v2 {
-        //         // Start in writer mode
-        //         start_test_indexer_v2(
-        //             Some(pg_address.clone()),
-        //             fullnode_url.clone(),
-        //             None,
-        //             options.use_indexer_experimental_methods,
-        //         )
-        //         .await;
+        let fullnode_url = fullnode_cluster.fullnode_handle.rpc_url.clone();
 
-        //         // Start in reader mode
-        //         start_test_indexer_v2(
-        //             fullnode_url.clone(),
-        //             Some(indexer_address.to_string()),
-        //             options.use_indexer_experimental_methods,
-        //         )
-        //         .await;
-        //     } else {
-        //         let migrated_methods = if options.use_indexer_experimental_methods {
-        //             IndexerConfig::all_implemented_methods()
-        //         } else {
-        //             vec![]
-        //         };
-        //         let config = IndexerConfig {
-        //             db_url: Some(pg_address),
-        //             rpc_client_url: fullnode_url.clone(),
-        //             rpc_server_url: indexer_address.ip().to_string(),
-        //             rpc_server_port: indexer_address.port(),
-        //             migrated_methods,
-        //             reset_db: true,
-        //             ..Default::default()
-        //         };
-        //         start_test_indexer(config).await?;
-        //     }
-        // }
+        if let (Some(pg_address), Some(indexer_address)) =
+            (options.pg_address.clone(), indexer_address)
+        {
+            if options.use_indexer_v2 {
+                // Start in writer mode
+                start_test_indexer_v2(
+                    Some(pg_address.clone()),
+                    fullnode_url.clone(),
+                    None,
+                    options.use_indexer_experimental_methods,
+                )
+                .await;
 
-        // if let Some(graphql_address) = &options.graphql_address {
-        //     let graphql_address = graphql_address.parse::<SocketAddr>()?;
-        //     let graphql_connection_config = ConnectionConfig::new(
-        //         Some(graphql_address.port()),
-        //         Some(graphql_address.ip().to_string()),
-        //         options.pg_address.clone(),
-        //         None,
-        //         None,
-        //     );
+                // Start in reader mode
+                start_test_indexer_v2(
+                    Some(pg_address),
+                    fullnode_url.clone(),
+                    Some(indexer_address.to_string()),
+                    options.use_indexer_experimental_methods,
+                )
+                .await;
+            } else {
+                let migrated_methods = if options.use_indexer_experimental_methods {
+                    IndexerConfig::all_implemented_methods()
+                } else {
+                    vec![]
+                };
+                let config = IndexerConfig {
+                    db_url: Some(pg_address),
+                    rpc_client_url: fullnode_url.clone(),
+                    rpc_server_url: indexer_address.ip().to_string(),
+                    rpc_server_port: indexer_address.port(),
+                    migrated_methods,
+                    reset_db: true,
+                    ..Default::default()
+                };
+                start_test_indexer(config).await?;
+            }
+        }
 
-        //     start_graphql_server(graphql_connection_config.clone()).await;
-        // }
+        if let Some(graphql_address) = &options.graphql_address {
+            let graphql_address = graphql_address.parse::<SocketAddr>()?;
+            let graphql_connection_config = ConnectionConfig::new(
+                Some(graphql_address.port()),
+                Some(graphql_address.ip().to_string()),
+                options.pg_address.clone(),
+                None,
+                None,
+                None,
+            );
+
+            start_graphql_server(graphql_connection_config.clone()).await;
+        }
 
         // Let nodes connect to one another
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
         // TODO: test connectivity before proceeding?
-        fullnode_cluster
-        // Ok(Self {
-        //     test_cluster,
-        //     config_directory: tempfile::tempdir()?,
-        //     // fullnode_url,
-        //     // faucet_key,
-        //     // indexer_url: options.indexer_address.clone(),
-        // })
+        Ok(fullnode_cluster)
     }
-
-    // fn fullnode_url(&self) -> &str {
-    //     &self.fullnode_url
-    // }
-
-    // fn indexer_url(&self) -> &Option<String> {
-    //     &self.indexer_url
-    // }
-
-    // fn remote_faucet_url(&self) -> Option<&str> {
-    //     None
-    // }
-
-    // fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
-    //     Some(&self.faucet_key)
-    // }
 
     fn user_key(&self) -> AccountKeyPair {
         get_key_pair().1
@@ -240,14 +232,31 @@ impl Cluster for FullnodeCluster {
         self.config_directory.path()
     }
 }
+#[async_trait]
+impl FullnodeClusterTrait for FullnodeCluster {
+    fn fullnode_url(&self) -> &str {
+        self.fullnode_handle.rpc_url.as_str()
+    }
 
+    fn indexer_url(&self) -> &Option<String> {
+        &self.indexer_url
+    }
+
+    fn remote_faucet_url(&self) -> Option<&str> {
+        None
+    }
+
+    fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
+        Some(&self.faucet_key)
+    }
+}
 pub struct FullnodeClusterBuilder {
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
     cluster_size: Option<usize>,
     ///Rpc port for external rpc api call
-    rpc_port: Option<u16>,
+    fullnode_rpc_port: Option<u16>,
     enable_events: bool,
     consensus_url: Option<String>,
     supported_protocol_versions_config: ProtocolVersionsConfig,
@@ -265,7 +274,7 @@ impl FullnodeClusterBuilder {
             network_config: None,
             additional_objects: vec![],
             cluster_size: None,
-            rpc_port: None,
+            fullnode_rpc_port: None,
             consensus_url: None,
             enable_events: false,
             supported_protocol_versions_config: ProtocolVersionsConfig::Default,
@@ -289,6 +298,11 @@ impl FullnodeClusterBuilder {
 
     pub fn with_cluster_size(mut self, num: usize) -> Self {
         self.cluster_size = Some(num);
+        self
+    }
+
+    pub fn with_fullnode_rpc_port(mut self, port: u16) -> Self {
+        self.fullnode_rpc_port = Some(port);
         self
     }
 
@@ -339,37 +353,38 @@ impl FullnodeClusterBuilder {
             }));
         }
 
-        let swarm = self.start_swarm().await.unwrap();
+        let mut swarm = self.start_swarm().await.unwrap();
         let working_dir = swarm.dir();
 
-        // let mut wallet_conf: SuiClientConfig =
-        //     PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
+        let mut wallet_conf: SuiClientConfig =
+            PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
 
         let fullnode = swarm.fullnodes().next().unwrap();
         let json_rpc_address = fullnode.config.json_rpc_address;
         let fullnode_handle =
             FullNodeHandle::new(fullnode.get_node_handle().unwrap(), json_rpc_address).await;
-        let fullnode_url = fullnode_handle.rpc_url.clone();
-        // wallet_conf.envs.push(SuiEnv {
-        //     alias: "localnet".to_string(),
-        //     rpc: fullnode_handle.rpc_url.clone(),
-        //     ws: Some(fullnode_handle.ws_url.clone()),
-        // });
-        // wallet_conf.active_env = Some("localnet".to_string());
+        wallet_conf.envs.push(SuiEnv {
+            alias: "localnet".to_string(),
+            rpc: fullnode_handle.rpc_url.clone(),
+            ws: Some(fullnode_handle.ws_url.clone()),
+        });
+        wallet_conf.active_env = Some("localnet".to_string());
 
-        // wallet_conf
-        //     .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
-        //     .save()
-        //     .unwrap();
+        wallet_conf
+            .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
+            .save()
+            .unwrap();
 
-        // let wallet_conf = swarm.dir().join(SUI_CLIENT_CONFIG);
-        // let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
-
+        let wallet_conf = working_dir.join(SUI_CLIENT_CONFIG);
+        let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
+        let faucet_key = swarm.config_mut().account_keys.swap_remove(0);
         Ok(FullnodeCluster {
             swarm,
-            fullnode_url,
+            fullnode_handle,
             config_directory: tempfile::tempdir()?,
-            // wallet,
+            wallet,
+            indexer_url: None,
+            faucet_key,
         })
     }
     /// Start a Swarm and set up WalletConfig
@@ -379,11 +394,9 @@ impl FullnodeClusterBuilder {
             .with_objects(self.additional_objects.clone())
             .with_fullnode_count(1)
             .with_fullnode_supported_protocol_versions_config(
-                self.fullnode_supported_protocol_versions_config
-                    .clone()
-                    .unwrap_or(self.validator_supported_protocol_versions_config.clone()),
+                self.supported_protocol_versions_config.clone(),
             )
-            .with_db_checkpoint_config(self.db_checkpoint_config_fullnodes.clone());
+            .with_db_checkpoint_config(self.db_checkpoint_config.clone());
 
         if let Some(genesis_config) = self.genesis_config.take() {
             builder = builder.with_genesis_config(genesis_config);
@@ -392,7 +405,7 @@ impl FullnodeClusterBuilder {
         if let Some(network_config) = self.network_config.take() {
             builder = builder.with_network_config(network_config);
         }
-        if let Some(consensus_url) = self.consensus_url {
+        if let Some(consensus_url) = self.consensus_url.take() {
             builder = builder.with_consensus_url(consensus_url);
         }
         if let Some(fullnode_rpc_port) = self.fullnode_rpc_port {

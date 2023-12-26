@@ -227,8 +227,8 @@ pub struct AuthorityMetrics {
     pub(crate) execution_driver_executed_transactions: IntCounter,
     pub(crate) execution_driver_dispatch_queue: IntGauge,
 
-    pub(crate) skipped_consensus_txns: IntCounter,
-    pub(crate) skipped_consensus_txns_cache_hit: IntCounter,
+    pub skipped_consensus_txns: IntCounter,
+    pub skipped_consensus_txns_cache_hit: IntCounter,
 
     /// Post processing metrics
     post_processing_total_events_emitted: IntCounter,

@@ -10,7 +10,7 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::{Cluster, Env, FullnodeCluster, LocalClusterConfig};
+use scalar_test_cluster::{ClusterTrait, Env, FullnodeCluster, FullnodeClusterTrait, LocalClusterConfig, faucet::start_faucet};
 use std::{net::SocketAddr, sync::Arc, thread, time};
 use tokio::time::Sleep;
 use tower::ServiceBuilder;
@@ -140,15 +140,14 @@ async fn main() -> Result<()> {
     } else if !use_indexer_v2 {
         println!("`with_indexer` flag unset. Indexer service will run unmaintained indexer.")
     }
-    let consensus_url = if let (Some(host), Some(oprt)) = (consensus_host, consensus_port) {
-        Some(format!("{}:{}", consensus_host, consensus_port))
+    let consensus_url = if let (Some(host), Some(port)) = (consensus_host, consensus_port) {
+        Some(format!("{}:{}", host, port))
     } else {
         None
     };
     let cluster_config = LocalClusterConfig {
-        env: Env::NewLocal,
+        env: Env::LocalFullnode,
         consensus_url,
-        consensus_grpc_port: None,
         fullnode_address: Some(format!("0.0.0.0:{}", fullnode_rpc_port)),
         indexer_address: with_indexer.then_some(format!("0.0.0.0:{}", indexer_rpc_port)),
         pg_address: Some(format!(
@@ -168,20 +167,20 @@ async fn main() -> Result<()> {
     );
     let fullnode_cluster = FullnodeCluster::start(&cluster_config).await?;
     let swarm = fullnode_cluster.swarm();
-    // println!("Fullnode RPC URL: {}", cluster.fullnode_url());
+    println!("Fullnode RPC URL: {}", fullnode_cluster.fullnode_url());
 
-    // if with_indexer {
-    //     println!(
-    //         "Indexer RPC URL: {}",
-    //         cluster.indexer_url().clone().unwrap_or_default()
-    //     );
-    // }
-
-    //start_faucet(&cluster, faucet_port).await?;
-    // Keep main thread alive instead of start_faucet
-    let one_minute = time::Duration::from_secs(60);
-    loop {
-        thread::sleep(one_minute);
+    if with_indexer {
+        println!(
+            "Indexer RPC URL: {}",
+            fullnode_cluster.indexer_url().clone().unwrap_or_default()
+        );
     }
-    //Ok(())
+
+    start_faucet(&fullnode_cluster, faucet_port).await?;
+    // Keep main thread alive instead of start_faucet
+    // let one_minute = time::Duration::from_secs(60);
+    // loop {
+    //     thread::sleep(one_minute);
+    // }
+    Ok(())
 }

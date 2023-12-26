@@ -1,0 +1,17 @@
+[package]
+name = "scalar-consensus-common"
+version = "0.1.0"
+authors = ["Scalar org <tech@scalar.org>"]
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+async-trait.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+tokio-stream.workspace = true
+prost.workspace = true
+tonic.workspace = true
+
+[build-dependencies]
+tonic-build.workspace = true

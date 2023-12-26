@@ -1,10 +1,10 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::consensus::consensus_handler::ConsensusHandlerInitializer;
-use crate::consensus::consensus_manager::narwhal_manager::{NarwhalConfiguration, NarwhalManager};
-use crate::consensus::consensus_manager::{ConsensusManagerMetrics, ConsensusManagerTrait};
-use crate::consensus::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
+use crate::consensus_handler::ConsensusHandlerInitializer;
+use crate::consensus_manager::narwhal_manager::{NarwhalConfiguration, NarwhalManager};
+use crate::consensus_manager::{ConsensusManagerMetrics, ConsensusManagerTrait};
+use crate::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
 use crate::core::authority::test_authority_builder::TestAuthorityBuilder;
 use crate::core::authority::AuthorityState;
 use crate::core::checkpoints::{CheckpointMetrics, CheckpointService, CheckpointServiceNoop};

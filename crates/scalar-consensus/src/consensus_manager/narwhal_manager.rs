@@ -1,10 +1,10 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-use crate::consensus::consensus_handler::ConsensusHandlerInitializer;
-use crate::consensus::consensus_manager::{
+use crate::consensus_handler::ConsensusHandlerInitializer;
+use crate::consensus_manager::{
     ConsensusManagerMetrics, ConsensusManagerTrait, Running, RunningLockGuard,
 };
-use crate::consensus::consensus_validator::SuiTxValidator;
+use crate::consensus_validator::SuiTxValidator;
 use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use async_trait::async_trait;
 use fastcrypto::traits::KeyPair;

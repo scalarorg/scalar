@@ -10496,54 +10496,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "scalar-consensus"
+name = "scalar-consensus-common"
 version = "0.1.0"
 dependencies = [
- "anemo",
- "anemo-tower",
- "anyhow",
- "arc-swap",
- "axum",
- "clap",
- "const-str",
- "fastcrypto",
- "fastcrypto-zkp",
- "futures",
- "git-version",
- "humantime",
- "mysten-common",
- "mysten-metrics",
- "mysten-network",
- "narwhal-network",
- "prometheus",
- "reqwest",
- "scalar-core",
- "scalar-json-rpc",
- "scalar-kvstore",
- "scalar-rest-api",
- "serde",
- "snap",
- "sui-archival",
- "sui-config",
- "sui-json-rpc-api",
- "sui-kvstore",
- "sui-macros",
- "sui-network",
- "sui-protocol-config",
- "sui-simulator",
- "sui-snapshot",
- "sui-storage",
- "sui-telemetry",
- "sui-tls",
- "sui-types",
- "tap",
- "telemetry-subscribers",
+ "async-trait",
+ "prost 0.12.1",
  "tokio",
- "tower",
- "tracing",
- "typed-store",
- "url",
- "workspace-hack 0.1.0",
+ "tokio-stream",
+ "tonic 0.10.2",
+ "tonic-build",
 ]
 
 [[package]]
@@ -10742,6 +10703,7 @@ dependencies = [
  "scalar-json-rpc",
  "scalar-kvstore",
  "scalar-rest-api",
+ "scalar-telemetry",
  "serde",
  "snap",
  "sui-archival",
@@ -10754,7 +10716,6 @@ dependencies = [
  "sui-simulator",
  "sui-snapshot",
  "sui-storage",
- "sui-telemetry",
  "sui-tls",
  "sui-types",
  "tap",
@@ -10837,6 +10798,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "scalar-telemetry"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "scalar-core",
+ "serde",
+ "tracing",
+ "workspace-hack 0.1.0",
+]
+
+[[package]]
 name = "scalar-test-cluster"
 version = "0.0.1"
 dependencies = [
@@ -10876,21 +10848,27 @@ dependencies = [
  "narwhal-worker",
  "pprof",
  "pretty_assertions",
+ "prometheus",
  "prost 0.12.1",
  "rand 0.8.5",
  "regex",
+ "reqwest",
  "scalar-core",
  "scalar-node",
  "scalar-swarm",
  "scalar-swarm-config",
  "serde-reflection",
+ "serde_json",
  "serde_yaml 0.8.26",
  "shared-crypto",
  "sui-archival",
  "sui-config",
  "sui-execution",
+ "sui-faucet",
  "sui-framework",
  "sui-genesis-builder",
+ "sui-graphql-rpc",
+ "sui-indexer",
  "sui-json-rpc-types",
  "sui-keys",
  "sui-macros",
@@ -10914,6 +10892,7 @@ dependencies = [
  "tonic-build",
  "tonic-health",
  "tower",
+ "tower-http",
  "tracing",
  "typed-store",
  "typed-store-derive",
@@ -11839,6 +11818,69 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 
 [[package]]
+name = "sui"
+version = "1.16.0"
+dependencies = [
+ "anemo",
+ "anyhow",
+ "async-trait",
+ "bcs",
+ "bip32",
+ "camino",
+ "clap",
+ "colored",
+ "const-str",
+ "csv",
+ "fastcrypto",
+ "fastcrypto-zkp",
+ "git-version",
+ "im",
+ "inquire",
+ "jemalloc-ctl",
+ "json_to_table",
+ "move-core-types",
+ "move-package",
+ "num-bigint 0.4.4",
+ "prometheus",
+ "rand 0.8.5",
+ "regex",
+ "reqwest",
+ "rusoto_core",
+ "rusoto_kms",
+ "rustyline",
+ "rustyline-derive",
+ "serde",
+ "serde_json",
+ "serde_yaml 0.8.26",
+ "shared-crypto",
+ "shell-words",
+ "signature 1.6.4",
+ "sui-config",
+ "sui-execution",
+ "sui-genesis-builder",
+ "sui-json",
+ "sui-json-rpc-types",
+ "sui-keys",
+ "sui-move",
+ "sui-move-build",
+ "sui-protocol-config",
+ "sui-replay",
+ "sui-sdk",
+ "sui-source-validation",
+ "sui-swarm",
+ "sui-swarm-config",
+ "sui-types",
+ "tabled",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "unescape",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-adapter-latest"
 version = "0.1.0"
 dependencies = [
@@ -12129,6 +12171,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-faucet"
+version = "1.16.0"
+dependencies = [
+ "anyhow",
+ "async-recursion",
+ "async-trait",
+ "axum",
+ "clap",
+ "eyre",
+ "futures",
+ "http",
+ "mysten-metrics",
+ "parking_lot 0.12.1",
+ "prometheus",
+ "rocksdb",
+ "scopeguard",
+ "serde",
+ "shared-crypto",
+ "sui",
+ "sui-config",
+ "sui-json-rpc-types",
+ "sui-keys",
+ "sui-sdk",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "ttl_cache",
+ "typed-store",
+ "typed-store-derive",
+ "uuid 1.5.0",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-framework"
 version = "0.1.0"
 dependencies = [
@@ -12189,6 +12271,115 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-graphql-rpc"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-graphql",
+ "async-graphql-axum",
+ "async-trait",
+ "axum",
+ "bcs",
+ "chrono",
+ "clap",
+ "diesel",
+ "either",
+ "fastcrypto",
+ "futures",
+ "hex",
+ "http",
+ "hyper",
+ "lru 0.10.1",
+ "markdown-gen",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "move-disassembler",
+ "move-ir-types",
+ "mysten-metrics",
+ "once_cell",
+ "prometheus",
+ "rand 0.8.5",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serde_yaml 0.8.26",
+ "serial_test",
+ "shared-crypto",
+ "similar",
+ "simulacrum",
+ "sui-indexer",
+ "sui-json-rpc",
+ "sui-json-rpc-types",
+ "sui-package-resolver",
+ "sui-protocol-config",
+ "sui-rest-api",
+ "sui-sdk",
+ "sui-swarm-config",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "test-cluster",
+ "thiserror",
+ "tokio",
+ "toml 0.7.8",
+ "tower",
+ "tracing",
+ "uuid 1.5.0",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-indexer"
+version = "1.16.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "backoff",
+ "bcs",
+ "cached",
+ "chrono",
+ "clap",
+ "diesel",
+ "diesel-derive-enum",
+ "diesel_migrations",
+ "fastcrypto",
+ "futures",
+ "itertools 0.10.5",
+ "jsonrpsee",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "mysten-metrics",
+ "prometheus",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sui-json",
+ "sui-json-rpc",
+ "sui-json-rpc-api",
+ "sui-json-rpc-types",
+ "sui-open-rpc",
+ "sui-protocol-config",
+ "sui-rest-api",
+ "sui-sdk",
+ "sui-transaction-builder",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "url",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-json"
 version = "0.0.0"
 dependencies = [
@@ -12203,6 +12394,54 @@ dependencies = [
  "serde_json",
  "sui-framework",
  "sui-types",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-json-rpc"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-trait",
+ "axum",
+ "bcs",
+ "cached",
+ "eyre",
+ "fastcrypto",
+ "futures",
+ "hyper",
+ "indexmap 2.1.0",
+ "itertools 0.10.5",
+ "jsonrpsee",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "move-package",
+ "mysten-metrics",
+ "once_cell",
+ "prometheus",
+ "serde",
+ "serde_json",
+ "shared-crypto",
+ "signature 1.6.4",
+ "sui-core",
+ "sui-json",
+ "sui-json-rpc-api",
+ "sui-json-rpc-types",
+ "sui-open-rpc",
+ "sui-open-rpc-macros",
+ "sui-protocol-config",
+ "sui-storage",
+ "sui-transaction-builder",
+ "sui-types",
+ "tap",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "typed-store-error",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -12307,6 +12546,39 @@ dependencies = [
  "sui-proc-macros",
  "tracing",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-move"
+version = "1.16.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "const-str",
+ "git-version",
+ "jemalloc-ctl",
+ "move-binary-format",
+ "move-cli",
+ "move-compiler",
+ "move-disassembler",
+ "move-ir-types",
+ "move-package",
+ "move-prover",
+ "move-prover-boogie-backend",
+ "move-unit-test",
+ "move-vm-runtime",
+ "once_cell",
+ "prometheus",
+ "serde_json",
+ "serde_yaml 0.8.26",
+ "sui-move-build",
+ "sui-move-natives-latest",
+ "sui-protocol-config",
+ "sui-types",
+ "telemetry-subscribers",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -12446,6 +12718,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-node"
+version = "1.16.0"
+dependencies = [
+ "anemo",
+ "anemo-tower",
+ "anyhow",
+ "arc-swap",
+ "axum",
+ "clap",
+ "const-str",
+ "fastcrypto",
+ "fastcrypto-zkp",
+ "futures",
+ "git-version",
+ "humantime",
+ "mysten-common",
+ "mysten-metrics",
+ "mysten-network",
+ "narwhal-network",
+ "prometheus",
+ "reqwest",
+ "serde",
+ "snap",
+ "sui-archival",
+ "sui-config",
+ "sui-core",
+ "sui-json-rpc",
+ "sui-json-rpc-api",
+ "sui-kvstore",
+ "sui-macros",
+ "sui-network",
+ "sui-protocol-config",
+ "sui-rest-api",
+ "sui-simulator",
+ "sui-snapshot",
+ "sui-storage",
+ "sui-telemetry",
+ "sui-tls",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tokio",
+ "tower",
+ "tracing",
+ "typed-store",
+ "url",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-open-rpc"
 version = "1.16.0"
 dependencies = [
@@ -12467,6 +12789,24 @@ dependencies = [
  "quote 1.0.33",
  "syn 1.0.109",
  "unescape",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-package-resolver"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bcs",
+ "eyre",
+ "lru 0.10.1",
+ "move-binary-format",
+ "move-core-types",
+ "serde",
+ "sui-rest-api",
+ "sui-types",
+ "thiserror",
+ "tokio",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -12503,6 +12843,66 @@ dependencies = [
  "proc-macro2 1.0.69",
  "quote 1.0.33",
  "syn 1.0.109",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-replay"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-recursion",
+ "async-trait",
+ "bcs",
+ "clap",
+ "futures",
+ "http",
+ "jsonrpsee",
+ "lru 0.10.1",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-core-types",
+ "parking_lot 0.12.1",
+ "prometheus",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serde_yaml 0.8.26",
+ "shared-crypto",
+ "shellexpand",
+ "similar",
+ "sui-config",
+ "sui-core",
+ "sui-execution",
+ "sui-framework",
+ "sui-json-rpc",
+ "sui-json-rpc-api",
+ "sui-json-rpc-types",
+ "sui-protocol-config",
+ "sui-sdk",
+ "sui-storage",
+ "sui-types",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sui-rest-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bcs",
+ "rand 0.8.5",
+ "reqwest",
+ "serde",
+ "simulacrum",
+ "sui-core",
+ "sui-types",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -12588,6 +12988,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sui-source-validation"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "move-binary-format",
+ "move-compiler",
+ "move-core-types",
+ "move-package",
+ "move-symbol-pool",
+ "sui-json-rpc-types",
+ "sui-move-build",
+ "sui-sdk",
+ "sui-types",
+ "thiserror",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sui-storage"
 version = "0.1.0"
 dependencies = [
@@ -12635,6 +13054,31 @@ dependencies = [
  "url",
  "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zstd 0.12.4",
+]
+
+[[package]]
+name = "sui-swarm"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "mysten-metrics",
+ "mysten-network",
+ "prometheus",
+ "rand 0.8.5",
+ "sui-config",
+ "sui-node",
+ "sui-protocol-config",
+ "sui-simulator",
+ "sui-swarm-config",
+ "sui-types",
+ "tap",
+ "telemetry-subscribers",
+ "tempfile",
+ "tokio",
+ "tonic-health",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -13150,6 +13594,36 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
+
+[[package]]
+name = "test-cluster"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fastcrypto-zkp",
+ "futures",
+ "jsonrpsee",
+ "move-binary-format",
+ "prometheus",
+ "rand 0.8.5",
+ "sui-config",
+ "sui-core",
+ "sui-framework",
+ "sui-json-rpc",
+ "sui-json-rpc-types",
+ "sui-keys",
+ "sui-node",
+ "sui-protocol-config",
+ "sui-sdk",
+ "sui-simulator",
+ "sui-swarm",
+ "sui-swarm-config",
+ "sui-test-transaction-builder",
+ "sui-types",
+ "tokio",
+ "tracing",
+ "workspace-hack 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "test-fuzz"

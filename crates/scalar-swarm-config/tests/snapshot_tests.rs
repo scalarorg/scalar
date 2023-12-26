@@ -20,12 +20,12 @@ use fastcrypto::traits::KeyPair;
 use insta::assert_yaml_snapshot;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use scalar_swarm_config::genesis_config::GenesisConfig;
 use std::num::NonZeroUsize;
 use sui_config::genesis::{GenesisCeremonyParameters, TokenDistributionScheduleBuilder};
 use sui_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
 use sui_genesis_builder::validator_info::ValidatorInfo;
 use sui_genesis_builder::Builder;
-use sui_swarm_config::genesis_config::GenesisConfig;
 use sui_types::base_types::SuiAddress;
 use sui_types::crypto::{
     generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
@@ -106,9 +106,9 @@ fn populated_genesis_snapshot_matches() {
 #[test]
 #[cfg_attr(msim, ignore)]
 fn network_config_snapshot_matches() {
+    use scalar_swarm_config::network_config_builder::ConfigBuilder;
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     use std::path::PathBuf;
-    use sui_swarm_config::network_config_builder::ConfigBuilder;
 
     let temp_dir = tempfile::tempdir().unwrap();
     let committee_size = 7;

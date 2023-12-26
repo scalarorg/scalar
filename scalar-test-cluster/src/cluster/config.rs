@@ -13,7 +13,8 @@ pub enum Env {
     CiNomad,
     Testnet,
     CustomRemote,
-    NewLocal,
+    LocalValidator,
+    LocalFullnode,
 }
 
 // #[derive(Derivative, Parser)]
@@ -25,9 +26,6 @@ pub struct LocalClusterConfig {
     pub env: Env,
     #[clap(long)]
     pub faucet_address: Option<String>,
-    #[clap(long)]
-    pub consensus_grpc_port: Option<u16>,
-    /// Url for connect to the consensus layer
     #[clap(long)]
     pub consensus_url: Option<String>,
     #[clap(long)]
@@ -72,11 +70,26 @@ fn obfuscated_pg_address(val: &Option<String>, f: &mut fmt::Formatter<'_>) -> fm
 }
 
 impl LocalClusterConfig {
-    pub fn new_local() -> Self {
+    pub fn new_local_validator() -> Self {
         Self {
-            env: Env::NewLocal,
+            env: Env::LocalValidator,
             faucet_address: None,
-            consensus_grpc_port: None,
+            consensus_url: None,
+            fullnode_address: None,
+            epoch_duration_ms: None,
+            indexer_address: None,
+            pg_address: None,
+            use_indexer_experimental_methods: false,
+            config_dir: None,
+            cluster_size: None,
+            graphql_address: None,
+            use_indexer_v2: false,
+        }
+    }
+    pub fn new_local_fullnode() -> Self {
+        Self {
+            env: Env::LocalFullnode,
+            faucet_address: None,
             consensus_url: None,
             fullnode_address: None,
             epoch_duration_ms: None,

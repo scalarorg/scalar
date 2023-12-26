@@ -48,7 +48,7 @@ tracing.workspace = true
 fastcrypto.workspace = true
 fastcrypto-zkp.workspace = true
 
-scalar-swarm-config = { path = "../scalar-swarm-config" }
+sui-swarm-config = { path = "../scalar-swarm-config", package = "scalar-swarm-config" }
 move-core-types = { path = "../../sui/external-crates/move/crates/move-core-types" }
 move-bytecode-utils = { path = "../../sui/external-crates/move/crates/move-bytecode-utils" }
 move-binary-format = { path = "../../sui/external-crates/move/crates/move-binary-format" }

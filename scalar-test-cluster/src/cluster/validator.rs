@@ -1,14 +1,11 @@
-use super::Cluster;
+use crate::ClusterTrait;
 use crate::LocalClusterConfig;
 use crate::NUM_VALIDATOR;
 use anyhow::Result;
 use async_trait::async_trait;
-use jsonrpsee::{
-    http_client::{HttpClient, HttpClientBuilder},
-    ws_client::{WsClient, WsClientBuilder},
-};
+use jsonrpsee::http_client::{HttpClient, HttpClientBuilder};
 use scalar_node::SuiNodeHandle;
-use scalar_swarm::validator::{ValidatorSwarmBuilder, ValidatorSwarm};
+use scalar_swarm::validator::{ValidatorSwarm, ValidatorSwarmBuilder};
 use scalar_swarm_config::{
     genesis_config::GenesisConfig, network_config::NetworkConfig,
     network_config_builder::ProtocolVersionsConfig,
@@ -22,51 +19,43 @@ use sui_config::{
     SUI_NETWORK_CONFIG,
 };
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore, Keystore};
-use sui_sdk::{
-    sui_client_config::SuiClientConfig, wallet_context::WalletContext, SuiClient, SuiClientBuilder,
+use sui_sdk::sui_client_config::SuiClientConfig;
+use sui_sdk::SuiClient;
+use sui_sdk::SuiClientBuilder;
+use sui_types::{
+    crypto::{get_key_pair, AccountKeyPair, KeypairTraits, SuiKeyPair},
+    object::Object,
 };
-use sui_types::{base_types::SuiAddress, crypto::{AccountKeyPair, SuiKeyPair, get_key_pair, KeypairTraits}, object::Object};
 use tracing::{error, info};
 
-pub struct ValidatorHandle {
+pub struct ValidatorNodeHandle {
     pub sui_node: SuiNodeHandle,
     pub sui_client: SuiClient,
     pub rpc_client: HttpClient,
-    pub rpc_url: String,
-    pub ws_url: String,
+    pub consensus_url: String,
 }
 
-#[async_trait]
-impl Cluster for ValidatorHandle {
-    async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
-        let rpc_url = format!("http://{}", json_rpc_address);
-        let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
-
-        let ws_url = format!("ws://{}", json_rpc_address);
-        let sui_client = SuiClientBuilder::default().build(&rpc_url).await.unwrap();
+impl ValidatorNodeHandle {
+    pub async fn new(sui_node: SuiNodeHandle, consensus_address: SocketAddr) -> Self {
+        let consensus_url = format!("http://{}", consensus_address);
+        let rpc_client = HttpClientBuilder::default().build(&consensus_url).unwrap();
+        let sui_client = SuiClientBuilder::default()
+            .build(&consensus_url)
+            .await
+            .unwrap();
 
         Self {
             sui_node,
             sui_client,
             rpc_client,
-            rpc_url,
-            ws_url,
+            consensus_url,
         }
-    }
-
-    async fn ws_client(&self) -> WsClient {
-        WsClientBuilder::default()
-            .build(&self.ws_url)
-            .await
-            .unwrap()
     }
 }
 
 pub struct ValidatorCluster {
     pub swarm: ValidatorSwarm,
-    fullnode_url: String,
-    // indexer_url: Option<String>,
-    // faucet_key: AccountKeyPair,
+    pub validator_handle: ValidatorNodeHandle,
     config_directory: tempfile::TempDir,
 }
 
@@ -78,18 +67,13 @@ impl ValidatorCluster {
 }
 
 #[async_trait]
-impl Cluster for ValidatorCluster {
+impl ClusterTrait for ValidatorCluster {
     async fn start(options: &LocalClusterConfig) -> Result<Self> {
         // TODO: options should contain port instead of address
         let fullnode_port = options.fullnode_address.as_ref().map(|addr| {
             addr.parse::<SocketAddr>()
                 .expect("Unable to parse fullnode address")
                 .port()
-        });
-
-        let indexer_address = options.indexer_address.as_ref().map(|addr| {
-            addr.parse::<SocketAddr>()
-                .expect("Unable to parse indexer address")
         });
 
         let mut cluster_builder = ValidatorClusterBuilder::new(); //.enable_fullnode_events();
@@ -136,101 +120,18 @@ impl Cluster for ValidatorCluster {
             }
         }
 
-        // if let Some(rpc_port) = fullnode_port {
-        //     cluster_builder = cluster_builder.with_fullnode_rpc_port(rpc_port);
-        // }
+        if let Some(rpc_port) = fullnode_port {
+            cluster_builder = cluster_builder.with_fullnode_rpc_port(rpc_port);
+        }
 
-        let mut fullnode_cluster = cluster_builder.build().await;
-
-        // Use the wealthy account for faucet
-        let faucet_key = test_cluster.swarm.config_mut().account_keys.swap_remove(0);
-        let faucet_address = SuiAddress::from(faucet_key.public());
-        info!(?faucet_address, "faucet_address");
-
-        // This cluster has fullnode handle, safe to unwrap
-        // let fullnode_url = test_cluster.fullnode_handle.rpc_url.clone();
-        //Khong chay indexer va graphql
-        // if let (Some(pg_address), Some(indexer_address)) =
-        //     (options.pg_address.clone(), indexer_address)
-        // {
-        //     if options.use_indexer_v2 {
-        //         // Start in writer mode
-        //         start_test_indexer_v2(
-        //             Some(pg_address.clone()),
-        //             fullnode_url.clone(),
-        //             None,
-        //             options.use_indexer_experimental_methods,
-        //         )
-        //         .await;
-
-        //         // Start in reader mode
-        //         start_test_indexer_v2(
-        //             fullnode_url.clone(),
-        //             Some(indexer_address.to_string()),
-        //             options.use_indexer_experimental_methods,
-        //         )
-        //         .await;
-        //     } else {
-        //         let migrated_methods = if options.use_indexer_experimental_methods {
-        //             IndexerConfig::all_implemented_methods()
-        //         } else {
-        //             vec![]
-        //         };
-        //         let config = IndexerConfig {
-        //             db_url: Some(pg_address),
-        //             rpc_client_url: fullnode_url.clone(),
-        //             rpc_server_url: indexer_address.ip().to_string(),
-        //             rpc_server_port: indexer_address.port(),
-        //             migrated_methods,
-        //             reset_db: true,
-        //             ..Default::default()
-        //         };
-        //         start_test_indexer(config).await?;
-        //     }
-        // }
-
-        // if let Some(graphql_address) = &options.graphql_address {
-        //     let graphql_address = graphql_address.parse::<SocketAddr>()?;
-        //     let graphql_connection_config = ConnectionConfig::new(
-        //         Some(graphql_address.port()),
-        //         Some(graphql_address.ip().to_string()),
-        //         options.pg_address.clone(),
-        //         None,
-        //         None,
-        //     );
-
-        //     start_graphql_server(graphql_connection_config.clone()).await;
-        // }
+        let mut validator_cluster = cluster_builder.build().await?;
 
         // Let nodes connect to one another
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
         // TODO: test connectivity before proceeding?
-        fullnode_cluster
-        // Ok(Self {
-        //     test_cluster,
-        //     config_directory: tempfile::tempdir()?,
-        //     // fullnode_url,
-        //     // faucet_key,
-        //     // indexer_url: options.indexer_address.clone(),
-        // })
+        Ok(validator_cluster)
     }
-
-    // fn fullnode_url(&self) -> &str {
-    //     &self.fullnode_url
-    // }
-
-    // fn indexer_url(&self) -> &Option<String> {
-    //     &self.indexer_url
-    // }
-
-    // fn remote_faucet_url(&self) -> Option<&str> {
-    //     None
-    // }
-
-    // fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
-    //     Some(&self.faucet_key)
-    // }
 
     fn user_key(&self) -> AccountKeyPair {
         get_key_pair().1
@@ -241,13 +142,19 @@ impl Cluster for ValidatorCluster {
     }
 }
 
+impl ValidatorCluster {
+    fn consensus_url(&self) -> &str {
+        self.validator_handle.consensus_url.as_str()
+    }
+}
+
 pub struct ValidatorClusterBuilder {
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
     cluster_size: Option<usize>,
     ///Rpc port for external rpc api call
-    rpc_port: Option<u16>,
+    fullnode_rpc_port: Option<u16>,
     enable_events: bool,
     consensus_url: Option<String>,
     supported_protocol_versions_config: ProtocolVersionsConfig,
@@ -265,7 +172,7 @@ impl ValidatorClusterBuilder {
             network_config: None,
             additional_objects: vec![],
             cluster_size: None,
-            rpc_port: None,
+            fullnode_rpc_port: None,
             consensus_url: None,
             enable_events: false,
             supported_protocol_versions_config: ProtocolVersionsConfig::Default,
@@ -289,6 +196,11 @@ impl ValidatorClusterBuilder {
 
     pub fn with_cluster_size(mut self, num: usize) -> Self {
         self.cluster_size = Some(num);
+        self
+    }
+
+    pub fn with_fullnode_rpc_port(mut self, port: u16) -> Self {
+        self.fullnode_rpc_port = Some(port);
         self
     }
 
@@ -340,36 +252,16 @@ impl ValidatorClusterBuilder {
         }
 
         let swarm = self.start_swarm().await.unwrap();
-        let working_dir = swarm.dir();
 
-        // let mut wallet_conf: SuiClientConfig =
-        //     PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
-
-        let fullnode = swarm.fullnodes().next().unwrap();
-        let json_rpc_address = fullnode.config.json_rpc_address;
-        let fullnode_handle =
-            FullNodeHandle::new(fullnode.get_node_handle().unwrap(), json_rpc_address).await;
-        let fullnode_url = fullnode_handle.rpc_url.clone();
-        // wallet_conf.envs.push(SuiEnv {
-        //     alias: "localnet".to_string(),
-        //     rpc: fullnode_handle.rpc_url.clone(),
-        //     ws: Some(fullnode_handle.ws_url.clone()),
-        // });
-        // wallet_conf.active_env = Some("localnet".to_string());
-
-        // wallet_conf
-        //     .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
-        //     .save()
-        //     .unwrap();
-
-        // let wallet_conf = swarm.dir().join(SUI_CLIENT_CONFIG);
-        // let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
-
+        let validator_node = swarm.fullnodes().next().unwrap();
+        let json_rpc_address = validator_node.config.json_rpc_address;
+        let validator_handle =
+            ValidatorNodeHandle::new(validator_node.get_node_handle().unwrap(), json_rpc_address)
+                .await;
         Ok(ValidatorCluster {
             swarm,
-            fullnode_url,
+            validator_handle,
             config_directory: tempfile::tempdir()?,
-            // wallet,
         })
     }
     /// Start a Swarm and set up WalletConfig
@@ -379,11 +271,9 @@ impl ValidatorClusterBuilder {
             .with_objects(self.additional_objects.clone())
             .with_fullnode_count(1)
             .with_fullnode_supported_protocol_versions_config(
-                self.fullnode_supported_protocol_versions_config
-                    .clone()
-                    .unwrap_or(self.validator_supported_protocol_versions_config.clone()),
+                self.supported_protocol_versions_config.clone(),
             )
-            .with_db_checkpoint_config(self.db_checkpoint_config_fullnodes.clone());
+            .with_db_checkpoint_config(self.db_checkpoint_config.clone());
 
         if let Some(genesis_config) = self.genesis_config.take() {
             builder = builder.with_genesis_config(genesis_config);
@@ -392,9 +282,7 @@ impl ValidatorClusterBuilder {
         if let Some(network_config) = self.network_config.take() {
             builder = builder.with_network_config(network_config);
         }
-        if let Some(consensus_url) = self.consensus_url {
-            builder = builder.with_consensus_url(consensus_url);
-        }
+
         if let Some(fullnode_rpc_port) = self.fullnode_rpc_port {
             builder = builder.with_fullnode_rpc_port(fullnode_rpc_port);
         }

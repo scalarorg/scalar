@@ -10,9 +10,9 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::{Env, LocalClusterConfig, Cluster, LocalNewCluster};
+use scalar_test_cluster::{ClusterTrait, Env, LocalClusterConfig, ValidatorCluster};
+use std::{net::SocketAddr, sync::Arc, thread, time};
 use tokio::time::Sleep;
-use std::{net::SocketAddr, sync::Arc, time, thread};
 use tower::ServiceBuilder;
 use tracing::info;
 use uuid::Uuid;
@@ -93,8 +93,6 @@ struct Args {
     /// If we should use the new version of the indexer
     #[clap(long)]
     pub use_indexer_v2: bool,
-
-
 }
 
 #[tokio::main]
@@ -140,8 +138,8 @@ async fn main() -> Result<()> {
         println!("`with_indexer` flag unset. Indexer service will run unmaintained indexer.")
     }
     let cluster_config = LocalClusterConfig {
-        env: Env::NewLocal,
-        consensus_grpc_port,
+        env: Env::LocalValidator,
+        consensus_url: None,
         fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),
         indexer_address: with_indexer.then_some(format!("127.0.0.1:{}", indexer_rpc_port)),
         pg_address: Some(format!(
@@ -159,7 +157,7 @@ async fn main() -> Result<()> {
         "Starting local validator cluster with config: {:#?}",
         &cluster_config
     );
-    let local_cluster = LocalNewCluster::start(&cluster_config).await?;
+    let local_cluster = ValidatorCluster::start(&cluster_config).await?;
     let swarm = local_cluster.swarm();
     // println!("Fullnode RPC URL: {}", cluster.fullnode_url());
 

@@ -24,14 +24,13 @@ use tokio_stream::{wrappers::UnboundedReceiverStream, Stream, StreamExt};
 use tonic::{Response, Status};
 use tracing::{error, info, instrument};
 
-use crate::consensus::consensus_adapter::SubmitToConsensus;
-use crate::consensus::consensus_types::{ConsensusTransactionWrapper, NsTransaction};
+use crate::consensus_types::{ConsensusTransactionWrapper, NsTransaction};
 use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::core::authority::AuthorityState;
 use crate::core::authority_server::ValidatorService;
 use crate::{CommitedTransactions, ConsensusApi, ExternalTransaction};
 
-use super::consensus_adapter::ConsensusAdapter;
+use sui_core::consensus_adapter::ConsensusAdapter;
 pub type ConsensusServiceResult<T> = Result<Response<T>, Status>;
 pub type ListenerCollection = Vec<UnboundedSender<Result<CommitedTransactions, Status>>>;
 pub type ResponseStream = Pin<Box<dyn Stream<Item = Result<CommitedTransactions, Status>> + Send>>;

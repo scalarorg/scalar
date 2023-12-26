@@ -64,3 +64,4 @@ pub mod signature_verifier;
 
 pub mod runtime;
 mod transaction_signing_filter;
+pub use transaction_manager::TransactionManager;

@@ -1,6 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use super::container::Container;
+use crate::{HealthCheckError, RuntimeType};
 use anyhow::anyhow;
 use anyhow::Result;
 use std::sync::Mutex;
@@ -10,8 +12,6 @@ use sui_types::base_types::AuthorityName;
 use sui_types::base_types::ConciseableName;
 use tap::TapFallible;
 use tracing::{error, info};
-use crate::{HealthCheckError, RuntimeType};
-use super::container::Container;
 
 /// A handle to an in-memory Sui Node.
 ///
@@ -122,7 +122,6 @@ impl ValidatorNode {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use crate::validator::ValidatorSwarm;
@@ -130,7 +129,7 @@ mod test {
     #[tokio::test]
     async fn start_and_stop() {
         telemetry_subscribers::init_for_testing();
-        let swarm = Swarm::builder().build();
+        let swarm = ValidatorSwarm::builder().build();
 
         let validator = swarm.validator_nodes().next().unwrap();
 

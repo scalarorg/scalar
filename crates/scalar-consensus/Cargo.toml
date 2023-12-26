@@ -7,52 +7,111 @@ publish = false
 edition = "2021"
 
 [dependencies]
-anemo.workspace = true
-anemo-tower.workspace = true
+anyhow = { workspace = true, features = ["backtrace"] }
 arc-swap.workspace = true
-axum.workspace = true
-anyhow.workspace = true
-clap.workspace = true
-prometheus.workspace = true
-tokio = { workspace = true, features = ["full"] }
-tracing.workspace = true
+async-trait.workspace = true
+bcs.workspace = true
+bytes.workspace = true
+chrono.workspace = true
+dashmap.workspace = true
+diffy = { version = "0.3", default-features = false }
+either.workspace = true
+enum_dispatch.workspace = true
+eyre.workspace = true
 futures.workspace = true
-tower.workspace = true
-reqwest.workspace = true
-tap.workspace = true
+im.workspace = true
+indexmap.workspace = true
+itertools.workspace = true
+lru.workspace = true
+num_cpus.workspace = true
+object_store.workspace = true
+once_cell.workspace = true
+parking_lot.workspace = true
+prometheus.workspace = true
+rand.workspace = true
+roaring.workspace = true
+rocksdb.workspace = true
+scopeguard.workspace = true
 serde.workspace = true
-snap.workspace = true
-git-version.workspace = true
-const-str.workspace = true
-url.workspace = true
-humantime.workspace = true
-
-scalar-core = { path = "../scalar-core" }
-scalar-kvstore = { path = "../scalar-kvstore" }
-sui-json-rpc = { path = "../scalar-json-rpc", package = "scalar-json-rpc" }
-sui-rest-api = { path = "../scalar-rest-api", package = "scalar-rest-api" }
-sui-archival = { path = "../../sui/crates/sui-archival" }
-sui-tls = { path = "../../sui/crates/sui-tls" }
-sui-macros = { path = "../../sui/crates/sui-macros" }
-sui-config = { path = "../../sui/crates/sui-config" }
-sui-storage = { path = "../../sui/crates/sui-storage" }
-sui-network = { path = "../../sui/crates/sui-network" }
-sui-json-rpc-api = { path = "../../sui/crates/sui-json-rpc-api" }
-sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
-sui-snapshot = { path = "../../sui/crates/sui-snapshot" }
-sui-telemetry = { path = "../../sui/crates/sui-telemetry" }
-sui-types = { path = "../../sui/crates/sui-types" }
-sui-kvstore = { path = "../../sui/crates/sui-kvstore" }
-mysten-metrics = { path = "../../sui/crates/mysten-metrics" }
-mysten-common = { path = "../../sui/crates/mysten-common" }
-narwhal-network = { path = "../../sui/narwhal/network" }
-typed-store = { path = "../../sui/crates/typed-store" }
-mysten-network = { path = "../../sui/crates/mysten-network" }
-telemetry-subscribers = { path = "../../sui/crates/telemetry-subscribers" }
+serde_bytes.workspace = true
+serde_json.workspace = true
+serde_with.workspace = true
+signature.workspace = true
+static_assertions.workspace = true
+tap.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["full", "tracing", "test-util"] }
+tokio-retry.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+tracing.workspace = true
 
 fastcrypto.workspace = true
 fastcrypto-zkp.workspace = true
-workspace-hack = { path = "../../sui/crates/workspace-hack" }
 
-[target.'cfg(msim)'.dependencies]
+scalar-consensus-common = { path = "../scalar-consensus-common" }
+sui-core = { path = "../scalar-core", package = "scalar-core" }
+sui-swarm-config = { path = "../scalar-swarm-config", package = "scalar-swarm-config" }
+move-core-types = { path = "../../sui/external-crates/move/crates/move-core-types" }
+move-bytecode-utils = { path = "../../sui/external-crates/move/crates/move-bytecode-utils" }
+move-binary-format = { path = "../../sui/external-crates/move/crates/move-binary-format" }
+move-symbol-pool = { path = "../../sui/external-crates/move/crates/move-symbol-pool" }
+move-package = { path = "../../sui/external-crates/move/crates/move-package" }
+
+mysten-common = { path = "../../sui/crates/mysten-common" }
+mysten-metrics = { path = "../../sui/crates/mysten-metrics" }
+mysten-network = { path = "../../sui/crates/mysten-network" }
+telemetry-subscribers = { path = "../../sui/crates/telemetry-subscribers" }
+typed-store = { path = "../../sui/crates/typed-store" }
+typed-store-derive = { path = "../../sui/crates/typed-store-derive" }
+
+narwhal-config = { path = "../../sui/narwhal/config" }
+narwhal-crypto = { path = "../../sui/narwhal/crypto" }
+narwhal-executor = { path = "../../sui/narwhal/executor" }
+narwhal-network = { path = "../../sui/narwhal/network" }
+narwhal-node = { path = "../../sui/narwhal/node" }
+narwhal-test-utils = { path = "../../sui/narwhal/test-utils" }
+narwhal-types = { path = "../../sui/narwhal/types" }
+narwhal-worker = { path = "../../sui/narwhal/worker" }
+shared-crypto = { path = "../../sui/crates/shared-crypto" }
+sui-archival = { path = "../../sui/crates/sui-archival" }
+sui-config = { path = "../../sui/crates/sui-config" }
+sui-authority-aggregation = { path = "../../sui/crates/sui-authority-aggregation" }
+sui-execution = { path = "../../sui/sui-execution" }
+sui-framework = { path = "../../sui/crates/sui-framework" }
+sui-genesis-builder = { path = "../../sui/crates/sui-genesis-builder" }
+sui-json-rpc-types = { path = "../../sui/crates/sui-json-rpc-types" }
+sui-macros = { path = "../../sui/crates/sui-macros" }
+sui-move-build = { path = "../../sui/crates/sui-move-build" }
+sui-network = { path = "../../sui/crates/sui-network" }
+sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
+sui-transaction-checks = { path = "../../sui/crates/sui-transaction-checks" }
 sui-simulator = { path = "../../sui/crates/sui-simulator" }
+sui-storage = { path = "../../sui/crates/sui-storage" }
+sui-types = { path = "../../sui/crates/sui-types" }
+workspace-hack = { path = "../../sui/crates/workspace-hack" }
+zeroize.workspace = true
+mysticeti-core = { git = "https://github.com/MystenLabs/mysticeti", rev = "318d61d27f47d257d99a86983d835e9e9756bc59" }
+
+[dev-dependencies]
+clap.workspace = true
+criterion.workspace = true
+expect-test.workspace = true
+fs_extra.workspace = true
+more-asserts.workspace = true
+pretty_assertions.workspace = true
+serde-reflection.workspace = true
+serde_yaml.workspace = true
+
+move-symbol-pool = { path = "../../sui/external-crates/move/crates/move-symbol-pool" }
+sui-test-transaction-builder = { path = "../../sui/crates/sui-test-transaction-builder" }
+#test-cluster.workspace = true
+sui-types = { path = "../../sui/crates/sui-types", features = ["test-utils"] }
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+pprof.workspace = true
+test-fuzz.workspace = true
+
+sui-macros = { path = "../../sui/crates/sui-macros" }
+sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }

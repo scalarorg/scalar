@@ -17,11 +17,13 @@ use sui_protocol_config::ProtocolConfig;
 use sui_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
 use tap::TapFallible;
 use tracing::{info, warn};
-
+#[cfg(test)]
+#[path = "unit_tests/consensus_tests.rs"]
+pub mod consensus_tests;
 /// Allows verifying the validity of transactions
 #[derive(Clone)]
 pub struct SuiTxValidator {
-    epoch_store: Arc<AuthorityPerEpochStore>,
+    pub epoch_store: Arc<AuthorityPerEpochStore>,
     checkpoint_service: Arc<dyn CheckpointServiceNotify + Send + Sync>,
     _transaction_manager: Arc<TransactionManager>,
     metrics: Arc<SuiTxValidatorMetrics>,
@@ -185,17 +187,17 @@ impl SuiTxValidatorMetrics {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        consensus::consensus_adapter::consensus_tests::{test_certificates, test_gas_objects},
-        consensus::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics},
+    use crate::consensus_validator::{
+        consensus_tests::{test_certificates, test_gas_objects},
+        SuiTxValidator, SuiTxValidatorMetrics,
     };
-
     use crate::core::{
         authority::test_authority_builder::TestAuthorityBuilder, checkpoints::CheckpointServiceNoop,
     };
     use narwhal_test_utils::latest_protocol_version;
     use narwhal_types::{Batch, BatchV1};
     use narwhal_worker::TransactionValidator;
+    use sui_swarm_config::network_config_builder;
     use sui_types::signature::GenericSignature;
 
     use std::sync::Arc;
@@ -213,7 +215,7 @@ mod tests {
 
         let latest_protocol_config = &latest_protocol_version();
 
-        let network_config = crate::network_config_builder::ConfigBuilder::new_with_temp_dir()
+        let network_config = network_config_builder::ConfigBuilder::new_with_temp_dir()
             .with_objects(objects.clone())
             .build();
 
