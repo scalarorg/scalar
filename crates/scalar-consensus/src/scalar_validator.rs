@@ -187,8 +187,8 @@ impl ScalarTxValidatorMetrics {
 #[cfg(test)]
 mod tests {
     use crate::{
-        consensus::consensus_adapter::consensus_tests::{test_certificates, test_gas_objects},
-        consensus::scalar_validator::{ScalarTxValidator, ScalarTxValidatorMetrics},
+        consensus_adapter::consensus_tests::{test_certificates, test_gas_objects},
+        scalar_validator::{ScalarTxValidator, ScalarTxValidatorMetrics},
     };
 
     use crate::core::{
@@ -197,6 +197,7 @@ mod tests {
     use narwhal_test_utils::latest_protocol_version;
     use narwhal_types::{Batch, BatchV1};
     use narwhal_worker::TransactionValidator;
+    use sui_swarm_config::network_config_builder;
     use sui_types::signature::GenericSignature;
 
     use std::sync::Arc;
@@ -214,7 +215,7 @@ mod tests {
 
         let latest_protocol_config = &latest_protocol_version();
 
-        let network_config = crate::network_config_builder::ConfigBuilder::new_with_temp_dir()
+        let network_config = network_config_builder::ConfigBuilder::new_with_temp_dir()
             .with_objects(objects.clone())
             .build();
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::consensus::consensus_handler::SequencedConsensusTransaction;
+use crate::consensus_handler::SequencedConsensusTransaction;
 use crate::core::authority::{authority_tests::init_state_with_objects, AuthorityState};
 use crate::core::checkpoints::CheckpointServiceNoop;
 use move_core_types::{account_address::AccountAddress, ident_str};
@@ -138,7 +138,6 @@ async fn submit_transaction_to_consensus_adapter() {
             transaction: Vec<u8>,
             epoch_store: &Arc<AuthorityPerEpochStore>,
         ) -> SuiResult {
-
             /*
              * 2023-12-11 TaiVV
              * Scalar Todo: Implement unit testing

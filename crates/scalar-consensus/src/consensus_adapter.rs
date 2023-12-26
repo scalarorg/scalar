@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::classify;
 use crate::core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::core::epoch::reconfiguration::{ReconfigState, ReconfigurationInitiator};
 use arc_swap::{ArcSwap, ArcSwapOption};
@@ -35,6 +36,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Instant;
+use sui_core::consensus_handler::SequencedConsensusTransactionKey;
 use sui_types::base_types::TransactionDigest;
 use sui_types::committee::Committee;
 use sui_types::error::{SuiError, SuiResult};
@@ -44,8 +46,8 @@ use tokio::sync::{Semaphore, SemaphorePermit};
 use tokio::task::JoinHandle;
 use tokio::time::{self, sleep, timeout};
 
-use crate::consensus::consensus_handler::{classify, SequencedConsensusTransactionKey};
-use crate::consensus::consensus_throughput_calculator::{ConsensusThroughputProfiler, Level};
+// use crate::consensus_handler::{classify, SequencedConsensusTransactionKey};
+use crate::consensus_throughput_calculator::{ConsensusThroughputProfiler, Level};
 use mysten_metrics::{spawn_monitored_task, GaugeGuard, GaugeGuardFutureExt};
 use sui_protocol_config::ProtocolConfig;
 use sui_simulator::anemo::PeerId;
@@ -186,8 +188,11 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
         transaction: &ConsensusTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult;
-    async fn submit_raw_transaction_to_consensus(&self, transaction: Vec<u8>,
-        epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult;
+    async fn submit_raw_transaction_to_consensus(
+        &self,
+        transaction: Vec<u8>,
+        epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult;
 }
 
 #[async_trait::async_trait]
@@ -303,7 +308,7 @@ impl SubmitToConsensus for LazyNarwhalClient {
             })?;
         Ok(())
     }
-     async fn submit_raw_transaction_to_consensus(
+    async fn submit_raw_transaction_to_consensus(
         &self,
         transaction: Vec<u8>,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
@@ -1165,13 +1170,16 @@ impl SubmitToConsensus for Arc<ConsensusAdapter> {
     /*
      * 2023-12-11 TaiVV
      * Scalar Todo: Submit rawtransaction to consensus layer
-     * 
+     *
      */
-    async fn submit_raw_transaction_to_consensus(&self, transaction_data: Vec<u8>, epoch_store: &Arc<AuthorityPerEpochStore>) -> SuiResult {
-        self
-                    .consensus_client
-                    .submit_raw_transaction_to_consensus(transaction_data, epoch_store)
-                    .await
+    async fn submit_raw_transaction_to_consensus(
+        &self,
+        transaction_data: Vec<u8>,
+        epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        self.consensus_client
+            .submit_raw_transaction_to_consensus(transaction_data, epoch_store)
+            .await
     }
 }
 
@@ -1187,7 +1195,7 @@ pub fn position_submit_certificate(
 #[cfg(test)]
 mod adapter_tests {
     use super::position_submit_certificate;
-    use crate::consensus::consensus_adapter::{
+    use crate::consensus_adapter::{
         ConnectionMonitorStatusForTests, ConsensusAdapter, ConsensusAdapterMetrics,
         LazyNarwhalClient,
     };

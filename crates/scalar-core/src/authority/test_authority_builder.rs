@@ -12,8 +12,6 @@ use crate::module_cache_metrics::ResolverMetrics;
 use crate::signature_verifier::SignatureVerifierMetrics;
 use fastcrypto::traits::KeyPair;
 use prometheus::Registry;
-use scalar_swarm_config::genesis_config::AccountConfig;
-use scalar_swarm_config::network_config::NetworkConfig;
 use std::path::PathBuf;
 use std::sync::Arc;
 use sui_archival::reader::ArchiveReaderBalancer;
@@ -27,6 +25,8 @@ use sui_config::transaction_deny_config::TransactionDenyConfig;
 use sui_macros::nondeterministic;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
 use sui_storage::IndexStore;
+use sui_swarm_config::genesis_config::AccountConfig;
+use sui_swarm_config::network_config::NetworkConfig;
 use sui_types::base_types::{AuthorityName, ObjectID};
 use sui_types::crypto::AuthorityKeyPair;
 use sui_types::digests::ChainIdentifier;
@@ -151,7 +151,7 @@ impl<'a> TestAuthorityBuilder<'a> {
 
     pub async fn build(self) -> Arc<AuthorityState> {
         let mut local_network_config_builder =
-            scalar_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
+            sui_swarm_config::network_config_builder::ConfigBuilder::new_with_temp_dir()
                 .with_accounts(self.accounts)
                 .with_reference_gas_price(self.reference_gas_price.unwrap_or(500));
         if let Some(protocol_config) = &self.protocol_config {

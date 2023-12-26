@@ -31,6 +31,7 @@ scalar-core = { path = "../scalar-core" }
 scalar-kvstore = { path = "../scalar-kvstore" }
 sui-json-rpc = { path = "../scalar-json-rpc", package = "scalar-json-rpc" }
 sui-rest-api = { path = "../scalar-rest-api", package = "scalar-rest-api" }
+sui-telemetry = { path = "../scalar-telemetry", package = "scalar-telemetry" }
 sui-archival = { path = "../../sui/crates/sui-archival" }
 sui-tls = { path = "../../sui/crates/sui-tls" }
 sui-macros = { path = "../../sui/crates/sui-macros" }
@@ -40,7 +41,6 @@ sui-network = { path = "../../sui/crates/sui-network" }
 sui-json-rpc-api = { path = "../../sui/crates/sui-json-rpc-api" }
 sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
 sui-snapshot = { path = "../../sui/crates/sui-snapshot" }
-sui-telemetry = { path = "../../sui/crates/sui-telemetry" }
 sui-types = { path = "../../sui/crates/sui-types" }
 sui-kvstore = { path = "../../sui/crates/sui-kvstore" }
 mysten-metrics = { path = "../../sui/crates/mysten-metrics" }

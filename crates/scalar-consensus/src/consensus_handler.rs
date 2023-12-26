@@ -1,8 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::consensus::consensus_throughput_calculator::ConsensusThroughputCalculator;
-use crate::consensus::consensus_types::{
+use crate::consensus_throughput_calculator::ConsensusThroughputCalculator;
+use crate::consensus_types::{
     committee_api::CommitteeAPI, consensus_output_api::ConsensusOutputAPI, AuthorityIndex,
 };
 use crate::core::authority::authority_per_epoch_store::{
@@ -840,10 +840,8 @@ impl SequencedConsensusTransaction {
 mod tests {
     use super::*;
     // use crate::authority::authority_per_epoch_store::{ConsensusStats, ConsensusStatsAPI};
-    use crate::consensus::consensus_adapter::consensus_tests::{
-        test_certificates, test_gas_objects,
-    };
-    use crate::consensus::post_consensus_tx_reorder::PostConsensusTxReorder;
+    use crate::consensus_adapter::consensus_tests::{test_certificates, test_gas_objects};
+    use crate::post_consensus_tx_reorder::PostConsensusTxReorder;
     // use crate::core::authority::test_authority_builder::TestAuthorityBuilder;
     use crate::core::checkpoints::CheckpointServiceNoop;
     use narwhal_config::AuthorityIdentifier;

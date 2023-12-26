@@ -1,0 +1,31 @@
+[package]
+name = "scalar-swarm"
+version = "0.0.0"
+authors = ["Mysten Labs <build@mystenlabs.com>"]
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+rand.workspace = true
+tracing.workspace = true
+tokio = { workspace = true, features = ["full"] }
+futures.workspace = true
+tempfile.workspace = true
+tonic-health.workspace = true
+tap.workspace = true
+prometheus.workspace = true
+
+sui-node = { path = "../scalar-node", package = "scalar-node" }
+sui-swarm-config = { path = "../scalar-swarm-config", package = "scalar-swarm-config" }
+sui-config = { path = "../../sui/crates/sui-config" }
+sui-protocol-config = { path = "../../sui/crates/sui-protocol-config" }
+sui-types = { path = "../../sui/crates/sui-types" }
+mysten-metrics = { path = "../../sui/crates/mysten-metrics" }
+mysten-network = { path = "../../sui/crates/mysten-network" }
+telemetry-subscribers = { path = "../../sui/crates/telemetry-subscribers" }
+workspace-hack = { path = "../../sui/crates/workspace-hack" }
+
+[target.'cfg(msim)'.dependencies]
+sui-simulator = { path = "../../sui/crates/sui-simulator" }

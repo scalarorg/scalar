@@ -1,7 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-use crate::consensus::consensus_types::committee_api::CommitteeAPI;
-use crate::consensus::consensus_types::AuthorityIndex;
+use crate::consensus_types::committee_api::CommitteeAPI;
+use crate::consensus_types::AuthorityIndex;
 use crate::core::authority::AuthorityMetrics;
 use arc_swap::ArcSwap;
 use narwhal_config::Stake;
@@ -80,8 +80,8 @@ pub(crate) fn update_low_scoring_authorities(
 #[cfg(test)]
 mod tests {
     #![allow(clippy::mutable_key_type)]
-    use crate::consensus::scoring_decision::update_low_scoring_authorities;
     use crate::core::authority::AuthorityMetrics;
+    use crate::scoring_decision::update_low_scoring_authorities;
     use arc_swap::ArcSwap;
     use fastcrypto::traits::{InsecureDefault, KeyPair as _};
     use mysten_network::Multiaddr;

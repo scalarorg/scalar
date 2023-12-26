@@ -431,7 +431,7 @@ impl ConsensusThroughputCalculator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::consensus::consensus_throughput_calculator::Level::{High, Low};
+    use crate::consensus_throughput_calculator::Level::{High, Low};
     use prometheus::Registry;
 
     #[test]

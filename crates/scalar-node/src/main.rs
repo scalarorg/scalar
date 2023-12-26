@@ -101,7 +101,7 @@ fn main() {
     let node_once_cell_clone = node_once_cell.clone();
     let rpc_runtime = runtimes.json_rpc.handle().clone();
 
-    runtimes.scalar_node.spawn(async move {
+    runtimes.sui_node.spawn(async move {
         match scalar_node::SuiNode::start_async(&config, registry_service, Some(rpc_runtime)).await
         {
             Ok(scalar_node) => node_once_cell_clone

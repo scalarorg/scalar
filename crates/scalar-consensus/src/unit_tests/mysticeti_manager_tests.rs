@@ -1,15 +1,15 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::consensus::consensus_handler::ConsensusHandlerInitializer;
-use crate::consensus::consensus_manager::mysticeti_manager::MysticetiManager;
-use crate::consensus::consensus_manager::narwhal_manager::narwhal_manager_tests::checkpoint_service_for_testing;
-use crate::consensus::consensus_manager::ConsensusManagerMetrics;
-use crate::consensus::consensus_manager::ConsensusManagerTrait;
-use crate::consensus::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
-use crate::consensus::mysticeti_adapter::LazyMysticetiClient;
+use crate::consensus_handler::ConsensusHandlerInitializer;
+use crate::consensus_manager::mysticeti_manager::MysticetiManager;
+use crate::consensus_manager::narwhal_manager::narwhal_manager_tests::checkpoint_service_for_testing;
+use crate::consensus_manager::ConsensusManagerMetrics;
+use crate::consensus_manager::ConsensusManagerTrait;
+use crate::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
 use crate::core::authority::test_authority_builder::TestAuthorityBuilder;
 use crate::core::checkpoints::CheckpointServiceNoop;
+use crate::mysticeti_adapter::LazyMysticetiClient;
 use crate::network_config_builder::ConfigBuilder;
 use fastcrypto::traits::KeyPair;
 use mysten_metrics::RegistryService;

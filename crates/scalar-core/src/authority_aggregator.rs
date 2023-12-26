@@ -12,7 +12,7 @@ use futures::{future::BoxFuture, stream::FuturesUnordered, StreamExt};
 use mysten_metrics::histogram::Histogram;
 use mysten_metrics::{monitored_future, spawn_monitored_task, GaugeGuard};
 use mysten_network::config::Config;
-use scalar_swarm_config::network_config::NetworkConfig;
+use sui_swarm_config::network_config::NetworkConfig;
 use std::convert::AsRef;
 use sui_authority_aggregation::ReduceOutput;
 use sui_authority_aggregation::{quorum_map_then_reduce_with_timeout, AsyncResult};

@@ -1,7 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::consensus::consensus_types::ConsensusTransactionWrapper;
+use crate::consensus_types::ConsensusTransactionWrapper;
 
 use super::AuthorityIndex;
 use fastcrypto::hash::Hash;

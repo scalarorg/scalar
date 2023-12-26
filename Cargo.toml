@@ -4,11 +4,13 @@ resolver = "2"
 members = [
     "crates/scalar-core",
     "crates/scalar-node",
-    "crates/scalar-consensus",
+    "crates/scalar-consensus-common",
+    "crates/scalar-swarm",
     "crates/scalar-swarm-config",
     "crates/scalar-kvstore",
     "crates/scalar-json-rpc",
     "crates/scalar-rest-api",
+    "crates/scalar-telemetry",
     "scalar-test-cluster",
 ]
 
@@ -440,6 +442,7 @@ schemars = { version = "0.8.10", features = ["either"] }
 scopeguard = "1.1"
 serial_test = "2.0.0"
 serde = { version = "1.0.144", features = ["derive", "rc"] }
+serde_bytes = "0.11.5"
 serde-name = "0.2.1"
 serde-reflection = "0.3.6"
 serde_json = { version = "1.0.95", features = [
