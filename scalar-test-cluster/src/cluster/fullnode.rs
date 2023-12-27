@@ -105,7 +105,13 @@ impl ClusterTrait for FullnodeCluster {
         if let Some(size) = options.cluster_size.as_ref() {
             cluster_builder = cluster_builder.with_cluster_size(size.clone());
         }
-        cluster_builder = cluster_builder.with_consensus_url(options.consensus_url.clone());
+        if let (Some(host), Some(port)) = (
+            options.consensus_rpc_host.as_ref(),
+            options.consensus_rpc_port.as_ref(),
+        ) {
+            let consensus_url = format!("http://{}:{}", host, port);
+            cluster_builder = cluster_builder.with_consensus_url(consensus_url);
+        }
 
         // Check if we already have a config directory that is passed
         if let Some(config_dir) = options.config_dir.clone() {
@@ -306,8 +312,8 @@ impl FullnodeClusterBuilder {
         self
     }
 
-    pub fn with_consensus_url(mut self, url: Option<String>) -> Self {
-        self.consensus_url = url;
+    pub fn with_consensus_url(mut self, url: String) -> Self {
+        self.consensus_url = Some(url);
         self
     }
 

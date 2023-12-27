@@ -27,7 +27,9 @@ pub struct LocalClusterConfig {
     #[clap(long)]
     pub faucet_address: Option<String>,
     #[clap(long)]
-    pub consensus_url: Option<String>,
+    pub consensus_rpc_host: Option<String>,
+    #[clap(long)]
+    pub consensus_rpc_port: Option<u16>,
     #[clap(long)]
     pub fullnode_address: Option<String>,
     #[clap(long)]
@@ -74,7 +76,8 @@ impl LocalClusterConfig {
         Self {
             env: Env::LocalValidator,
             faucet_address: None,
-            consensus_url: None,
+            consensus_rpc_host: None,
+            consensus_rpc_port: None,
             fullnode_address: None,
             epoch_duration_ms: None,
             indexer_address: None,
@@ -90,7 +93,8 @@ impl LocalClusterConfig {
         Self {
             env: Env::LocalFullnode,
             faucet_address: None,
-            consensus_url: None,
+            consensus_rpc_host: None,
+            consensus_rpc_port: None,
             fullnode_address: None,
             epoch_duration_ms: None,
             indexer_address: None,

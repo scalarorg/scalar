@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+use super::consensus_types::NsTransaction;
 use arc_swap::{ArcSwap, ArcSwapOption};
 use bytes::Bytes;
 use dashmap::try_result::TryResult;
@@ -186,6 +187,11 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
         transaction: &ConsensusTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult;
+    async fn submit_ns_transaction_to_consensus(
+        &self,
+        transaction: &NsTransaction,
+        epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult;
 }
 
 #[async_trait::async_trait]
@@ -193,6 +199,25 @@ impl SubmitToConsensus for TransactionsClient<sui_network::tonic::transport::Cha
     async fn submit_to_consensus(
         &self,
         transaction: &ConsensusTransaction,
+        _epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        let serialized =
+            bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
+        let bytes = Bytes::from(serialized.clone());
+
+        self.clone()
+            .submit_transaction(TransactionProto { transaction: bytes })
+            .await
+            .map_err(|e| SuiError::ConsensusConnectionBroken(format!("{:?}", e)))
+            .tap_err(|r| {
+                // Will be logged by caller as well.
+                warn!("Submit transaction failed with: {:?}", r);
+            })?;
+        Ok(())
+    }
+    async fn submit_ns_transaction_to_consensus(
+        &self,
+        transaction: &NsTransaction,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
         let serialized =
@@ -276,6 +301,37 @@ impl SubmitToConsensus for LazyNarwhalClient {
         let client = client.as_ref().unwrap().load();
         client
             .submit_transaction(transaction)
+            .await
+            .map_err(|e| SuiError::FailedToSubmitToConsensus(format!("{:?}", e)))
+            .tap_err(|r| {
+                // Will be logged by caller as well.
+                warn!("Submit transaction failed with: {:?}", r);
+            })?;
+        Ok(())
+    }
+
+    async fn submit_ns_transaction_to_consensus(
+        &self,
+        transaction: &NsTransaction,
+        _epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        // let transaction =
+        //     bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
+        // The retrieved LocalNarwhalClient can be from the past epoch. Submit would fail after
+        // Narwhal shuts down, so there should be no correctness issue.
+        let client = {
+            let c = self.client.load();
+            if c.is_some() {
+                c
+            } else {
+                self.client.store(Some(self.get().await));
+                self.client.load()
+            }
+        };
+        let client = client.as_ref().unwrap().load();
+        let tx_bytes = bcs::to_bytes(transaction).expect("Serialization should not fail.");
+        client
+            .submit_transaction(tx_bytes)
             .await
             .map_err(|e| SuiError::FailedToSubmitToConsensus(format!("{:?}", e)))
             .tap_err(|r| {
@@ -1130,6 +1186,15 @@ impl SubmitToConsensus for Arc<ConsensusAdapter> {
     ) -> SuiResult {
         self.submit(transaction.clone(), None, epoch_store)
             .map(|_| ())
+    }
+    async fn submit_ns_transaction_to_consensus(
+        &self,
+        transaction: &NsTransaction,
+        epoch_store: &Arc<AuthorityPerEpochStore>,
+    ) -> SuiResult {
+        self.consensus_client
+            .submit_ns_transaction_to_consensus(transaction, epoch_store)
+            .await
     }
 }
 

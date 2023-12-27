@@ -3,14 +3,15 @@
 validator_cluster() {
     RUST_LOG=info /usr/local/bin/validator-cluster \
         --cluster-size 4 \
-        --consensus-grpc-port 9090 \
+        --consensus-rpc-host 0.0.0.0 \
+        --consensus-rpc-port 9090 \
         --epoch-duration-ms 3600000
 }  
 
 move_fullnode_cluster() {
     RUST_LOG=info /usr/local/bin/move-fullnode-cluster \
         --cluster-size 4 \
-        --consensus-grpc-port 9090 \
+        --consensus-rpc-port 9090 \
         --epoch-duration-ms 3600000
 }   
 

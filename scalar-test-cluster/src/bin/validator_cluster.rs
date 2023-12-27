@@ -32,9 +32,12 @@ struct Args {
     #[clap(long, default_value = "4")]
     cluster_size: Option<usize>,
 
-    /// Port to start the Fullnode RPC server on
+    /// Host to start the Consensus RPC server on
+    #[clap(long, default_value = "127.0.0.1")]
+    consensus_rpc_host: String,
+    /// Port to start the Consensus RPC server on
     #[clap(long, default_value = "5000")]
-    consensus_grpc_port: Option<u16>,
+    consensus_rpc_port: u16,
 
     /// Port to start the Fullnode RPC server on
     #[clap(long, default_value = "9000")]
@@ -105,7 +108,8 @@ async fn main() -> Result<()> {
     let Args {
         config_dir,
         cluster_size,
-        consensus_grpc_port,
+        consensus_rpc_host,
+        consensus_rpc_port,
         fullnode_rpc_port,
         graphql_host,
         graphql_port,
@@ -139,7 +143,8 @@ async fn main() -> Result<()> {
     }
     let cluster_config = LocalClusterConfig {
         env: Env::LocalValidator,
-        consensus_url: None,
+        consensus_rpc_host: Some(consensus_rpc_host),
+        consensus_rpc_port: Some(consensus_rpc_port),
         fullnode_address: Some(format!("127.0.0.1:{}", fullnode_rpc_port)),
         indexer_address: with_indexer.then_some(format!("127.0.0.1:{}", indexer_rpc_port)),
         pg_address: Some(format!(

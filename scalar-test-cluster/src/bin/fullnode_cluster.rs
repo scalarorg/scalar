@@ -10,7 +10,10 @@ use axum::{
 };
 use clap::Parser;
 use http::{Method, StatusCode};
-use scalar_test_cluster::{ClusterTrait, Env, FullnodeCluster, FullnodeClusterTrait, LocalClusterConfig, faucet::start_faucet};
+use scalar_test_cluster::{
+    faucet::start_faucet, ClusterTrait, Env, FullnodeCluster, FullnodeClusterTrait,
+    LocalClusterConfig,
+};
 use std::{net::SocketAddr, sync::Arc, thread, time};
 use tokio::time::Sleep;
 use tower::ServiceBuilder;
@@ -33,11 +36,11 @@ struct Args {
     cluster_size: Option<usize>,
 
     /// Host to access to consensus RPC server
-    #[clap(long, default_value = "http://127.0.0.1")]
-    consensus_host: Option<String>,
+    #[clap(long, default_value = "127.0.0.1")]
+    consensus_rpc_host: String,
     /// Port to access to the consensus RPC server
     #[clap(long, default_value = "5000")]
-    consensus_port: Option<u16>,
+    consensus_rpc_port: u16,
     /// Port to start the Fullnode RPC server on
     #[clap(long, default_value = "9000")]
     fullnode_rpc_port: u16,
@@ -107,8 +110,8 @@ async fn main() -> Result<()> {
     let Args {
         config_dir,
         cluster_size,
-        consensus_host,
-        consensus_port,
+        consensus_rpc_host,
+        consensus_rpc_port,
         fullnode_rpc_port,
         graphql_host,
         graphql_port,
@@ -140,14 +143,10 @@ async fn main() -> Result<()> {
     } else if !use_indexer_v2 {
         println!("`with_indexer` flag unset. Indexer service will run unmaintained indexer.")
     }
-    let consensus_url = if let (Some(host), Some(port)) = (consensus_host, consensus_port) {
-        Some(format!("{}:{}", host, port))
-    } else {
-        None
-    };
     let cluster_config = LocalClusterConfig {
         env: Env::LocalFullnode,
-        consensus_url,
+        consensus_rpc_host: Some(consensus_rpc_host),
+        consensus_rpc_port: Some(consensus_rpc_port),
         fullnode_address: Some(format!("0.0.0.0:{}", fullnode_rpc_port)),
         indexer_address: with_indexer.then_some(format!("0.0.0.0:{}", indexer_rpc_port)),
         pg_address: Some(format!(

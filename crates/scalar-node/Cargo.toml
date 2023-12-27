@@ -27,6 +27,7 @@ const-str.workspace = true
 url.workspace = true
 humantime.workspace = true
 
+scalar-consensus-common = { path = "../scalar-consensus-common" }
 scalar-core = { path = "../scalar-core" }
 scalar-kvstore = { path = "../scalar-kvstore" }
 sui-json-rpc = { path = "../scalar-json-rpc", package = "scalar-json-rpc" }
@@ -46,6 +47,7 @@ sui-kvstore = { path = "../../sui/crates/sui-kvstore" }
 mysten-metrics = { path = "../../sui/crates/mysten-metrics" }
 mysten-common = { path = "../../sui/crates/mysten-common" }
 narwhal-network = { path = "../../sui/narwhal/network" }
+narwhal-worker = { path = "../../sui/narwhal/worker" }
 typed-store = { path = "../../sui/crates/typed-store" }
 mysten-network = { path = "../../sui/crates/mysten-network" }
 telemetry-subscribers = { path = "../../sui/crates/telemetry-subscribers" }

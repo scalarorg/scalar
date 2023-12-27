@@ -33,6 +33,7 @@ roaring.workspace = true
 rocksdb.workspace = true
 scopeguard.workspace = true
 serde.workspace = true
+serde_bytes.workspace = true
 serde_json.workspace = true
 serde_with.workspace = true
 signature.workspace = true
@@ -43,11 +44,13 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["full", "tracing", "test-util"] }
 tokio-retry.workspace = true
 tokio-stream.workspace = true
+tonic.workspace = true
 tracing.workspace = true
 
 fastcrypto.workspace = true
 fastcrypto-zkp.workspace = true
 
+scalar-consensus-common = { path = "../scalar-consensus-common", package = "scalar-consensus-common" }
 sui-swarm-config = { path = "../scalar-swarm-config", package = "scalar-swarm-config" }
 move-core-types = { path = "../../sui/external-crates/move/crates/move-core-types" }
 move-bytecode-utils = { path = "../../sui/external-crates/move/crates/move-bytecode-utils" }

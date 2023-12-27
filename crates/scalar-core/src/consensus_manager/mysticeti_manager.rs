@@ -5,13 +5,13 @@ use crate::consensus_handler::{ConsensusHandlerInitializer, MysticetiConsensusHa
 use crate::consensus_manager::{
     ConsensusManagerMetrics, ConsensusManagerTrait, Running, RunningLockGuard,
 };
-use crate::consensus_validator::SuiTxValidator;
 use crate::mysticeti_adapter::{LazyMysticetiClient, MysticetiClient};
 use arc_swap::ArcSwapOption;
 use async_trait::async_trait;
 use fastcrypto::traits::KeyPair;
 use itertools::Itertools;
 use mysten_metrics::{RegistryID, RegistryService};
+use mysticeti_core::block_validator::BlockVerifier;
 use mysticeti_core::commit_observer::SimpleCommitObserver;
 use mysticeti_core::committee::{Authority, Committee};
 use mysticeti_core::config::{Identifier, Parameters, PrivateConfig};
@@ -19,6 +19,7 @@ use mysticeti_core::types::AuthorityIndex;
 use mysticeti_core::validator::Validator;
 use mysticeti_core::{CommitConsumer, PublicKey, Signer, SimpleBlockHandler};
 use narwhal_executor::ExecutionState;
+use narwhal_worker::TransactionValidator;
 use prometheus::Registry;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, ToSocketAddrs};
 use std::path::PathBuf;
@@ -89,7 +90,7 @@ impl ConsensusManagerTrait for MysticetiManager {
         _config: &NodeConfig,
         epoch_store: Arc<AuthorityPerEpochStore>,
         consensus_handler_initializer: ConsensusHandlerInitializer,
-        tx_validator: SuiTxValidator,
+        tx_validator: impl TransactionValidator + BlockVerifier,
     ) {
         let system_state = epoch_store.epoch_start_state();
         let committee: narwhal_config::Committee = system_state.get_narwhal_committee();

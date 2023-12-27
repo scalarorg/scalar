@@ -55,7 +55,6 @@ impl ValidatorNodeHandle {
 
 pub struct ValidatorCluster {
     pub swarm: ValidatorSwarm,
-    pub validator_handle: ValidatorNodeHandle,
     config_directory: tempfile::TempDir,
 }
 
@@ -80,8 +79,12 @@ impl ClusterTrait for ValidatorCluster {
         if let Some(size) = options.cluster_size.as_ref() {
             cluster_builder = cluster_builder.with_cluster_size(size.clone());
         }
-        cluster_builder = cluster_builder.with_consensus_url(options.consensus_url.clone());
-
+        if let Some(host) = options.consensus_rpc_host.as_ref() {
+            cluster_builder = cluster_builder.with_consensus_rpc_host(host.clone());
+        }
+        if let Some(port) = options.consensus_rpc_port.as_ref() {
+            cluster_builder = cluster_builder.with_consensus_rpc_port(port.clone());
+        }
         // Check if we already have a config directory that is passed
         if let Some(config_dir) = options.config_dir.clone() {
             assert!(options.epoch_duration_ms.is_none());
@@ -120,10 +123,6 @@ impl ClusterTrait for ValidatorCluster {
             }
         }
 
-        if let Some(rpc_port) = fullnode_port {
-            cluster_builder = cluster_builder.with_fullnode_rpc_port(rpc_port);
-        }
-
         let mut validator_cluster = cluster_builder.build().await?;
 
         // Let nodes connect to one another
@@ -143,20 +142,22 @@ impl ClusterTrait for ValidatorCluster {
 }
 
 impl ValidatorCluster {
-    fn consensus_url(&self) -> &str {
-        self.validator_handle.consensus_url.as_str()
+    fn consensus_urls(&self) -> Vec<String> {
+        self.swarm()
+            .validator_nodes()
+            .map(|node| node.config.network_address.to_string())
+            .collect()
     }
 }
 
 pub struct ValidatorClusterBuilder {
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
+    consensus_rpc_host: Option<String>,
+    consensus_rpc_port: Option<u16>,
     additional_objects: Vec<Object>,
     cluster_size: Option<usize>,
-    ///Rpc port for external rpc api call
-    fullnode_rpc_port: Option<u16>,
     enable_events: bool,
-    consensus_url: Option<String>,
     supported_protocol_versions_config: ProtocolVersionsConfig,
     db_checkpoint_config: DBCheckpointConfig,
     num_unpruned_validators: Option<usize>,
@@ -170,10 +171,10 @@ impl ValidatorClusterBuilder {
         Self {
             genesis_config: None,
             network_config: None,
+            consensus_rpc_host: None,
+            consensus_rpc_port: None,
             additional_objects: vec![],
             cluster_size: None,
-            fullnode_rpc_port: None,
-            consensus_url: None,
             enable_events: false,
             supported_protocol_versions_config: ProtocolVersionsConfig::Default,
             db_checkpoint_config: DBCheckpointConfig::default(),
@@ -199,13 +200,14 @@ impl ValidatorClusterBuilder {
         self
     }
 
-    pub fn with_fullnode_rpc_port(mut self, port: u16) -> Self {
-        self.fullnode_rpc_port = Some(port);
+    pub fn with_consensus_rpc_host(mut self, consensus_rpc_host: String) -> Self {
+        assert!(self.consensus_rpc_host.is_none());
+        self.consensus_rpc_host = Some(consensus_rpc_host);
         self
     }
-
-    pub fn with_consensus_url(mut self, url: Option<String>) -> Self {
-        self.consensus_url = url;
+    pub fn with_consensus_rpc_port(mut self, consensus_rpc_port: u16) -> Self {
+        assert!(self.consensus_rpc_port.is_none());
+        self.consensus_rpc_port = Some(consensus_rpc_port);
         self
     }
 
@@ -253,14 +255,13 @@ impl ValidatorClusterBuilder {
 
         let swarm = self.start_swarm().await.unwrap();
 
-        let validator_node = swarm.fullnodes().next().unwrap();
-        let json_rpc_address = validator_node.config.json_rpc_address;
-        let validator_handle =
-            ValidatorNodeHandle::new(validator_node.get_node_handle().unwrap(), json_rpc_address)
-                .await;
+        // let validator_node = swarm.validator_node_handles().mapnext().unwrap();
+        // let json_rpc_address = validator_node.config.json_rpc_address;
+        // let validator_handle =
+        //     ValidatorNodeHandle::new(validator_node.get_node_handle().unwrap(), json_rpc_address)
+        //         .await;
         Ok(ValidatorCluster {
             swarm,
-            validator_handle,
             config_directory: tempfile::tempdir()?,
         })
     }
@@ -269,10 +270,6 @@ impl ValidatorClusterBuilder {
         let mut builder: ValidatorSwarmBuilder = ValidatorSwarm::builder()
             .committee_size(NonZeroUsize::new(self.cluster_size.unwrap_or(NUM_VALIDATOR)).unwrap())
             .with_objects(self.additional_objects.clone())
-            .with_fullnode_count(1)
-            .with_fullnode_supported_protocol_versions_config(
-                self.supported_protocol_versions_config.clone(),
-            )
             .with_db_checkpoint_config(self.db_checkpoint_config.clone());
 
         if let Some(genesis_config) = self.genesis_config.take() {
@@ -282,9 +279,11 @@ impl ValidatorClusterBuilder {
         if let Some(network_config) = self.network_config.take() {
             builder = builder.with_network_config(network_config);
         }
-
-        if let Some(fullnode_rpc_port) = self.fullnode_rpc_port {
-            builder = builder.with_fullnode_rpc_port(fullnode_rpc_port);
+        if let Some(consensus_rpc_host) = self.consensus_rpc_host.take() {
+            builder = builder.with_consensus_rpc_host(consensus_rpc_host);
+        }
+        if let Some(consensus_rpc_port) = self.consensus_rpc_port.take() {
+            builder = builder.with_consensus_rpc_port(consensus_rpc_port);
         }
         if let Some(num_unpruned_validators) = self.num_unpruned_validators {
             builder = builder.with_num_unpruned_validators(num_unpruned_validators);

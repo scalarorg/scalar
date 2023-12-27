@@ -18,11 +18,16 @@ fi
 #COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-reth.yaml"
 
 init() {
+  export UID=$(id -u)
+  export GID=$(id -g)
   docker-compose ${COMPOSE_FILE} build
 }
 
 containers() {
   COMMAND=${1:-up}
+  export GID=$(id -g)
+  export UID=$(id -u)
+  echo $GID, $UID
   if [ "$COMMAND" == "up" ]
   then
     docker-compose ${COMPOSE_FILE} up -d
