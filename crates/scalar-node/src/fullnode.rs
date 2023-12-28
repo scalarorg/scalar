@@ -10,7 +10,7 @@ use anemo_tower::callback::CallbackLayer;
 use anemo_tower::trace::DefaultMakeSpan;
 use anemo_tower::trace::DefaultOnFailure;
 use anemo_tower::trace::TraceLayer;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use arc_swap::ArcSwap;
 use fastcrypto_zkp::bn254::zk_login::{JwkId, OIDCProvider, JWK};
 use futures::TryFutureExt;
@@ -57,7 +57,7 @@ use scalar_core::{
 };
 use scalar_kvstore::writer::setup_key_value_store_uploader;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use std::{fmt, sync::Arc, str::FromStr, path::PathBuf, time::Duration};
+use std::{fmt, path::PathBuf, str::FromStr, sync::Arc, time::Duration};
 use sui_archival::reader::ArchiveReaderBalancer;
 use sui_archival::writer::ArchiveWriter;
 use sui_config::node::DBCheckpointConfig;
@@ -79,13 +79,11 @@ use sui_protocol_config::Chain;
 use sui_protocol_config::{ProtocolConfig, SupportedProtocolVersions};
 use sui_snapshot::uploader::StateSnapshotUploader;
 use sui_storage::{
-    object_store::{ObjectStoreType, ObjectStoreConfig},
     http_key_value_store::HttpKVStore,
     key_value_store::{FallbackTransactionKVStore, TransactionKeyValueStore},
     key_value_store_metrics::KeyValueStoreMetrics,
-    FileCompression, 
-    IndexStore,
-    StorageFormat,
+    object_store::{ObjectStoreConfig, ObjectStoreType},
+    FileCompression, IndexStore, StorageFormat,
 };
 use sui_types::base_types::AuthorityName;
 use sui_types::committee::Committee;
@@ -474,7 +472,9 @@ impl FullNode {
         info!("FullNode started!");
         Ok(Arc::new(node))
     }
-
+    pub fn state(&self) -> Arc<AuthorityState> {
+        self.state.clone()
+    }
     fn start_jwk_updater(
         config: &NodeConfig,
         metrics: Arc<SuiNodeMetrics>,

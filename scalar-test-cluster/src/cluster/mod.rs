@@ -22,7 +22,7 @@ impl ClusterFactory {
     ) -> Result<Box<dyn ClusterTrait + Sync + Send>> {
         Ok(match &options.env {
             Env::LocalValidator => Box::new(ValidatorCluster::start(options).await?),
-            Env::LocalFullnode => Box::new(FullnodeCluster::start(options).await?),
+            Env::LocalFullnode => Box::new(FullNodeCluster::start(options).await?),
             _ => Box::new(RemoteRunningCluster::start(options).await?),
         })
     }
@@ -34,7 +34,7 @@ pub trait ClusterTrait {
     async fn start(options: &LocalClusterConfig) -> Result<Self>
     where
         Self: Sized;
-
+    // First user key in the cluster
     fn user_key(&self) -> AccountKeyPair;
     /// Place to put config for the wallet, and any locally running services.
     fn config_directory(&self) -> &Path;
@@ -43,6 +43,7 @@ pub trait ClusterTrait {
 /// Cluster Abstraction
 #[async_trait]
 pub trait FullnodeClusterTrait: ClusterTrait {
+    /// Return  first fullnode_url
     fn fullnode_url(&self) -> &str;
 
     fn indexer_url(&self) -> &Option<String>;
@@ -50,11 +51,11 @@ pub trait FullnodeClusterTrait: ClusterTrait {
     /// Returns faucet url in a remote cluster.
     fn remote_faucet_url(&self) -> Option<&str>;
 
-    /// Returns faucet key in a local cluster.
+    /// Returns first faucet key in a local cluster.
     fn local_faucet_key(&self) -> Option<&AccountKeyPair>;
 }
 
-// Make linter happy
+//Make linter happy
 #[async_trait]
 impl FullnodeClusterTrait for Box<dyn FullnodeClusterTrait + Send + Sync> {
     fn fullnode_url(&self) -> &str {

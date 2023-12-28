@@ -1,7 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{FullnodeCluster, FullnodeClusterTrait};
+use crate::{FullNodeCluster, FullnodeClusterTrait};
 use anyhow::Result;
 use async_trait::async_trait;
 use axum::{
@@ -225,7 +225,7 @@ struct AppState {
     faucet: Arc<dyn FaucetClient + Sync + Send>,
 }
 
-pub async fn start_faucet(cluster: &FullnodeCluster, port: u16) -> Result<()> {
+pub async fn start_faucet(cluster: &FullNodeCluster, port: u16) -> Result<()> {
     let faucet = FaucetClientFactory::new_from_cluster(cluster).await;
 
     let app_state = Arc::new(AppState { faucet });

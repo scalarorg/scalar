@@ -7,7 +7,8 @@ use jsonrpsee::{
     http_client::{HttpClient, HttpClientBuilder},
     ws_client::{WsClient, WsClientBuilder},
 };
-use scalar_node::SuiNodeHandle;
+use scalar_node::handle::FullNodeHandle;
+use scalar_swarm::fullnode::FullNode;
 use scalar_swarm::fullnode::{FullnodeSwarm, FullnodeSwarmBuilder};
 use scalar_swarm_config::{
     genesis_config::GenesisConfig, network_config::NetworkConfig,
@@ -37,29 +38,58 @@ use sui_types::{
 };
 use tracing::{error, info};
 
-pub struct FullNodeHandle {
-    pub sui_node: SuiNodeHandle,
+pub struct FullNodeClusterHandle {
+    pub node_handle: FullNodeHandle,
+    pub wallet: WalletContext,
+    pub indexer_url: Option<String>,
+    pub faucet_key: AccountKeyPair,
+    pub config_directory: tempfile::TempDir,
     pub sui_client: SuiClient,
     pub rpc_client: HttpClient,
     pub rpc_url: String,
     pub ws_url: String,
 }
 
-impl FullNodeHandle {
-    pub async fn new(sui_node: SuiNodeHandle, json_rpc_address: SocketAddr) -> Self {
+impl FullNodeClusterHandle {
+    pub async fn new(
+        fullnode: &FullNode,
+        faucet_key: AccountKeyPair,
+        working_dir: &Path,
+    ) -> Result<Self> {
+        let node_handle = fullnode.get_node_handle().unwrap();
+        let json_rpc_address = fullnode.config.json_rpc_address;
+        let mut wallet_conf: SuiClientConfig =
+            PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
+
         let rpc_url = format!("http://{}", json_rpc_address);
         let rpc_client = HttpClientBuilder::default().build(&rpc_url).unwrap();
 
         let ws_url = format!("ws://{}", json_rpc_address);
         let sui_client = SuiClientBuilder::default().build(&rpc_url).await.unwrap();
+        wallet_conf.envs.push(SuiEnv {
+            alias: "localnet".to_string(),
+            rpc: rpc_url.clone(),
+            ws: Some(ws_url.clone()),
+        });
+        wallet_conf.active_env = Some("localnet".to_string());
 
-        Self {
-            sui_node,
+        wallet_conf
+            .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
+            .save()
+            .unwrap();
+        let wallet_conf = working_dir.join(SUI_CLIENT_CONFIG);
+        let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
+        Ok(Self {
+            node_handle,
             sui_client,
             rpc_client,
             rpc_url,
             ws_url,
-        }
+            indexer_url: None,
+            wallet,
+            faucet_key,
+            config_directory: tempfile::tempdir()?,
+        })
     }
 
     pub async fn ws_client(&self) -> WsClient {
@@ -70,16 +100,12 @@ impl FullNodeHandle {
     }
 }
 
-pub struct FullnodeCluster {
+pub struct FullNodeCluster {
     pub swarm: FullnodeSwarm,
-    pub wallet: WalletContext,
-    pub fullnode_handle: FullNodeHandle,
-    indexer_url: Option<String>,
-    faucet_key: AccountKeyPair,
-    config_directory: tempfile::TempDir,
+    pub handles: Vec<FullNodeClusterHandle>,
 }
 
-impl FullnodeCluster {
+impl FullNodeCluster {
     #[allow(unused)]
     pub fn swarm(&self) -> &FullnodeSwarm {
         &self.swarm
@@ -87,7 +113,7 @@ impl FullnodeCluster {
 }
 
 #[async_trait]
-impl ClusterTrait for FullnodeCluster {
+impl ClusterTrait for FullNodeCluster {
     async fn start(options: &LocalClusterConfig) -> Result<Self> {
         // TODO: options should contain port instead of address
         let fullnode_port = options.fullnode_address.as_ref().map(|addr| {
@@ -156,58 +182,7 @@ impl ClusterTrait for FullnodeCluster {
         }
 
         let mut fullnode_cluster = cluster_builder.build().await?;
-        fullnode_cluster.indexer_url = options.indexer_address.clone();
-        // Use the wealthy account for faucet
-        let faucet_key = fullnode_cluster
-            .swarm
-            .config_mut()
-            .account_keys
-            .swap_remove(0);
-        let faucet_address = SuiAddress::from(faucet_key.public());
-        info!(?faucet_address, "faucet_address");
-
-        // This cluster has fullnode handle, safe to unwrap
-        let fullnode_url = fullnode_cluster.fullnode_handle.rpc_url.clone();
-
-        if let (Some(pg_address), Some(indexer_address)) =
-            (options.pg_address.clone(), indexer_address)
-        {
-            if options.use_indexer_v2 {
-                // Start in writer mode
-                start_test_indexer_v2(
-                    Some(pg_address.clone()),
-                    fullnode_url.clone(),
-                    None,
-                    options.use_indexer_experimental_methods,
-                )
-                .await;
-
-                // Start in reader mode
-                start_test_indexer_v2(
-                    Some(pg_address),
-                    fullnode_url.clone(),
-                    Some(indexer_address.to_string()),
-                    options.use_indexer_experimental_methods,
-                )
-                .await;
-            } else {
-                let migrated_methods = if options.use_indexer_experimental_methods {
-                    IndexerConfig::all_implemented_methods()
-                } else {
-                    vec![]
-                };
-                let config = IndexerConfig {
-                    db_url: Some(pg_address),
-                    rpc_client_url: fullnode_url.clone(),
-                    rpc_server_url: indexer_address.ip().to_string(),
-                    rpc_server_port: indexer_address.port(),
-                    migrated_methods,
-                    reset_db: true,
-                    ..Default::default()
-                };
-                start_test_indexer(config).await?;
-            }
-        }
+        fullnode_cluster.test_indexers().await;
 
         if let Some(graphql_address) = &options.graphql_address {
             let graphql_address = graphql_address.parse::<SocketAddr>()?;
@@ -235,17 +210,73 @@ impl ClusterTrait for FullnodeCluster {
     }
 
     fn config_directory(&self) -> &Path {
-        self.config_directory.path()
+        self.handles.first().unwrap().config_directory.path()
+    }
+}
+impl FullNodeCluster {
+    async fn test_indexers(&mut self) {
+        // fullnode_cluster.indexer_url = options.indexer_address.clone();
+        // // Use the wealthy account for faucet
+        // let faucet_key = fullnode_cluster
+        //     .swarm
+        //     .config_mut()
+        //     .account_keys
+        //     .swap_remove(0);
+        // let faucet_address = SuiAddress::from(faucet_key.public());
+        // info!(?faucet_address, "faucet_address");
+
+        // // This cluster has fullnode handle, safe to unwrap
+        // let fullnode_url = fullnode_cluster.handles.first().unwrap().rpc_url.clone();
+
+        // if let (Some(pg_address), Some(indexer_address)) =
+        //     (options.pg_address.clone(), indexer_address)
+        // {
+        //     if options.use_indexer_v2 {
+        //         // Start in writer mode
+        //         start_test_indexer_v2(
+        //             Some(pg_address.clone()),
+        //             fullnode_url.clone(),
+        //             None,
+        //             options.use_indexer_experimental_methods,
+        //         )
+        //         .await;
+
+        //         // Start in reader mode
+        //         start_test_indexer_v2(
+        //             Some(pg_address),
+        //             fullnode_url.clone(),
+        //             Some(indexer_address.to_string()),
+        //             options.use_indexer_experimental_methods,
+        //         )
+        //         .await;
+        //     } else {
+        //         let migrated_methods = if options.use_indexer_experimental_methods {
+        //             IndexerConfig::all_implemented_methods()
+        //         } else {
+        //             vec![]
+        //         };
+        //         let config = IndexerConfig {
+        //             db_url: Some(pg_address),
+        //             rpc_client_url: fullnode_url.clone(),
+        //             rpc_server_url: indexer_address.ip().to_string(),
+        //             rpc_server_port: indexer_address.port(),
+        //             migrated_methods,
+        //             reset_db: true,
+        //             ..Default::default()
+        //         };
+        //         start_test_indexer(config).await?;
+        //     }
+        // }
     }
 }
 #[async_trait]
-impl FullnodeClusterTrait for FullnodeCluster {
+impl FullnodeClusterTrait for FullNodeCluster {
     fn fullnode_url(&self) -> &str {
-        self.fullnode_handle.rpc_url.as_str()
+        &self.handles.first().unwrap().rpc_url.as_str()
     }
 
     fn indexer_url(&self) -> &Option<String> {
-        &self.indexer_url
+        &self.handles.first().unwrap().indexer_url
     }
 
     fn remote_faucet_url(&self) -> Option<&str> {
@@ -253,7 +284,7 @@ impl FullnodeClusterTrait for FullnodeCluster {
     }
 
     fn local_faucet_key(&self) -> Option<&AccountKeyPair> {
-        Some(&self.faucet_key)
+        self.handles.first().map(|handle| &handle.faucet_key)
     }
 }
 pub struct FullnodeClusterBuilder {
@@ -329,7 +360,7 @@ impl FullnodeClusterBuilder {
         self
     }
 
-    pub async fn build(mut self) -> Result<FullnodeCluster> {
+    pub async fn build(mut self) -> Result<FullNodeCluster> {
         // All test clusters receive a continuous stream of random JWKs.
         // If we later use zklogin authenticated transactions in tests we will need to supply
         // valid JWKs as well.
@@ -360,38 +391,38 @@ impl FullnodeClusterBuilder {
         }
 
         let mut swarm = self.start_swarm().await.unwrap();
+        let mut faucet_keys = vec![];
+        let size = swarm.config().account_keys.len();
+        for ind in 0..size {
+            faucet_keys.push(swarm.config_mut().account_keys.swap_remove(ind));
+        }
         let working_dir = swarm.dir();
+        let mut handles = vec![];
+        for (ind, fullnode) in swarm.fullnodes().enumerate() {
+            let faucet_key = faucet_keys.swap_remove(ind);
+            let handle = FullNodeClusterHandle::new(fullnode, faucet_key, working_dir).await?;
+            handles.push(handle);
+        }
+        // let fullnode = swarm.fullnodes().next().unwrap();
+        // let json_rpc_address = fullnode.config.json_rpc_address;
+        // let fullnode_handle =
+        //     FullNodeClusterHandle::new(fullnode.get_node_handle().unwrap(), json_rpc_address).await;
+        // wallet_conf.envs.push(SuiEnv {
+        //     alias: "localnet".to_string(),
+        //     rpc: fullnode_handle.rpc_url.clone(),
+        //     ws: Some(fullnode_handle.ws_url.clone()),
+        // });
+        // wallet_conf.active_env = Some("localnet".to_string());
 
-        let mut wallet_conf: SuiClientConfig =
-            PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
+        // wallet_conf
+        //     .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
+        //     .save()
+        //     .unwrap();
 
-        let fullnode = swarm.fullnodes().next().unwrap();
-        let json_rpc_address = fullnode.config.json_rpc_address;
-        let fullnode_handle =
-            FullNodeHandle::new(fullnode.get_node_handle().unwrap(), json_rpc_address).await;
-        wallet_conf.envs.push(SuiEnv {
-            alias: "localnet".to_string(),
-            rpc: fullnode_handle.rpc_url.clone(),
-            ws: Some(fullnode_handle.ws_url.clone()),
-        });
-        wallet_conf.active_env = Some("localnet".to_string());
-
-        wallet_conf
-            .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
-            .save()
-            .unwrap();
-
-        let wallet_conf = working_dir.join(SUI_CLIENT_CONFIG);
-        let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
-        let faucet_key = swarm.config_mut().account_keys.swap_remove(0);
-        Ok(FullnodeCluster {
-            swarm,
-            fullnode_handle,
-            config_directory: tempfile::tempdir()?,
-            wallet,
-            indexer_url: None,
-            faucet_key,
-        })
+        // let wallet_conf = working_dir.join(SUI_CLIENT_CONFIG);
+        // let wallet = WalletContext::new(&wallet_conf, None, None).await.unwrap();
+        // let faucet_key = swarm.config_mut().account_keys.swap_remove(0);
+        Ok(FullNodeCluster { swarm, handles })
     }
     /// Start a Swarm and set up WalletConfig
     async fn start_swarm(&mut self) -> Result<FullnodeSwarm, anyhow::Error> {

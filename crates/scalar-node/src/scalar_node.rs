@@ -1,4 +1,4 @@
-use super::validator::ValidatorNode;
+use super::validator_component::ValidatorComponents;
 use crate::metrics::SuiNodeMetrics;
 use anemo::Network;
 use anemo_tower::callback::CallbackLayer;
@@ -54,7 +54,7 @@ use typed_store::DBMetrics;
 
 pub struct ScalarNode {
     pub config: NodeConfig,
-    validator_node: Mutex<ValidatorNode>,
+    validator_node: Mutex<ValidatorComponents>,
     state: Arc<AuthorityState>,
 }
 
@@ -279,7 +279,7 @@ impl ScalarNode {
         };
         let connection_monitor_status = Arc::new(connection_monitor_status);
         let sui_node_metrics = Arc::new(SuiNodeMetrics::new(&registry_service.default_registry()));
-        match ValidatorNode::start(
+        match ValidatorComponents::start(
             &config,
             state.clone(),
             committee,

@@ -125,10 +125,11 @@ use typed_store::DBMetrics;
 use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
 pub mod admin;
 pub mod fullnode;
-mod handle;
+pub mod handle;
 pub mod metrics;
 pub mod scalar_node;
 pub mod validator;
+pub mod validator_component;
 pub struct ValidatorComponents {
     validator_server_handle: JoinHandle<Result<()>>,
     consensus_manager: ConsensusManager,

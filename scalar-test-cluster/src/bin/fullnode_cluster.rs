@@ -11,7 +11,7 @@ use axum::{
 use clap::Parser;
 use http::{Method, StatusCode};
 use scalar_test_cluster::{
-    faucet::start_faucet, ClusterTrait, Env, FullnodeCluster, FullnodeClusterTrait,
+    faucet::start_faucet, ClusterTrait, Env, FullNodeCluster, FullnodeClusterTrait,
     LocalClusterConfig,
 };
 use std::{net::SocketAddr, sync::Arc, thread, time};
@@ -164,7 +164,7 @@ async fn main() -> Result<()> {
         "Starting local validator cluster with config: {:#?}",
         &cluster_config
     );
-    let fullnode_cluster = FullnodeCluster::start(&cluster_config).await?;
+    let fullnode_cluster = FullNodeCluster::start(&cluster_config).await?;
     let swarm = fullnode_cluster.swarm();
     println!("Fullnode RPC URL: {}", fullnode_cluster.fullnode_url());
 

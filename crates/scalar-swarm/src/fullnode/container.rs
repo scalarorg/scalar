@@ -7,7 +7,7 @@ use std::sync::{Arc, Weak};
 use std::thread;
 use sui_config::NodeConfig;
 use sui_node::fullnode::FullNode;
-use sui_node::{SuiNode, SuiNodeHandle};
+use sui_node::handle::FullNodeHandle;
 use sui_types::base_types::ConciseableName;
 use sui_types::crypto::{AuthorityPublicKeyBytes, KeypairTraits};
 use telemetry_subscribers::get_global_telemetry_config;
@@ -17,7 +17,7 @@ use tracing::{info, trace};
 pub(crate) struct Container {
     join_handle: Option<thread::JoinHandle<()>>,
     cancel_sender: Option<tokio::sync::oneshot::Sender<()>>,
-    node: Weak<SuiNode>,
+    node: Weak<FullNode>,
 }
 
 /// When dropped, stop and wait for the node running in this Container to completely shutdown.
@@ -116,8 +116,8 @@ impl Container {
     }
 
     /// Get a SuiNodeHandle to the node owned by the container.
-    pub fn get_node_handle(&self) -> Option<SuiNodeHandle> {
-        Some(SuiNodeHandle::new(self.node.upgrade()?))
+    pub fn get_node_handle(&self) -> Option<FullNodeHandle> {
+        Some(FullNodeHandle::new(self.node.upgrade()?))
     }
 
     /// Check to see that the Node is still alive by checking if the receiving side of the
