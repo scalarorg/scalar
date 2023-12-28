@@ -9,6 +9,9 @@ services:
         # update with git sha of whichever branch you're building on.
         GIT_REVISION: db24658bc9
         BUILD_DATE: today
+        GID: $GID
+        UID: $UID
+        USER: $USER
     image: scalar-builder
     environment:
       - LD_PRELOAD

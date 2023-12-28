@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::authority::authority_store_types::{StoreObject, StoreObjectWrapper};
+use crate::consensus_listener::ConsensusListener;
 use crate::verify_indexes::verify_indexes;
 use anyhow::anyhow;
 use arc_swap::{ArcSwap, Guard};
@@ -655,6 +656,8 @@ pub struct AuthorityState {
 
     /// Config for when we consider the node overloaded.
     overload_threshold_config: OverloadThresholdConfig,
+
+    consensus_listeners: Arc<ConsensusListener>,
 }
 
 /// The authority state encapsulates all state, drives execution, and ensures safety.
@@ -664,6 +667,9 @@ pub struct AuthorityState {
 ///
 /// Repeating valid commands should produce no changes and return no error.
 impl AuthorityState {
+    pub fn get_consensus_listeners(&self) -> Arc<ConsensusListener> {
+        return self.consensus_listeners.clone();
+    }
     pub fn is_validator(&self, epoch_store: &AuthorityPerEpochStore) -> bool {
         epoch_store.committee().authority_exists(&self.name)
     }
@@ -2275,6 +2281,7 @@ impl AuthorityState {
             certificate_deny_config,
             debug_dump_config,
             overload_threshold_config,
+            consensus_listeners: Arc::new(ConsensusListener::default()),
         });
 
         // Start a task to execute ready certificates.

@@ -17,7 +17,7 @@ use std::{
 };
 use sui_config::node::{DBCheckpointConfig, OverloadThresholdConfig};
 use sui_config::NodeConfig;
-use sui_node::SuiNodeHandle;
+use sui_node::handle::FullNodeHandle;
 use sui_protocol_config::{ProtocolVersion, SupportedProtocolVersions};
 use sui_swarm_config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
 use sui_swarm_config::network_config::NetworkConfig;
@@ -414,7 +414,7 @@ impl FullnodeSwarm {
             .filter(|node| node.config.consensus_config.is_some())
     }
 
-    pub fn validator_node_handles(&self) -> Vec<SuiNodeHandle> {
+    pub fn validator_node_handles(&self) -> Vec<FullNodeHandle> {
         self.validator_nodes()
             .map(|node| node.get_node_handle().unwrap())
             .collect()
@@ -437,7 +437,7 @@ impl FullnodeSwarm {
             .filter(|node| node.config.consensus_config.is_none())
     }
 
-    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> SuiNodeHandle {
+    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> FullNodeHandle {
         let name = config.protocol_public_key();
         let node = FullNode::new(config);
         node.start().await.unwrap();

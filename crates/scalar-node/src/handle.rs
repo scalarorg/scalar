@@ -42,6 +42,9 @@
 //!
 //! We can't prevent this completely, but we can at least make the right way the easy way.
 
+use crate::fullnode::FullNode;
+use crate::validator::ValidatorNode;
+
 use super::SuiNode;
 use scalar_core::authority::AuthorityState;
 use std::future::Future;
@@ -137,5 +140,191 @@ impl Drop for SuiNodeHandle {
 impl From<Arc<SuiNode>> for SuiNodeHandle {
     fn from(node: Arc<SuiNode>) -> Self {
         SuiNodeHandle::new(node)
+    }
+}
+
+/// Wrap SuiNode to allow correct access to SuiNode in simulator tests.
+pub struct FullNodeHandle {
+    node: Option<Arc<FullNode>>,
+    shutdown_on_drop: bool,
+}
+
+impl FullNodeHandle {
+    pub fn new(node: Arc<FullNode>) -> Self {
+        Self {
+            node: Some(node),
+            shutdown_on_drop: false,
+        }
+    }
+
+    pub fn inner(&self) -> &Arc<FullNode> {
+        self.node.as_ref().unwrap()
+    }
+
+    pub fn with<T>(&self, cb: impl FnOnce(&FullNode) -> T) -> T {
+        let _guard = self.guard();
+        cb(self.inner())
+    }
+
+    pub fn state(&self) -> Arc<AuthorityState> {
+        self.with(|node| node.state())
+    }
+
+    pub fn shutdown_on_drop(&mut self) {
+        self.shutdown_on_drop = true;
+    }
+}
+
+impl Clone for FullNodeHandle {
+    fn clone(&self) -> Self {
+        Self {
+            node: self.node.clone(),
+            shutdown_on_drop: false,
+        }
+    }
+}
+
+#[cfg(not(msim))]
+impl FullNodeHandle {
+    // Must return something to silence lints above at `let _guard = ...`
+    fn guard(&self) -> u32 {
+        0
+    }
+
+    pub async fn with_async<'a, F, R, T>(&'a self, cb: F) -> T
+    where
+        F: FnOnce(&'a FullNode) -> R,
+        R: Future<Output = T>,
+    {
+        cb(self.inner()).await
+    }
+}
+
+#[cfg(msim)]
+impl FullNodeHandle {
+    fn guard(&self) -> sui_simulator::runtime::NodeEnterGuard {
+        self.inner().sim_state.sim_node.enter_node()
+    }
+
+    pub async fn with_async<'a, F, R, T>(&'a self, cb: F) -> T
+    where
+        F: FnOnce(&'a SuiNode) -> R,
+        R: Future<Output = T>,
+    {
+        let fut = cb(self.node.as_ref().unwrap());
+        self.inner()
+            .sim_state
+            .sim_node
+            .await_future_in_node(fut)
+            .await
+    }
+}
+
+#[cfg(msim)]
+impl Drop for FullNodeHandle {
+    fn drop(&mut self) {
+        if self.shutdown_on_drop {
+            let node_id = self.inner().sim_state.sim_node.id();
+            sui_simulator::runtime::Handle::try_current().map(|h| h.delete_node(node_id));
+        }
+    }
+}
+
+impl From<Arc<FullNode>> for FullNodeHandle {
+    fn from(node: Arc<FullNode>) -> Self {
+        FullNodeHandle::new(node)
+    }
+}
+
+/// Wrap SuiNode to allow correct access to SuiNode in simulator tests.
+pub struct ValidatorNodeHandle {
+    node: Option<Arc<ValidatorNode>>,
+    shutdown_on_drop: bool,
+}
+
+impl ValidatorNodeHandle {
+    pub fn new(node: Arc<ValidatorNode>) -> Self {
+        Self {
+            node: Some(node),
+            shutdown_on_drop: false,
+        }
+    }
+
+    pub fn inner(&self) -> &Arc<ValidatorNode> {
+        self.node.as_ref().unwrap()
+    }
+
+    pub fn with<T>(&self, cb: impl FnOnce(&ValidatorNode) -> T) -> T {
+        let _guard = self.guard();
+        cb(self.inner())
+    }
+
+    pub fn state(&self) -> Arc<AuthorityState> {
+        self.with(|node| node.state())
+    }
+
+    pub fn shutdown_on_drop(&mut self) {
+        self.shutdown_on_drop = true;
+    }
+}
+
+impl Clone for ValidatorNodeHandle {
+    fn clone(&self) -> Self {
+        Self {
+            node: self.node.clone(),
+            shutdown_on_drop: false,
+        }
+    }
+}
+
+#[cfg(not(msim))]
+impl ValidatorNodeHandle {
+    // Must return something to silence lints above at `let _guard = ...`
+    fn guard(&self) -> u32 {
+        0
+    }
+
+    pub async fn with_async<'a, F, R, T>(&'a self, cb: F) -> T
+    where
+        F: FnOnce(&'a ValidatorNode) -> R,
+        R: Future<Output = T>,
+    {
+        cb(self.inner()).await
+    }
+}
+
+#[cfg(msim)]
+impl ValidatorNodeHandle {
+    fn guard(&self) -> sui_simulator::runtime::NodeEnterGuard {
+        self.inner().sim_state.sim_node.enter_node()
+    }
+
+    pub async fn with_async<'a, F, R, T>(&'a self, cb: F) -> T
+    where
+        F: FnOnce(&'a ValidatorNode) -> R,
+        R: Future<Output = T>,
+    {
+        let fut = cb(self.node.as_ref().unwrap());
+        self.inner()
+            .sim_state
+            .sim_node
+            .await_future_in_node(fut)
+            .await
+    }
+}
+
+#[cfg(msim)]
+impl Drop for ValidatorNodeHandle {
+    fn drop(&mut self) {
+        if self.shutdown_on_drop {
+            let node_id = self.inner().sim_state.sim_node.id();
+            sui_simulator::runtime::Handle::try_current().map(|h| h.delete_node(node_id));
+        }
+    }
+}
+
+impl From<Arc<ValidatorNode>> for ValidatorNodeHandle {
+    fn from(node: Arc<ValidatorNode>) -> Self {
+        ValidatorNodeHandle::new(node)
     }
 }

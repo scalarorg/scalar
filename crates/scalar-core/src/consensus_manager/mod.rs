@@ -4,12 +4,13 @@ use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::consensus_handler::ConsensusHandlerInitializer;
 use crate::consensus_manager::mysticeti_manager::MysticetiManager;
 use crate::consensus_manager::narwhal_manager::{NarwhalConfiguration, NarwhalManager};
-use crate::consensus_validator::SuiTxValidator;
 use crate::mysticeti_adapter::LazyMysticetiClient;
 use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
 use fastcrypto::traits::KeyPair;
 use mysten_metrics::RegistryService;
+use mysticeti_core::block_validator::BlockVerifier;
+use narwhal_worker::TransactionValidator;
 use prometheus::{register_int_gauge_with_registry, IntGauge, Registry};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -43,7 +44,7 @@ pub trait ConsensusManagerTrait {
         config: &NodeConfig,
         epoch_store: Arc<AuthorityPerEpochStore>,
         consensus_handler_initializer: ConsensusHandlerInitializer,
-        tx_validator: SuiTxValidator,
+        tx_validator: impl TransactionValidator + BlockVerifier,
     );
 
     async fn shutdown(&self);

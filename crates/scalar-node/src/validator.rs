@@ -39,10 +39,8 @@ use tokio::task::JoinHandle;
 use tower::ServiceBuilder;
 use tracing::{debug, error, warn};
 use tracing::{error_span, info, Instrument};
-
 use checkpoint_executor::CheckpointExecutor;
 use fastcrypto_zkp::bn254::zk_login::JWK;
-pub use handle::SuiNodeHandle;
 use mysten_metrics::{spawn_monitored_task, RegistryService};
 use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
@@ -123,13 +121,7 @@ use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
 use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
-pub mod admin;
-pub mod fullnode;
-pub mod handle;
-pub mod metrics;
-pub mod scalar_node;
-pub mod validator;
-pub mod validator_component;
+
 pub struct ValidatorComponents {
     validator_server_handle: JoinHandle<Result<()>>,
     consensus_manager: ConsensusManager,
@@ -202,7 +194,7 @@ use scalar_core::mysticeti_adapter::LazyMysticetiClient;
 #[cfg(msim)]
 pub use simulator::set_jwk_injector;
 
-pub struct SuiNode {
+pub struct ValidatorNode {
     config: NodeConfig,
     validator_components: Mutex<Option<ValidatorComponents>>,
     /// The http server responsible for serving JSON-RPC as well as the experimental rest service
@@ -235,7 +227,7 @@ pub struct SuiNode {
     _kv_store_uploader_handle: Option<oneshot::Sender<()>>,
 }
 
-impl fmt::Debug for SuiNode {
+impl fmt::Debug for ValidatorNode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("SuiNode")
             .field("name", &self.state.name.concise())
@@ -245,12 +237,12 @@ impl fmt::Debug for SuiNode {
 
 static MAX_JWK_KEYS_PER_FETCH: usize = 100;
 
-impl SuiNode {
+impl ValidatorNode {
     pub async fn start(
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
-    ) -> Result<Arc<SuiNode>> {
+    ) -> Result<Arc<ValidatorNode>> {
         Self::start_async(config, registry_service, custom_rpc_runtime).await
     }
 
@@ -393,7 +385,7 @@ impl SuiNode {
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
-    ) -> Result<Arc<SuiNode>> {
+    ) -> Result<Arc<ValidatorNode>> {
         NodeConfigMetrics::new(&registry_service.default_registry()).record_metrics(config);
         let mut config = config.clone();
         if config.supported_protocol_versions.is_none() {
@@ -1616,7 +1608,7 @@ impl SuiNode {
 }
 
 #[cfg(not(msim))]
-impl SuiNode {
+impl ValidatorNode {
     async fn fetch_jwks(
         _authority: AuthorityName,
         provider: &OIDCProvider,
@@ -1630,7 +1622,7 @@ impl SuiNode {
 }
 
 #[cfg(msim)]
-impl SuiNode {
+impl ValidatorNode {
     pub fn get_sim_node_id(&self) -> sui_simulator::task::NodeId {
         self.sim_state.sim_node.id()
     }

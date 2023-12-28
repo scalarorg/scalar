@@ -79,7 +79,7 @@ impl ClusterTrait for RemoteRunningCluster {
 #[async_trait]
 impl FullnodeClusterTrait for RemoteRunningCluster {
     fn fullnode_url(&self) -> &str {
-        &self.fullnode_url
+        self.fullnode_url.as_str()
     }
 
     fn indexer_url(&self) -> &Option<String> {

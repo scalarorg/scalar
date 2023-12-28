@@ -8,7 +8,7 @@ use anyhow::Result;
 use futures::future::try_join_all;
 use rand::rngs::OsRng;
 use std::collections::HashMap;
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::num::NonZeroUsize;
 use std::time::Duration;
 use std::{
@@ -17,7 +17,7 @@ use std::{
 };
 use sui_config::node::{DBCheckpointConfig, OverloadThresholdConfig};
 use sui_config::NodeConfig;
-use sui_node::SuiNodeHandle;
+use sui_node::handle::ValidatorNodeHandle;
 use sui_protocol_config::{ProtocolVersion, SupportedProtocolVersions};
 use sui_swarm_config::genesis_config::{AccountConfig, GenesisConfig, ValidatorGenesisConfig};
 use sui_swarm_config::network_config::NetworkConfig;
@@ -28,21 +28,18 @@ use sui_swarm_config::node_config_builder::FullnodeConfigBuilder;
 use sui_types::base_types::AuthorityName;
 use sui_types::object::Object;
 use tempfile::TempDir;
-
+use tracing::info;
 pub struct ValidatorSwarmBuilder<R = OsRng> {
     rng: R,
     // template: NodeConfig,
     dir: Option<PathBuf>,
     committee: CommitteeConfig,
+    consensus_rpc_host: Option<String>,
+    consensus_rpc_port: Option<u16>,
     genesis_config: Option<GenesisConfig>,
     network_config: Option<NetworkConfig>,
     additional_objects: Vec<Object>,
-    fullnode_count: usize,
-    fullnode_rpc_port: Option<u16>,
-    fullnode_rpc_addr: Option<SocketAddr>,
     supported_protocol_versions_config: ProtocolVersionsConfig,
-    // Default to supported_protocol_versions_config, but can be overridden.
-    fullnode_supported_protocol_versions_config: Option<ProtocolVersionsConfig>,
     db_checkpoint_config: DBCheckpointConfig,
     jwk_fetch_interval: Option<Duration>,
     num_unpruned_validators: Option<usize>,
@@ -57,14 +54,12 @@ impl ValidatorSwarmBuilder {
             rng: OsRng,
             dir: None,
             committee: CommitteeConfig::Size(NonZeroUsize::new(1).unwrap()),
+            consensus_rpc_host: None,
+            consensus_rpc_port: None,
             genesis_config: None,
             network_config: None,
             additional_objects: vec![],
-            fullnode_count: 0,
-            fullnode_rpc_port: None,
-            fullnode_rpc_addr: None,
             supported_protocol_versions_config: ProtocolVersionsConfig::Default,
-            fullnode_supported_protocol_versions_config: None,
             db_checkpoint_config: DBCheckpointConfig::default(),
             jwk_fetch_interval: None,
             num_unpruned_validators: None,
@@ -80,15 +75,12 @@ impl<R> ValidatorSwarmBuilder<R> {
             rng,
             dir: self.dir,
             committee: self.committee,
+            consensus_rpc_host: self.consensus_rpc_host,
+            consensus_rpc_port: self.consensus_rpc_port,
             genesis_config: self.genesis_config,
             network_config: self.network_config,
             additional_objects: self.additional_objects,
-            fullnode_count: self.fullnode_count,
-            fullnode_rpc_port: self.fullnode_rpc_port,
-            fullnode_rpc_addr: self.fullnode_rpc_addr,
             supported_protocol_versions_config: self.supported_protocol_versions_config,
-            fullnode_supported_protocol_versions_config: self
-                .fullnode_supported_protocol_versions_config,
             db_checkpoint_config: self.db_checkpoint_config,
             jwk_fetch_interval: self.jwk_fetch_interval,
             num_unpruned_validators: self.num_unpruned_validators,
@@ -114,7 +106,16 @@ impl<R> ValidatorSwarmBuilder<R> {
         self.committee = CommitteeConfig::Size(committee_size);
         self
     }
-
+    pub fn with_consensus_rpc_host(mut self, consensus_rpc_host: String) -> Self {
+        assert!(self.consensus_rpc_host.is_none());
+        self.consensus_rpc_host = Some(consensus_rpc_host);
+        self
+    }
+    pub fn with_consensus_rpc_port(mut self, consensus_rpc_port: u16) -> Self {
+        assert!(self.consensus_rpc_port.is_none());
+        self.consensus_rpc_port = Some(consensus_rpc_port);
+        self
+    }
     pub fn with_validators(mut self, validators: Vec<ValidatorGenesisConfig>) -> Self {
         self.committee = CommitteeConfig::Validators(validators);
         self
@@ -153,23 +154,6 @@ impl<R> ValidatorSwarmBuilder<R> {
         self
     }
 
-    pub fn with_fullnode_count(mut self, fullnode_count: usize) -> Self {
-        self.fullnode_count = fullnode_count;
-        self
-    }
-
-    pub fn with_fullnode_rpc_port(mut self, fullnode_rpc_port: u16) -> Self {
-        assert!(self.fullnode_rpc_addr.is_none());
-        self.fullnode_rpc_port = Some(fullnode_rpc_port);
-        self
-    }
-
-    pub fn with_fullnode_rpc_addr(mut self, fullnode_rpc_addr: SocketAddr) -> Self {
-        assert!(self.fullnode_rpc_port.is_none());
-        self.fullnode_rpc_addr = Some(fullnode_rpc_addr);
-        self
-    }
-
     pub fn with_epoch_duration_ms(mut self, epoch_duration_ms: u64) -> Self {
         self.get_or_init_genesis_config()
             .parameters
@@ -199,14 +183,6 @@ impl<R> ValidatorSwarmBuilder<R> {
 
     pub fn with_supported_protocol_versions_config(mut self, c: ProtocolVersionsConfig) -> Self {
         self.supported_protocol_versions_config = c;
-        self
-    }
-
-    pub fn with_fullnode_supported_protocol_versions_config(
-        mut self,
-        c: ProtocolVersionsConfig,
-    ) -> Self {
-        self.fullnode_supported_protocol_versions_config = Some(c);
         self
     }
 
@@ -246,7 +222,8 @@ impl<R: rand::RngCore + rand::CryptoRng> ValidatorSwarmBuilder<R> {
         } else {
             SwarmDirectory::Temporary(TempDir::new().unwrap())
         };
-
+        let grpc_host = self.consensus_rpc_host.as_ref();
+        let grpc_port = self.consensus_rpc_port.as_ref();
         let network_config = self.network_config.unwrap_or_else(|| {
             let mut config_builder = ConfigBuilder::new(dir.as_ref());
 
@@ -281,53 +258,37 @@ impl<R: rand::RngCore + rand::CryptoRng> ValidatorSwarmBuilder<R> {
                 )
                 .build()
         });
-
         let mut nodes: HashMap<_, _> = network_config
             .validator_configs()
             .iter()
-            .map(|config| {
-                (
-                    config.protocol_public_key(),
-                    ValidatorNode::new(config.to_owned()),
-                )
+            .enumerate()
+            .map(|(ind, config)| {
+                let mut config = config.to_owned();
+                if let (Some(host), Some(port)) = (grpc_host, grpc_port) {
+                    let network_address = format!(
+                        "/ip4/{}/tcp/{}/http",
+                        //Ipv4Addr::UNSPECIFIED,
+                        host,
+                        port.clone() + (ind as u16)
+                    );
+                    info!("Network address {network_address}");
+                    config.network_address = network_address.parse().unwrap();
+                } else if let Some(port) = grpc_port {
+                    let network_address = format!(
+                        "/ip4/{}/tcp/{}/http",
+                        Ipv4Addr::LOCALHOST,
+                        port.clone() + (ind as u16)
+                    );
+                    info!("Network address {network_address}");
+                    config.network_address = network_address.parse().unwrap();
+                }
+                (config.protocol_public_key(), ValidatorNode::new(config))
             })
             .collect();
-
-        let mut fullnode_config_builder = FullnodeConfigBuilder::new()
-            .with_config_directory(dir.as_ref().into())
-            .with_db_checkpoint_config(self.db_checkpoint_config.clone());
-        if let Some(spvc) = &self.fullnode_supported_protocol_versions_config {
-            let supported_versions = match spvc {
-                ProtocolVersionsConfig::Default => SupportedProtocolVersions::SYSTEM_DEFAULT,
-                ProtocolVersionsConfig::Global(v) => *v,
-                ProtocolVersionsConfig::PerValidator(func) => func(0, None),
-            };
-            fullnode_config_builder =
-                fullnode_config_builder.with_supported_protocol_versions(supported_versions);
-        }
-
-        if self.fullnode_count > 0 {
-            (0..self.fullnode_count).for_each(|idx| {
-                let mut builder = fullnode_config_builder.clone();
-                if idx == 0 {
-                    // Only the first fullnode is used as the rpc fullnode, we can only use the
-                    // same address once.
-                    if let Some(rpc_addr) = self.fullnode_rpc_addr {
-                        builder = builder.with_rpc_addr(rpc_addr);
-                    }
-                    if let Some(rpc_port) = self.fullnode_rpc_port {
-                        builder = builder.with_rpc_port(rpc_port);
-                    }
-                }
-                let config = builder.build(&mut OsRng, &network_config);
-                nodes.insert(config.protocol_public_key(), ValidatorNode::new(config));
-            });
-        }
         ValidatorSwarm {
             dir,
             network_config,
             nodes,
-            fullnode_config_builder,
         }
     }
 }
@@ -338,8 +299,6 @@ pub struct ValidatorSwarm {
     dir: SwarmDirectory,
     network_config: NetworkConfig,
     nodes: HashMap<AuthorityName, ValidatorNode>,
-    // Save a copy of the fullnode config builder to build future fullnodes.
-    fullnode_config_builder: FullnodeConfigBuilder,
 }
 
 impl Drop for ValidatorSwarm {
@@ -408,7 +367,7 @@ impl ValidatorSwarm {
             .filter(|node| node.config.consensus_config.is_some())
     }
 
-    pub fn validator_node_handles(&self) -> Vec<SuiNodeHandle> {
+    pub fn validator_node_handles(&self) -> Vec<ValidatorNodeHandle> {
         self.validator_nodes()
             .map(|node| node.get_node_handle().unwrap())
             .collect()
@@ -424,24 +383,13 @@ impl ValidatorSwarm {
         })
     }
 
-    /// Return an iterator over shared references of all Fullnodes.
-    pub fn fullnodes(&self) -> impl Iterator<Item = &ValidatorNode> {
-        self.nodes
-            .values()
-            .filter(|node| node.config.consensus_config.is_none())
-    }
-
-    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> SuiNodeHandle {
+    pub async fn spawn_new_node(&mut self, config: NodeConfig) -> ValidatorNodeHandle {
         let name = config.protocol_public_key();
         let node = ValidatorNode::new(config);
         node.start().await.unwrap();
         let handle = node.get_node_handle().unwrap();
         self.nodes.insert(name, node);
         handle
-    }
-
-    pub fn get_fullnode_config_builder(&self) -> FullnodeConfigBuilder {
-        self.fullnode_config_builder.clone()
     }
 }
 
@@ -455,17 +403,12 @@ mod test {
         telemetry_subscribers::init_for_testing();
         let mut swarm = ValidatorSwarm::builder()
             .committee_size(NonZeroUsize::new(4).unwrap())
-            .with_fullnode_count(1)
             .build();
 
         swarm.launch().await.unwrap();
 
         for validator in swarm.validator_nodes() {
             validator.health_check(true).await.unwrap();
-        }
-
-        for fullnode in swarm.fullnodes() {
-            fullnode.health_check(false).await.unwrap();
         }
     }
 }

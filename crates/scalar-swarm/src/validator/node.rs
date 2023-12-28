@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use anyhow::Result;
 use std::sync::Mutex;
 use sui_config::NodeConfig;
-use sui_node::SuiNodeHandle;
+use sui_node::handle::ValidatorNodeHandle;
 use sui_types::base_types::AuthorityName;
 use sui_types::base_types::ConciseableName;
 use tap::TapFallible;
@@ -78,7 +78,7 @@ impl ValidatorNode {
             .map_or(false, |c| c.is_alive())
     }
 
-    pub fn get_node_handle(&self) -> Option<SuiNodeHandle> {
+    pub fn get_node_handle(&self) -> Option<ValidatorNodeHandle> {
         self.container
             .lock()
             .unwrap()

@@ -133,6 +133,21 @@ async fn submit_transaction_to_consensus_adapter() {
                 .await?;
             Ok(())
         }
+        async fn submit_ns_transaction_to_consensus(
+            &self,
+            transaction: &NsTransaction,
+            epoch_store: &Arc<AuthorityPerEpochStore>,
+        ) -> SuiResult {
+            // epoch_store
+            //     .process_consensus_transactions_for_tests(
+            //         vec![SequencedConsensusTransaction::new_test(transaction.clone())],
+            //         &Arc::new(CheckpointServiceNoop {}),
+            //         self.0.db(),
+            //         &self.0.metrics.skipped_consensus_txns,
+            //     )
+            //     .await?;
+            Ok(())
+        }
     }
     // Make a new consensus adapter instance.
     let adapter = Arc::new(ConsensusAdapter::new(
