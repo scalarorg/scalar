@@ -60,6 +60,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use std::{fmt, path::PathBuf, str::FromStr, sync::Arc, time::Duration};
 use sui_archival::reader::ArchiveReaderBalancer;
 use sui_archival::writer::ArchiveWriter;
+use sui_config::node::ConsensusProtocol;
 use sui_config::node::DBCheckpointConfig;
 use sui_config::node_config_metrics::NodeConfigMetrics;
 use sui_config::ConsensusConfig;
@@ -158,6 +159,7 @@ impl FullNode {
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
     ) -> Result<Arc<FullNode>> {
+        let is_full_node = true;
         NodeConfigMetrics::new(&registry_service.default_registry()).record_metrics(config);
         let mut config = config.clone();
         if config.supported_protocol_versions.is_none() {
@@ -168,8 +170,6 @@ impl FullNode {
             config.supported_protocol_versions = Some(SupportedProtocolVersions::SYSTEM_DEFAULT);
         }
 
-        let is_validator = config.consensus_config().is_some();
-        let is_full_node = !is_validator;
         let prometheus_registry = registry_service.default_registry();
 
         info!(node =? config.protocol_public_key(),
@@ -442,7 +442,29 @@ impl FullNode {
 
         let connection_monitor_status = Arc::new(connection_monitor_status);
         let sui_node_metrics = Arc::new(SuiNodeMetrics::new(&registry_service.default_registry()));
-
+        /*
+         * 2023 Dec 28
+         * Scalar: TaiVV
+         * Construct consensus adapter for fullnode
+         */
+        let consensus_config = config
+            .consensus_config()
+            .ok_or_else(|| anyhow!("Validator is missing consensus config"))?;
+        let client: Arc<dyn SubmitToConsensus> = match consensus_config.protocol {
+            ConsensusProtocol::Narwhal => Arc::new(LazyNarwhalClient::new(
+                consensus_config.address().to_owned(),
+            )),
+            ConsensusProtocol::Mysticeti => Arc::new(LazyMysticetiClient::new()),
+        };
+        let consensus_adapter = Arc::new(Self::construct_consensus_adapter(
+            &committee,
+            consensus_config,
+            state.name,
+            connection_monitor_status.clone(),
+            &registry_service.default_registry(),
+            epoch_store.protocol_config().clone(),
+            client,
+        ));
         let node = Self {
             config,
             _http_server: http_server,

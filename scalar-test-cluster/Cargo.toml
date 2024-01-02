@@ -27,7 +27,7 @@ derivative.workspace = true
 fastcrypto.workspace = true
 fastcrypto-zkp.workspace = true
 futures.workspace = true
-# git-version.workspace = true
+git-version.workspace = true
 http.workspace = true
 # humantime.workspace = true
 # im.workspace = true
@@ -76,7 +76,7 @@ scalar-node = { path = "../crates/scalar-node" }
 scalar-core = { path = "../crates/scalar-core" }
 scalar-swarm = { path = "../crates/scalar-swarm" }
 scalar-swarm-config = { path = "../crates/scalar-swarm-config" }
-
+scalar-telemetry = { path = "../crates/scalar-telemetry" }
 mysten-common = { path = "../sui/crates/mysten-common" }
 mysten-metrics = { path = "../sui/crates/mysten-metrics" }
 mysten-network = { path = "../sui/crates/mysten-network" }

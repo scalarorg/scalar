@@ -9,46 +9,21 @@ use anemo_tower::trace::TraceLayer;
 use anyhow::anyhow;
 use anyhow::Result;
 use arc_swap::ArcSwap;
+use checkpoint_executor::CheckpointExecutor;
 use fastcrypto_zkp::bn254::zk_login::JwkId;
 use fastcrypto_zkp::bn254::zk_login::OIDCProvider;
-use futures::TryFutureExt;
-use prometheus::Registry;
-use scalar_core::authority::CHAIN_IDENTIFIER;
-use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
-use std::collections::{BTreeSet, HashMap, HashSet};
-use std::fmt;
-use std::path::PathBuf;
-use std::str::FromStr;
-#[cfg(msim)]
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
-use std::time::Duration;
-use sui_json_rpc_api::JsonRpcMetrics;
-use sui_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
-use sui_types::base_types::ConciseableName;
-use sui_types::digests::ChainIdentifier;
-use sui_types::message_envelope::get_google_jwk_bytes;
-use sui_types::randomness_state::get_randomness_state_obj_initial_shared_version;
-use sui_types::sui_system_state::SuiSystemState;
-use tap::tap::TapFallible;
-use tokio::runtime::Handle;
-use tokio::sync::broadcast;
-use tokio::sync::oneshot;
-use tokio::sync::{watch, Mutex};
-use tokio::task::JoinHandle;
-use tower::ServiceBuilder;
-use tracing::{debug, error, warn};
-use tracing::{error_span, info, Instrument};
-use checkpoint_executor::CheckpointExecutor;
 use fastcrypto_zkp::bn254::zk_login::JWK;
+use futures::TryFutureExt;
 use mysten_metrics::{spawn_monitored_task, RegistryService};
 use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
 use narwhal_network::metrics::{NetworkConnectionMetrics, NetworkMetrics};
+use prometheus::Registry;
 use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfiguration;
+use scalar_core::authority::CHAIN_IDENTIFIER;
 use scalar_core::authority_aggregator::AuthorityAggregator;
 use scalar_core::authority_server::{ValidatorService, ValidatorServiceMetrics};
 use scalar_core::checkpoints::checkpoint_executor;
@@ -59,6 +34,7 @@ use scalar_core::checkpoints::{
 use scalar_core::consensus_adapter::{
     CheckConnection, ConnectionMonitorStatus, ConsensusAdapter, ConsensusAdapterMetrics,
 };
+use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
 use scalar_core::consensus_manager::{ConsensusManager, ConsensusManagerTrait};
 use scalar_core::consensus_throughput_calculator::{
     ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
@@ -79,6 +55,14 @@ use scalar_core::{
     authority_client::NetworkAuthorityClient,
 };
 use scalar_kvstore::writer::setup_key_value_store_uploader;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::fmt;
+use std::path::PathBuf;
+use std::str::FromStr;
+#[cfg(msim)]
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use std::time::Duration;
 use sui_archival::reader::ArchiveReaderBalancer;
 use sui_archival::writer::ArchiveWriter;
 use sui_config::node::{ConsensusProtocol, DBCheckpointConfig};
@@ -92,6 +76,7 @@ use sui_json_rpc::read_api::ReadApi;
 use sui_json_rpc::transaction_builder_api::TransactionBuilderApi;
 use sui_json_rpc::transaction_execution_api::TransactionExecutionApi;
 use sui_json_rpc::JsonRpcServerBuilder;
+use sui_json_rpc_api::JsonRpcMetrics;
 use sui_macros::{fail_point_async, replay_log};
 use sui_network::api::ValidatorServer;
 use sui_network::discovery;
@@ -106,17 +91,32 @@ use sui_storage::{
     key_value_store_metrics::KeyValueStoreMetrics,
 };
 use sui_storage::{FileCompression, IndexStore, StorageFormat};
+use sui_types::authenticator_state::get_authenticator_state_obj_initial_shared_version;
+use sui_types::base_types::ConciseableName;
 use sui_types::base_types::{AuthorityName, EpochId};
 use sui_types::committee::Committee;
 use sui_types::crypto::KeypairTraits;
+use sui_types::digests::ChainIdentifier;
 use sui_types::error::{SuiError, SuiResult};
+use sui_types::message_envelope::get_google_jwk_bytes;
 use sui_types::messages_consensus::{
     check_total_jwk_size, AuthorityCapabilities, ConsensusTransaction,
 };
 use sui_types::quorum_driver_types::QuorumDriverEffectsQueueResult;
+use sui_types::randomness_state::get_randomness_state_obj_initial_shared_version;
 use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemState;
 use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
+use sui_types::sui_system_state::SuiSystemState;
 use sui_types::sui_system_state::SuiSystemStateTrait;
+use tap::tap::TapFallible;
+use tokio::runtime::Handle;
+use tokio::sync::broadcast;
+use tokio::sync::oneshot;
+use tokio::sync::{watch, Mutex};
+use tokio::task::JoinHandle;
+use tower::ServiceBuilder;
+use tracing::{debug, error, warn};
+use tracing::{error_span, info, Instrument};
 use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
@@ -386,6 +386,7 @@ impl ValidatorNode {
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
     ) -> Result<Arc<ValidatorNode>> {
+        let is_full_node = false;
         NodeConfigMetrics::new(&registry_service.default_registry()).record_metrics(config);
         let mut config = config.clone();
         if config.supported_protocol_versions.is_none() {
@@ -396,8 +397,6 @@ impl ValidatorNode {
             config.supported_protocol_versions = Some(SupportedProtocolVersions::SYSTEM_DEFAULT);
         }
 
-        let is_validator = config.consensus_config().is_some();
-        let is_full_node = !is_validator;
         let prometheus_registry = registry_service.default_registry();
 
         info!(node =? config.protocol_public_key(),
