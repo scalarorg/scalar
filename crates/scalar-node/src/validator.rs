@@ -19,6 +19,7 @@ use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
 use narwhal_network::metrics::{NetworkConnectionMetrics, NetworkMetrics};
 use prometheus::Registry;
+use scalar_consensus_common::ConsensusApiServer;
 use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
@@ -36,6 +37,7 @@ use scalar_core::consensus_adapter::{
 };
 use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
 use scalar_core::consensus_manager::{ConsensusManager, ConsensusManagerTrait};
+use scalar_core::consensus_service::ConsensusService;
 use scalar_core::consensus_throughput_calculator::{
     ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
 };
@@ -1064,6 +1066,7 @@ impl ValidatorNode {
             config,
             state.clone(),
             consensus_adapter.clone(),
+            epoch_store.clone(),
             &registry_service.default_registry(),
         )
         .await?;
@@ -1254,11 +1257,12 @@ impl ValidatorNode {
         config: &NodeConfig,
         state: Arc<AuthorityState>,
         consensus_adapter: Arc<ConsensusAdapter>,
+        epoch_store: Arc<AuthorityPerEpochStore>,
         prometheus_registry: &Registry,
     ) -> Result<tokio::task::JoinHandle<Result<()>>> {
         let validator_service = ValidatorService::new(
             state.clone(),
-            consensus_adapter,
+            consensus_adapter.clone(),
             Arc::new(ValidatorServiceMetrics::new(prometheus_registry)),
         );
 
@@ -1267,7 +1271,13 @@ impl ValidatorNode {
         server_conf.load_shed = config.grpc_load_shed;
         let mut server_builder =
             ServerBuilder::from_config(&server_conf, GrpcMetrics::new(prometheus_registry));
-
+        /*
+         * Scalar: Add consensus grpc server
+         */
+        let consensus_service =
+            ConsensusService::new(state, consensus_adapter, epoch_store, prometheus_registry);
+        server_builder = server_builder.add_service(ConsensusApiServer::new(consensus_service));
+        /************And adding consensus grpc server ****************/
         server_builder = server_builder.add_service(ValidatorServer::new(validator_service));
 
         let server = server_builder

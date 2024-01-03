@@ -971,7 +971,6 @@ impl FullNode {
         let consensus_service = ConsensusService::new(
             state,
             consensus_adapter,
-            validator_service.clone(),
             epoch_store,
             prometheus_registry,
         );

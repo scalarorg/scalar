@@ -65,7 +65,6 @@ fn from_ns_transactions(ns_transactions: Vec<NsTransaction>) -> CommitedTransact
 pub struct ConsensusService {
     state: Arc<AuthorityState>,
     consensus_adapter: Arc<ConsensusAdapter>,
-    validator_service: ValidatorService,
     epoch_store: Arc<AuthorityPerEpochStore>,
     metrics: Arc<ConsensusServiceMetrics>,
 }
@@ -73,14 +72,12 @@ impl ConsensusService {
     pub fn new(
         state: Arc<AuthorityState>,
         consensus_adapter: Arc<ConsensusAdapter>,
-        validator_service: ValidatorService,
         epoch_store: Arc<AuthorityPerEpochStore>,
         prometheus_registry: &Registry,
     ) -> Self {
         Self {
             state,
             consensus_adapter,
-            validator_service,
             epoch_store,
             metrics: Arc::new(ConsensusServiceMetrics::new(prometheus_registry)),
         }

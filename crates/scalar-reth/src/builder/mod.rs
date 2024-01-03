@@ -11,10 +11,14 @@ use crate::{
         db_type::{DatabaseBuilder, DatabaseInstance},
         ext::{RethCliExt, RethNodeCommandConfig},
     },
+    consensus::{
+        ConsensusArgs, EitherDownloader, ScalarBuilder, ScalarConsensus, ScalarMiningMode,
+    },
     commands::node::{cl_events::ConsensusLayerHealthEvents, events},
     dirs::{ChainPath, DataDirPath, MaybePlatformPath},
     init::init_genesis,
     prometheus_exporter,
+    proto::ExternalTransaction,
     utils::{get_single_header, write_peers_to_file},
     version::SHORT_VERSION,
 };
@@ -49,7 +53,6 @@ use reth_interfaces::{
     consensus::Consensus,
     p2p::{
         bodies::{client::BodiesClient, downloader::BodyDownloader},
-        either::EitherDownloader,
         headers::{client::HeadersClient, downloader::HeaderDownloader},
     },
     RethResult,
@@ -233,6 +236,7 @@ pub struct NodeConfig {
     /// All pruning related arguments
     pub pruning: PruningArgs,
 
+    pub consensus: ConsensusArgs,
     /// Rollup related arguments
     #[cfg(feature = "optimism")]
     pub rollup: crate::args::RollupArgs,
@@ -256,6 +260,7 @@ impl NodeConfig {
             db: DatabaseArgs::default(),
             dev: DevArgs::default(),
             pruning: PruningArgs::default(),
+            consensus: ConsensusArgs::default(),
             #[cfg(feature = "optimism")]
             rollup: crate::args::RollupArgs::default(),
         }
@@ -348,6 +353,11 @@ impl NodeConfig {
     /// Set the pruning args for the node
     pub fn with_pruning(mut self, pruning: PruningArgs) -> Self {
         self.pruning = pruning;
+        self
+    }
+
+    pub fn with_consensus(mut self, consensus: ConsensusArgs) -> Self {
+        self.consensus = consensus;
         self
     }
 
@@ -1008,6 +1018,7 @@ impl Default for NodeConfig {
             db: DatabaseArgs::default(),
             dev: DevArgs::default(),
             pruning: PruningArgs::default(),
+            consensus: ConsensusArgs::default(),
             #[cfg(feature = "optimism")]
             rollup: crate::args::RollupArgs::default(),
         }
@@ -1041,7 +1052,7 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
         // get config
         let config = self.load_config()?;
 
-        let prometheus_handle = self.config.install_prometheus_recorder()?;
+        //let prometheus_handle = self.config.install_prometheus_recorder()?;
         info!(target: "reth::cli", "Database opened");
 
         let mut provider_factory =
@@ -1059,9 +1070,9 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
             snapshotter.highest_snapshot_receiver(),
         )?;
 
-        self.config
-            .start_metrics_endpoint(prometheus_handle, Arc::clone(&self.db))
-            .await?;
+        // self.config
+        //     .start_metrics_endpoint(prometheus_handle, Arc::clone(&self.db))
+        //     .await?;
 
         debug!(target: "reth::cli", chain=%self.config.chain.chain, genesis=?self.config.chain.genesis_hash(), "Initializing genesis");
 
@@ -1194,7 +1205,46 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
             debug!(target: "reth::cli", "Spawning auto mine task");
             executor.spawn(Box::pin(task));
 
-            (pipeline, EitherDownloader::Left(client))
+            (pipeline, EitherDownloader::AutoSeal(client))
+        } else if self.config.consensus.narwhal {
+            info!(target: "reth::cli", "Starting Reth with narwhal consensus");
+            let (tx_commited_transactions, rx_commited_transactions) =
+                unbounded_channel::<Vec<ExternalTransaction>>();
+            let mining_mode = ScalarMiningMode::narwhal(
+                transaction_pool.pending_transactions_listener(),
+                rx_commited_transactions,
+            );
+            let (_, client, mut task) = ScalarBuilder::new(
+                Arc::clone(&self.config.chain),
+                blockchain_db.clone(),
+                transaction_pool.clone(),
+                mining_mode,
+                consensus_engine_tx.clone(),
+                canon_state_notification_sender,
+                tx_commited_transactions,
+                self.config.consensus.clone(),
+            )
+            .build();
+
+            let mut pipeline = self
+                .config
+                .build_networked_pipeline(
+                    &config.stages,
+                    client.clone(),
+                    Arc::clone(&consensus),
+                    provider_factory.clone(),
+                    &executor.clone(),
+                    sync_metrics_tx,
+                    prune_config.clone(),
+                    max_block,
+                )
+                .await?;
+
+            let pipeline_events = pipeline.events();
+            task.set_pipeline_events(pipeline_events);
+            debug!(target: "reth::cli", "Spawning auto mine task");
+            executor.spawn(Box::pin(task));
+            (pipeline, EitherDownloader::Scalar(client))
         } else {
             let pipeline = self
                 .config
@@ -1210,7 +1260,7 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
                 )
                 .await?;
 
-            (pipeline, EitherDownloader::Right(network_client))
+            (pipeline, EitherDownloader::Beacon(network_client))
         };
 
         let pipeline_events = pipeline.events();

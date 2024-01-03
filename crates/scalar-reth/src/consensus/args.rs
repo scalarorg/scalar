@@ -37,6 +37,18 @@ pub struct ConsensusArgs {
     #[arg(long = "narwhal.max_transactions", default_value_t = DEFAULT_MAX_BLOCK_TRANSACTIONS)]
     pub narwhal_max_transactions: u32,
 }
+
+impl Default for ConsensusArgs {
+    fn default() -> Self {
+        Self {
+            narwhal: false,
+            narwhal_addr: Ipv4Addr::LOCALHOST.into(),
+            narwhal_port: DEFAULT_NARWHAL_PORT,
+            narwhal_blocktime: DEFAULT_BLOCK_TIME,
+            narwhal_max_transactions: DEFAULT_MAX_BLOCK_TRANSACTIONS,
+        }
+    }
+}
 // impl ConsensusArgs {
 //     /// Configures and launches _all_ servers.
 //     ///

@@ -349,7 +349,24 @@ impl TransactionManager {
             .expect("Initialize TransactionManager with pending certificates failed.");
         transaction_manager
     }
-
+    //Publish external transaction to other service via the opened gRpc stream
+    #[instrument(level = "trace", skip_all)]
+    pub(crate) fn publish_ns_transactions(
+        &self,
+        transactions: Vec<NsTransaction>,
+        epoch_store: &AuthorityPerEpochStore,
+    ) -> SuiResult<()> {
+        warn!("publish_ns_transactions {:?}", &transactions);
+        // let filtered_transactions = self
+        //     .epoch_tx_cache
+        //     .write()
+        //     .filter_transactions(epoch_store.epoch(), transactions);
+        // if (filtered_transactions.len() > 0) {
+        //     self.tx_commited_transactions.send(filtered_transactions);
+        // }
+        self.tx_commited_transactions.send(transactions);
+        Ok(())
+    }
     /// Enqueues certificates / verified transactions into TransactionManager. Once all of the input objects are available
     /// locally for a certificate, the certified transaction will be sent to execution driver.
     ///

@@ -10,7 +10,7 @@ use crate::checkpoints::{CheckpointService, CheckpointServiceNotify};
 use crate::consensus_throughput_calculator::ConsensusThroughputCalculator;
 use crate::consensus_types::committee_api::CommitteeAPI;
 use crate::consensus_types::consensus_output_api::ConsensusOutputAPI;
-use crate::consensus_types::AuthorityIndex;
+use crate::consensus_types::{AuthorityIndex, ConsensusTransactionWrapper, NsTransaction};
 use crate::scoring_decision::update_low_scoring_authorities;
 use crate::transaction_manager::TransactionManager;
 use arc_swap::ArcSwap;
@@ -245,6 +245,7 @@ impl<T: ObjectStore + Send + Sync, C: CheckpointServiceNotify + Send + Sync>
 
         /* (serialized, transaction, output_cert) */
         let mut transactions = vec![];
+        let mut ns_transactions = vec![];
         let timestamp = consensus_output.commit_timestamp_ms();
         let leader_author = consensus_output.leader_author_index();
         let commit_sub_dag_index = consensus_output.commit_sub_dag_index();
@@ -337,44 +338,60 @@ impl<T: ObjectStore + Send + Sync, C: CheckpointServiceNotify + Send + Sync>
                     .inc_num_messages(authority_index as usize);
                 for (serialized_transaction, transaction) in authority_transactions {
                     bytes += serialized_transaction.len();
-                    self.metrics
-                        .consensus_handler_processed
-                        .with_label_values(&[classify(&transaction)])
-                        .inc();
-                    if matches!(
-                        &transaction.kind,
-                        ConsensusTransactionKind::UserTransaction(_)
-                    ) {
-                        self.last_consensus_stats
-                            .stats
-                            .inc_num_user_transactions(authority_index as usize);
-                    }
-                    if let ConsensusTransactionKind::RandomnessStateUpdate(
-                        randomness_round,
-                        bytes,
-                    ) = &transaction.kind
-                    {
-                        if self.epoch_store.randomness_state_enabled() {
-                            debug!("adding RandomnessStateUpdate tx for commit round {round:?}, randomness round {randomness_round:?}");
-                            let randomness_state_update_transaction = self
-                                .randomness_state_update_transaction(
-                                    *randomness_round,
-                                    bytes.clone(),
-                                );
-
-                            transactions.push((
-                                empty_bytes.as_slice(),
-                                SequencedConsensusTransactionKind::System(
-                                    randomness_state_update_transaction,
-                                ),
-                                consensus_output.leader_author_index(),
-                            ));
-                        } else {
-                            debug!("ignoring RandomnessStateUpdate tx for commit round {round:?}, randomness round {randomness_round:?}: randomness state is not enabled on this node")
+                    match transaction {
+                        ConsensusTransactionWrapper::Namespace(transaction) => {
+                            self.metrics
+                                .consensus_handler_processed
+                                .with_label_values(&[transaction.namespace.as_str()])
+                                .inc();
+                            ns_transactions.push(transaction);
                         }
-                    } else {
-                        let transaction = SequencedConsensusTransactionKind::External(transaction);
-                        transactions.push((serialized_transaction, transaction, authority_index));
+                        ConsensusTransactionWrapper::Consensus(transaction) => {
+                            self.metrics
+                                .consensus_handler_processed
+                                .with_label_values(&[classify(&transaction)])
+                                .inc();
+                            if matches!(
+                                &transaction.kind,
+                                ConsensusTransactionKind::UserTransaction(_)
+                            ) {
+                                self.last_consensus_stats
+                                    .stats
+                                    .inc_num_user_transactions(authority_index as usize);
+                            }
+                            if let ConsensusTransactionKind::RandomnessStateUpdate(
+                                randomness_round,
+                                bytes,
+                            ) = &transaction.kind
+                            {
+                                if self.epoch_store.randomness_state_enabled() {
+                                    debug!("adding RandomnessStateUpdate tx for commit round {round:?}, randomness round {randomness_round:?}");
+                                    let randomness_state_update_transaction = self
+                                        .randomness_state_update_transaction(
+                                            *randomness_round,
+                                            bytes.clone(),
+                                        );
+
+                                    transactions.push((
+                                        empty_bytes.as_slice(),
+                                        SequencedConsensusTransactionKind::System(
+                                            randomness_state_update_transaction,
+                                        ),
+                                        consensus_output.leader_author_index(),
+                                    ));
+                                } else {
+                                    debug!("ignoring RandomnessStateUpdate tx for commit round {round:?}, randomness round {randomness_round:?}: randomness state is not enabled on this node")
+                                }
+                            } else {
+                                let transaction =
+                                    SequencedConsensusTransactionKind::External(transaction);
+                                transactions.push((
+                                    serialized_transaction,
+                                    transaction,
+                                    authority_index,
+                                ));
+                            }
+                        }
                     }
                 }
             }
@@ -468,15 +485,20 @@ impl<T: ObjectStore + Send + Sync, C: CheckpointServiceNotify + Send + Sync>
         // update the calculated throughput
         self.throughput_calculator
             .add_transactions(timestamp, transactions_to_schedule.len() as u64);
-
+        if ns_transactions.len() > 0 {
+            self.transaction_scheduler
+                .send_ns_transactions(ns_transactions)
+                .await;
+        }
         self.transaction_scheduler
-            .schedule(transactions_to_schedule)
+            .schedule_sui_transactions(transactions_to_schedule)
             .await;
     }
 }
 
 struct AsyncTransactionScheduler {
-    sender: tokio::sync::mpsc::Sender<Vec<VerifiedExecutableTransaction>>,
+    tx_sui_transaction: tokio::sync::mpsc::Sender<Vec<VerifiedExecutableTransaction>>,
+    tx_ns_transaction: tokio::sync::mpsc::Sender<Vec<NsTransaction>>,
 }
 
 impl AsyncTransactionScheduler {
@@ -484,16 +506,38 @@ impl AsyncTransactionScheduler {
         transaction_manager: Arc<TransactionManager>,
         epoch_store: Arc<AuthorityPerEpochStore>,
     ) -> Self {
-        let (sender, recv) = tokio::sync::mpsc::channel(16);
-        spawn_monitored_task!(Self::run(recv, transaction_manager, epoch_store));
-        Self { sender }
+        let (tx_sui_transaction, rx_sui_transaction) = tokio::sync::mpsc::channel(16);
+        let (tx_ns_transaction, rx_ns_transaction) = tokio::sync::mpsc::channel(16);
+        //Clone references for sui_transactions handler spawned task
+        let sui_transaction_manager = transaction_manager.clone();
+        let sui_epoch_store = epoch_store.clone();
+        spawn_monitored_task!(Self::listen_sui_transactions(
+            rx_sui_transaction,
+            sui_transaction_manager,
+            sui_epoch_store
+        ));
+        spawn_monitored_task!(Self::listen_ns_transactions(
+            rx_ns_transaction,
+            transaction_manager,
+            epoch_store
+        ));
+        Self {
+            tx_sui_transaction,
+            tx_ns_transaction,
+        }
     }
 
-    pub async fn schedule(&self, transactions: Vec<VerifiedExecutableTransaction>) {
-        self.sender.send(transactions).await.ok();
+    pub async fn schedule_sui_transactions(
+        &self,
+        transactions: Vec<VerifiedExecutableTransaction>,
+    ) {
+        self.tx_sui_transaction.send(transactions).await.ok();
     }
-
-    pub async fn run(
+    pub async fn send_ns_transactions(&self, ns_transactions: Vec<NsTransaction>) {
+        //Scalar Todo: send transactions in seperated task
+        self.tx_ns_transaction.send(ns_transactions).await.ok();
+    }
+    pub async fn listen_sui_transactions(
         mut recv: tokio::sync::mpsc::Receiver<Vec<VerifiedExecutableTransaction>>,
         transaction_manager: Arc<TransactionManager>,
         epoch_store: Arc<AuthorityPerEpochStore>,
@@ -503,6 +547,18 @@ impl AsyncTransactionScheduler {
             transaction_manager
                 .enqueue(transactions, &epoch_store)
                 .expect("transaction_manager::enqueue should not fail");
+        }
+    }
+    pub async fn listen_ns_transactions(
+        mut recv: tokio::sync::mpsc::Receiver<Vec<NsTransaction>>,
+        transaction_manager: Arc<TransactionManager>,
+        epoch_store: Arc<AuthorityPerEpochStore>,
+    ) {
+        while let Some(transactions) = recv.recv().await {
+            let _guard = monitored_scope("ConsensusHandler::enqueue");
+            transaction_manager
+                .publish_ns_transactions(transactions, &epoch_store)
+                .expect("transaction_manager::publish_ns_transactions should not fail");
         }
     }
 }

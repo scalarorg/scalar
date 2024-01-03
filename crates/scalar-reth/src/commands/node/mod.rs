@@ -10,6 +10,9 @@ use crate::{
     },
     builder::NodeConfig,
     cli::{db_type::DatabaseBuilder, ext::RethCliExt},
+    consensus::{
+        ConsensusArgs, EitherDownloader, ScalarBuilder, ScalarConsensus, ScalarMiningMode,
+    },
     dirs::{DataDirPath, MaybePlatformPath},
     runner::CliContext,
 };
@@ -111,6 +114,10 @@ pub struct NodeCommand<Ext: RethCliExt = ()> {
     /// All pruning related arguments
     #[clap(flatten)]
     pub pruning: PruningArgs,
+    
+    /// All consensus related arguments
+    #[clap(flatten)]
+    pub consensus: ConsensusArgs,
 
     /// Rollup related arguments
     #[cfg(feature = "optimism")]
@@ -141,6 +148,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             db,
             dev,
             pruning,
+            consensus,
             #[cfg(feature = "optimism")]
             rollup,
             ..
@@ -160,6 +168,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             db,
             dev,
             pruning,
+            consensus,
             #[cfg(feature = "optimism")]
             rollup,
             ext,
@@ -183,6 +192,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             db,
             dev,
             pruning,
+            consensus,
             #[cfg(feature = "optimism")]
             rollup,
             ext,
@@ -207,6 +217,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             db,
             dev,
             pruning,
+            consensus,
             #[cfg(feature = "optimism")]
             rollup,
         };
@@ -227,6 +238,8 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
     pub fn consensus(&self) -> Arc<dyn Consensus> {
         if self.dev.dev {
             Arc::new(AutoSealConsensus::new(Arc::clone(&self.chain)))
+        } else if self.consensus.narwhal {
+            Arc::new(ScalarConsensus::new(Arc::clone(&self.chain)))
         } else {
             Arc::new(BeaconConsensus::new(Arc::clone(&self.chain)))
         }
