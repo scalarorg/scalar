@@ -11,5 +11,5 @@ serde.workspace = true
 reqwest.workspace = true
 tracing.workspace = true
 
-scalar-core.workspace = true
-workspace-hack.workspace = true
+sui-core = { path = "../scalar-core", package = "scalar-core" }
+workspace-hack = { path = "../../sui/crates/workspace-hack" }

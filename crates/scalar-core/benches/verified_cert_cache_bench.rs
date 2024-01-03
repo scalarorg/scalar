@@ -5,7 +5,7 @@ use criterion::*;
 
 use criterion::Criterion;
 use scalar_core::signature_verifier::{SignatureVerifierMetrics, VerifiedDigestCache};
-use scalar_types::digests::CertificateDigest;
+use sui_types::digests::CertificateDigest;
 
 fn verified_cert_cache_bench(c: &mut Criterion) {
     let mut digests: Vec<_> = (0..(1 << 18))
@@ -27,6 +27,7 @@ fn verified_cert_cache_bench(c: &mut Criterion) {
     let metrics = SignatureVerifierMetrics::new(&registry);
     let cache = VerifiedDigestCache::<CertificateDigest>::new(
         metrics.certificate_signatures_cache_hits.clone(),
+        metrics.certificate_signatures_cache_misses.clone(),
         metrics.certificate_signatures_cache_evictions.clone(),
     );
 

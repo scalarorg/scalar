@@ -1,35 +1,46 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::authority::{AuthorityState, EffectsNotifyRead};
+use crate::authority::{
+    test_authority_builder::TestAuthorityBuilder, AuthorityState, EffectsNotifyRead,
+};
 use crate::authority_aggregator::{AuthorityAggregator, TimeoutConfig};
 use crate::epoch::committee_store::CommitteeStore;
 use crate::state_accumulator::StateAccumulator;
 use crate::test_authority_clients::LocalAuthorityClient;
 use fastcrypto::hash::MultisetHash;
 use fastcrypto::traits::KeyPair;
+use futures::future::join_all;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::ident_str;
 use prometheus::Registry;
-use scalar_config::genesis::Genesis;
-use scalar_config::local_ip_utils;
-use scalar_framework::BuiltInFramework;
-use scalar_genesis_builder::validator_info::ValidatorInfo;
-use scalar_types::base_types::{random_object_ref, ObjectID};
-use scalar_types::crypto::{
+use shared_crypto::intent::{Intent, IntentScope};
+use std::collections::{BTreeMap, HashMap};
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
+use sui_config::genesis::Genesis;
+use sui_config::local_ip_utils;
+use sui_config::node::OverloadThresholdConfig;
+use sui_framework::BuiltInFramework;
+use sui_genesis_builder::validator_info::ValidatorInfo;
+use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
+use sui_protocol_config::ProtocolConfig;
+use sui_types::base_types::{random_object_ref, ObjectID};
+use sui_types::crypto::{
     generate_proof_of_possession, get_key_pair, AccountKeyPair, AuthorityPublicKeyBytes,
     NetworkKeyPair, SuiKeyPair,
 };
-use scalar_types::crypto::{AuthorityKeyPair, Signer};
-use scalar_types::effects::{SignedTransactionEffects, TransactionEffects};
-use scalar_types::error::SuiError;
-use scalar_types::transaction::ObjectArg;
-use scalar_types::transaction::{
+use sui_types::crypto::{AuthorityKeyPair, Signer};
+use sui_types::effects::{SignedTransactionEffects, TransactionEffects};
+use sui_types::error::SuiError;
+use sui_types::transaction::ObjectArg;
+use sui_types::transaction::{
     CallArg, SignedTransaction, Transaction, TransactionData, TEST_ONLY_GAS_UNIT_FOR_TRANSFER,
 };
-use scalar_types::utils::create_fake_transaction;
-use scalar_types::utils::to_sender_signed_transaction;
-use scalar_types::{
+use sui_types::utils::create_fake_transaction;
+use sui_types::utils::to_sender_signed_transaction;
+use sui_types::{
     base_types::{AuthorityName, ExecutionDigests, ObjectRef, SuiAddress, TransactionDigest},
     committee::Committee,
     crypto::{AuthoritySignInfo, AuthoritySignature},
@@ -37,13 +48,6 @@ use scalar_types::{
     object::Object,
     transaction::CertifiedTransaction,
 };
-use shared_crypto::intent::{Intent, IntentScope};
-use std::collections::{BTreeMap, HashMap};
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
-use sui_move_build::{BuildConfig, CompiledPackage, SuiPackageHooks};
-use sui_protocol_config::ProtocolConfig;
 use tokio::time::timeout;
 use tracing::{info, warn};
 
@@ -56,7 +60,7 @@ pub async fn send_and_confirm_transaction(
 ) -> Result<(CertifiedTransaction, SignedTransactionEffects), SuiError> {
     // Make the initial request
     let epoch_store = authority.load_epoch_store_one_call_per_task();
-    let transaction = authority.verify_transaction(transaction)?;
+    let transaction = epoch_store.verify_transaction(transaction)?;
     let response = authority
         .handle_transaction(&epoch_store, transaction.clone())
         .await?;
@@ -105,7 +109,7 @@ where
     R: rand::CryptoRng + rand::RngCore,
 {
     let dir = tempfile::TempDir::new().unwrap();
-    let network_config = scalar_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
+    let network_config = sui_swarm_config::network_config_builder::ConfigBuilder::new(&dir)
         .rng(rng)
         .build();
     let genesis = network_config.genesis;
@@ -209,22 +213,18 @@ async fn init_genesis(
 ) {
     // add object_basics package object to genesis
     let modules: Vec<_> = compile_basics_package().get_modules().cloned().collect();
-    /*
-     * 23-11-07 Taivv
-     * Not include Move Package here
-     */
-    // let genesis_move_packages: Vec<_> = BuiltInFramework::genesis_move_packages().collect();
-    // let pkg = Object::new_package(
-    //     &modules,
-    //     TransactionDigest::genesis(),
-    //     ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
-    //     &genesis_move_packages,
-    // )
-    // .unwrap();
-    // let pkg_id = pkg.id();
+    let genesis_move_packages: Vec<_> = BuiltInFramework::genesis_move_packages().collect();
+    let pkg = Object::new_package(
+        &modules,
+        TransactionDigest::genesis_marker(),
+        ProtocolConfig::get_for_max_version_UNSAFE().max_move_package_size(),
+        &genesis_move_packages,
+    )
+    .unwrap();
+    let pkg_id = pkg.id();
     genesis_objects.push(pkg);
 
-    let mut builder = scalar_genesis_builder::Builder::new().add_objects(genesis_objects);
+    let mut builder = sui_genesis_builder::Builder::new().add_objects(genesis_objects);
     let mut key_pairs = Vec::new();
     for i in 0..committee_size {
         let key_pair: AuthorityKeyPair = get_key_pair().1;
@@ -270,26 +270,50 @@ pub async fn init_local_authorities(
     ObjectID,
 ) {
     let (genesis, key_pairs, framework) = init_genesis(committee_size, genesis_objects).await;
-    let (aggregator, authorities) = init_local_authorities_with_genesis(&genesis, key_pairs).await;
+    let authorities = join_all(key_pairs.iter().map(|(_, key_pair)| {
+        TestAuthorityBuilder::new()
+            .with_genesis_and_keypair(&genesis, key_pair)
+            .build()
+    }))
+    .await;
+    let aggregator = init_local_authorities_with_genesis(&genesis, authorities.clone()).await;
+    (aggregator, authorities, genesis, framework)
+}
+
+pub async fn init_local_authorities_with_overload_thresholds(
+    committee_size: usize,
+    genesis_objects: Vec<Object>,
+    overload_thresholds: OverloadThresholdConfig,
+) -> (
+    AuthorityAggregator<LocalAuthorityClient>,
+    Vec<Arc<AuthorityState>>,
+    Genesis,
+    ObjectID,
+) {
+    let (genesis, key_pairs, framework) = init_genesis(committee_size, genesis_objects).await;
+    let authorities = join_all(key_pairs.iter().map(|(_, key_pair)| {
+        TestAuthorityBuilder::new()
+            .with_genesis_and_keypair(&genesis, key_pair)
+            .with_overload_threshold_config(overload_thresholds.clone())
+            .build()
+    }))
+    .await;
+    let aggregator = init_local_authorities_with_genesis(&genesis, authorities.clone()).await;
     (aggregator, authorities, genesis, framework)
 }
 
 pub async fn init_local_authorities_with_genesis(
     genesis: &Genesis,
-    key_pairs: Vec<(AuthorityPublicKeyBytes, AuthorityKeyPair)>,
-) -> (
-    AuthorityAggregator<LocalAuthorityClient>,
-    Vec<Arc<AuthorityState>>,
-) {
+    authorities: Vec<Arc<AuthorityState>>,
+) -> AuthorityAggregator<LocalAuthorityClient> {
     telemetry_subscribers::init_for_testing();
     let committee = genesis.committee().unwrap();
 
     let mut clients = BTreeMap::new();
-    let mut states = Vec::new();
-    for (authority_name, secret) in key_pairs {
-        let client = LocalAuthorityClient::new(secret, genesis).await;
-        states.push(client.state.clone());
-        clients.insert(authority_name, client);
+    for state in authorities {
+        let name = state.name;
+        let client = LocalAuthorityClient::new_from_authority(state);
+        clients.insert(name, client);
     }
     let timeouts = TimeoutConfig {
         pre_quorum_timeout: Duration::from_secs(5),
@@ -297,16 +321,13 @@ pub async fn init_local_authorities_with_genesis(
         serial_authority_request_interval: Duration::from_secs(1),
     };
     let committee_store = Arc::new(CommitteeStore::new_for_testing(&committee));
-    (
-        AuthorityAggregator::new_with_timeouts(
-            committee,
-            committee_store,
-            clients,
-            &Registry::new(),
-            Arc::new(HashMap::new()),
-            timeouts,
-        ),
-        states,
+    AuthorityAggregator::new_with_timeouts(
+        committee,
+        committee_store,
+        clients,
+        &Registry::new(),
+        Arc::new(HashMap::new()),
+        timeouts,
     )
 }
 
@@ -412,7 +433,6 @@ pub fn make_dummy_tx(
             TEST_ONLY_GAS_UNIT_FOR_TRANSFER * 10,
             10,
         ),
-        Intent::sui_transaction(),
         vec![sender_sec],
     )
 }

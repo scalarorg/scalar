@@ -10,8 +10,8 @@ use crate::authority::{
 
 use move_core_types::language_storage::TypeTag;
 
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::{
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::{
     base_types::ObjectID,
     crypto::{get_key_pair, AccountKeyPair},
 };

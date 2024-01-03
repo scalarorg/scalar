@@ -20,18 +20,18 @@ use fastcrypto::traits::KeyPair;
 use insta::assert_yaml_snapshot;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use scalar_config::genesis::{GenesisCeremonyParameters, TokenDistributionScheduleBuilder};
-use scalar_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
-use scalar_genesis_builder::validator_info::ValidatorInfo;
-use scalar_genesis_builder::Builder;
 use scalar_swarm_config::genesis_config::GenesisConfig;
-use scalar_types::base_types::SuiAddress;
-use scalar_types::crypto::{
+use std::num::NonZeroUsize;
+use sui_config::genesis::{GenesisCeremonyParameters, TokenDistributionScheduleBuilder};
+use sui_config::node::{DEFAULT_COMMISSION_RATE, DEFAULT_VALIDATOR_GAS_PRICE};
+use sui_genesis_builder::validator_info::ValidatorInfo;
+use sui_genesis_builder::Builder;
+use sui_types::base_types::SuiAddress;
+use sui_types::crypto::{
     generate_proof_of_possession, get_key_pair_from_rng, AccountKeyPair, AuthorityKeyPair,
     NetworkKeyPair, SuiKeyPair,
 };
-use scalar_types::multiaddr::Multiaddr;
-use std::num::NonZeroUsize;
+use sui_types::multiaddr::Multiaddr;
 
 #[test]
 #[cfg_attr(msim, ignore)]

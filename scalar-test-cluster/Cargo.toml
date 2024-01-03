@@ -1,0 +1,164 @@
+[package]
+name = "scalar-test-cluster"
+version = "0.0.1"
+authors = ["Scalar org <tai@codelight.co>"]
+license = "Apache-2.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+# indexmap.workspace = true
+# anemo.workspace = true
+# anemo-tower.workspace = true
+anyhow.workspace = true
+# arc-swap.workspace = true
+async-trait.workspace = true
+axum.workspace = true
+# bcs.workspace = true
+# bytes.workspace = true
+# chrono.workspace = true
+clap.workspace = true
+const-str.workspace = true
+# dashmap.workspace = true
+derivative.workspace = true
+# enum_dispatch.workspace = true
+# either.workspace = true
+# eyre.workspace = true
+fastcrypto.workspace = true
+fastcrypto-zkp.workspace = true
+futures.workspace = true
+git-version.workspace = true
+http.workspace = true
+# humantime.workspace = true
+# im.workspace = true
+# itertools.workspace = true
+# lru.workspace = true
+# more-asserts.workspace = true
+# num_cpus.workspace = true
+# once_cell.workspace = true
+# parking_lot.workspace = true
+pprof.workspace = true
+prost.workspace = true
+prometheus.workspace = true
+rand.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+# rocksdb.workspace = true
+# serde = { workspace = true, features = ["derive", "rc"] }
+# serde_bytes = "0.11.5"
+serde_json.workspace = true
+# serde_with.workspace = true
+# serde_yaml.workspace = true
+tap.workspace = true
+tempfile.workspace = true
+# thiserror.workspace = true
+tokio = { workspace = true, features = ["full"] }
+# tokio-retry.workspace = true
+# tokio-stream.workspace = true
+tonic.workspace = true
+tonic-health.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+
+uuid.workspace = true
+# workspace-hack.workspace = true
+
+jsonrpsee = { git = "https://github.com/wlmyng/jsonrpsee.git", rev = "b1b300784795f6a64d0fcdf8f03081a9bc38bde8", features = [
+    "server",
+    "macros",
+    "ws-client",
+    "http-client",
+    "jsonrpsee-core",
+] }
+
+scalar-node = { path = "../crates/scalar-node" }
+scalar-core = { path = "../crates/scalar-core" }
+scalar-swarm = { path = "../crates/scalar-swarm" }
+scalar-swarm-config = { path = "../crates/scalar-swarm-config" }
+scalar-telemetry = { path = "../crates/scalar-telemetry" }
+mysten-common = { path = "../sui/crates/mysten-common" }
+mysten-metrics = { path = "../sui/crates/mysten-metrics" }
+mysten-network = { path = "../sui/crates/mysten-network" }
+mysten-util-mem = { path = "../sui/crates/mysten-util-mem" }
+mysten-util-mem-derive = { path = "../sui/crates/mysten-util-mem-derive" }
+
+narwhal-crypto = { path = "../sui/narwhal/crypto" }
+narwhal-network = { path = "../sui/narwhal/network" }
+narwhal-node = { path = "../sui/narwhal/node" }
+narwhal-config = { path = "../sui/narwhal/config" }
+narwhal-executor = { path = "../sui/narwhal/executor" }
+narwhal-types = { path = "../sui/narwhal/types" }
+narwhal-worker = { path = "../sui/narwhal/worker" }
+narwhal-test-utils = { path = "../sui/narwhal/test-utils" }
+mysticeti-core = { git = "https://github.com/MystenLabs/mysticeti", rev = "318d61d27f47d257d99a86983d835e9e9756bc59" }
+sui-archival = { path = "../sui/crates/sui-archival" }
+sui-config = { path = "../sui/crates/sui-config" }
+sui-macros = { path = "../sui/crates/sui-macros" }
+sui-snapshot = { path = "../sui/crates/sui-snapshot" }
+sui-simulator = { path = "../sui/crates/sui-simulator" }
+sui-storage = { path = "../sui/crates/sui-storage" }
+sui-types = { path = "../sui/crates/sui-types" }
+sui-telemetry = { path = "../sui/crates/sui-telemetry" }
+sui-keys = { path = "../sui/crates/sui-keys" }
+sui-genesis-builder = { path = "../sui/crates/sui-genesis-builder" }
+sui-network = { path = "../sui/crates/sui-network" }
+sui-json-rpc-types = { path = "../sui/crates/sui-json-rpc-types" }
+sui-protocol-config = { path = "../sui/crates/sui-protocol-config" }
+sui-sdk = { path = "../sui/crates/sui-sdk" }
+typed-store = { path = "../sui/crates/typed-store" }
+typed-store-derive = { path = "../sui/crates/typed-store-derive" }
+typed-store-error = { path = "../sui/crates/typed-store-error" }
+shared-crypto = { path = "../sui/crates/shared-crypto" }
+sui-execution = { path = "../sui/sui-execution" }
+sui-transaction-checks = { path = "../sui/crates/sui-transaction-checks" }
+sui-framework = { path = "../sui/crates/sui-framework" }
+sui-move-build = { path = "../sui/crates/sui-move-build" }
+sui-graphql-rpc = { path = "../sui/crates/sui-graphql-rpc" }
+sui-indexer = { path = "../sui/crates/sui-indexer" }
+sui-faucet = { path = "../sui/crates/sui-faucet" }
+# Import in testing only
+move-core-types = { path = "../sui/external-crates/move/crates/move-core-types" }
+move-bytecode-utils = { path = "../sui/external-crates/move/crates/move-bytecode-utils" }
+move-binary-format = { path = "../sui/external-crates/move/crates/move-binary-format" }
+move-symbol-pool = { path = "../sui/external-crates/move/crates/move-symbol-pool" }
+move-package = { path = "../sui/external-crates/move/crates/move-package" }
+enum-compat-util = { path = "../sui/external-crates/move/crates/enum-compat-util" }
+telemetry-subscribers = { path = "../sui/crates/telemetry-subscribers" }
+
+[dev-dependencies]
+clap.workspace = true
+criterion.workspace = true
+expect-test.workspace = true
+fs_extra.workspace = true
+more-asserts.workspace = true
+pretty_assertions.workspace = true
+serde-reflection.workspace = true
+serde_yaml.workspace = true
+
+
+move-symbol-pool = { path = "../sui/external-crates/move/crates/move-symbol-pool" }
+sui-test-transaction-builder = { path = "../sui/crates/sui-test-transaction-builder" }
+sui-types = { path = "../sui/crates/sui-types", features = ["test-utils"] }
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+pprof.workspace = true
+test-fuzz.workspace = true
+
+sui-macros = { path = "../sui/crates/sui-macros" }
+sui-protocol-config = { path = "../sui/crates/sui-protocol-config" }
+
+[build-dependencies]
+tonic-build.workspace = true
+
+[[bin]]
+name = "validator-cluster"
+path = "src/bin/validator_cluster.rs"
+
+[[bin]]
+name = "move-fullnode-cluster"
+path = "src/bin/fullnode_cluster.rs"
+
+[features]
+test-utils = []
+pg_integration = []

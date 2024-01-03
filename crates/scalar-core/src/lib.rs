@@ -11,17 +11,22 @@ pub mod authority_server;
 pub mod checkpoints;
 pub mod consensus_adapter;
 pub mod consensus_handler;
+pub mod consensus_listener;
+pub mod consensus_manager;
+pub mod consensus_service;
 pub mod consensus_throughput_calculator;
+pub(crate) mod consensus_types;
 pub mod consensus_validator;
 pub mod db_checkpoint_handler;
 pub mod epoch;
 mod execution_driver;
 pub mod metrics;
 pub mod module_cache_metrics;
-pub mod narwhal_manager;
+pub mod mysticeti_adapter;
 pub(crate) mod post_consensus_tx_reorder;
 pub mod quorum_driver;
 pub mod safe_client;
+pub mod scalar_validator;
 mod scoring_decision;
 mod stake_aggregator;
 pub mod state_accumulator;
@@ -30,6 +35,7 @@ pub mod streamer;
 pub mod subscription_handler;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
+mod transaction_input_loader;
 mod transaction_manager;
 pub mod transaction_orchestrator;
 pub mod verify_indexes;
@@ -46,6 +52,9 @@ mod move_package_upgrade_tests;
 #[cfg(test)]
 #[path = "unit_tests/pay_sui_tests.rs"]
 mod pay_sui_tests;
+#[cfg(test)]
+#[path = "unit_tests/shared_object_deletion_tests.rs"]
+mod shared_object_deletion_tests;
 pub mod test_authority_clients;
 #[cfg(test)]
 #[path = "unit_tests/transfer_to_object_tests.rs"]
@@ -58,3 +67,4 @@ pub mod signature_verifier;
 
 pub mod runtime;
 mod transaction_signing_filter;
+pub use transaction_manager::TransactionManager;

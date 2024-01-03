@@ -3,15 +3,15 @@
 
 use clap::Parser;
 use mysten_common::sync::async_once_cell::AsyncOnceCell;
-use scalar_config::{Config, NodeConfig};
 use scalar_core::runtime::SuiRuntimes;
 use scalar_node::metrics;
-use scalar_types::multiaddr::Multiaddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
+use sui_config::{Config, NodeConfig};
 use sui_protocol_config::SupportedProtocolVersions;
-use scalar_telemetry::send_telemetry_event;
+use sui_telemetry::send_telemetry_event;
+use sui_types::multiaddr::Multiaddr;
 use tokio::time::sleep;
 use tracing::{error, info};
 
@@ -20,7 +20,7 @@ const GIT_REVISION: &str = {
         revision
     } else {
         let version = git_version::git_version!(
-            args = ["--always", "--dirty", "--exclude", "*"],
+            args = ["--always", "--abbrev=12", "--dirty", "--exclude", "*"],
             fallback = ""
         );
 
@@ -101,7 +101,7 @@ fn main() {
     let node_once_cell_clone = node_once_cell.clone();
     let rpc_runtime = runtimes.json_rpc.handle().clone();
 
-    runtimes.scalar_node.spawn(async move {
+    runtimes.sui_node.spawn(async move {
         match scalar_node::SuiNode::start_async(&config, registry_service, Some(rpc_runtime)).await
         {
             Ok(scalar_node) => node_once_cell_clone
@@ -124,12 +124,17 @@ fn main() {
         let node = node_once_cell_clone.get().await;
         let chain_identifier = match node.state().get_chain_identifier() {
             Some(chain_identifier) => chain_identifier.to_string(),
-            None => "Unknown".to_string(),
+            None => "unknown".to_string(),
         };
 
         info!("Sui chain identifier: {chain_identifier}");
         prometheus_registry
             .register(mysten_metrics::uptime_metric(
+                if is_validator {
+                    "validator"
+                } else {
+                    "fullnode"
+                },
                 VERSION,
                 chain_identifier.as_str(),
             ))

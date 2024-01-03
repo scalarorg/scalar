@@ -1,0 +1,6 @@
+[submodule "sui"]
+	path = sui
+	url =  git@github.com:MystenLabs/sui.git
+[submodule "reth"]
+	path = reth
+	url = git@github.com:paradigmxyz/reth.git

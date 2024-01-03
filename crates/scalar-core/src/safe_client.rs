@@ -7,23 +7,23 @@ use crate::epoch::committee_store::CommitteeStore;
 use mysten_metrics::histogram::{Histogram, HistogramVec};
 use prometheus::core::GenericCounter;
 use prometheus::{register_int_counter_vec_with_registry, IntCounterVec, Registry};
-use scalar_types::crypto::AuthorityPublicKeyBytes;
-use scalar_types::effects::{SignedTransactionEffects, TransactionEffectsAPI};
-use scalar_types::messages_checkpoint::{
+use std::sync::Arc;
+use sui_types::crypto::AuthorityPublicKeyBytes;
+use sui_types::effects::{SignedTransactionEffects, TransactionEffectsAPI};
+use sui_types::messages_checkpoint::{
     CertifiedCheckpointSummary, CheckpointRequest, CheckpointResponse, CheckpointSequenceNumber,
 };
-use scalar_types::messages_grpc::{
-    HandleCertificateResponse, HandleCertificateResponseV2, ObjectInfoRequest, ObjectInfoResponse,
-    SystemStateRequest, TransactionInfoRequest, TransactionStatus, VerifiedObjectInfoResponse,
+use sui_types::messages_grpc::{
+    HandleCertificateResponseV2, ObjectInfoRequest, ObjectInfoResponse, SystemStateRequest,
+    TransactionInfoRequest, TransactionStatus, VerifiedObjectInfoResponse,
 };
-use scalar_types::messages_safe_client::PlainTransactionInfoResponse;
-use scalar_types::sui_system_state::SuiSystemState;
-use scalar_types::{base_types::*, committee::*, fp_ensure};
-use scalar_types::{
+use sui_types::messages_safe_client::PlainTransactionInfoResponse;
+use sui_types::sui_system_state::SuiSystemState;
+use sui_types::{base_types::*, committee::*, fp_ensure};
+use sui_types::{
     error::{SuiError, SuiResult},
     transaction::*,
 };
-use std::sync::Arc;
 use tap::TapFallible;
 use tracing::{debug, error};
 
@@ -321,21 +321,6 @@ where
         Ok(response)
     }
 
-    fn verify_certificate_response(
-        &self,
-        digest: &TransactionDigest,
-        response: HandleCertificateResponse,
-    ) -> SuiResult<HandleCertificateResponse> {
-        Ok(HandleCertificateResponse {
-            signed_effects: self.check_signed_effects_plain(
-                digest,
-                response.signed_effects,
-                None,
-            )?,
-            events: response.events,
-        })
-    }
-
     fn verify_certificate_response_v2(
         &self,
         digest: &TransactionDigest,
@@ -366,25 +351,6 @@ where
         let verified = check_error!(
             self.address,
             self.verify_certificate_response_v2(&digest, response),
-            "Client error in handle_certificate"
-        )?;
-        Ok(verified)
-    }
-
-    pub async fn handle_certificate(
-        &self,
-        certificate: CertifiedTransaction,
-    ) -> Result<HandleCertificateResponse, SuiError> {
-        let digest = *certificate.digest();
-        let _timer = self.metrics.handle_certificate_latency.start_timer();
-        let response = self
-            .authority_client
-            .handle_certificate(certificate)
-            .await?;
-
-        let verified = check_error!(
-            self.address,
-            self.verify_certificate_response(&digest, response),
             "Client error in handle_certificate"
         )?;
         Ok(verified)

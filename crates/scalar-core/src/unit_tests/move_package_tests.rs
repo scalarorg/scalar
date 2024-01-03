@@ -3,7 +3,10 @@
 
 use move_binary_format::file_format::CompiledModule;
 
-use scalar_types::{
+use std::{collections::BTreeMap, path::PathBuf};
+use sui_move_build::{BuildConfig, CompiledPackage};
+use sui_protocol_config::{Chain, ProtocolConfig};
+use sui_types::{
     base_types::ObjectID,
     digests::TransactionDigest,
     error::ExecutionErrorKind,
@@ -11,9 +14,6 @@ use scalar_types::{
     move_package::{MovePackage, TypeOrigin, UpgradeInfo},
     object::{Data, Object, OBJECT_START_VERSION},
 };
-use std::{collections::BTreeMap, path::PathBuf};
-use sui_move_build::{BuildConfig, CompiledPackage};
-use sui_protocol_config::{Chain, ProtocolConfig};
 
 macro_rules! type_origin_table {
     {} => { Vec::new() };

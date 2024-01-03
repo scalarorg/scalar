@@ -7,19 +7,19 @@ use axum::extract::Json;
 use axum::extract::State;
 use futures::StreamExt;
 use hyper::HeaderMap;
-//use jsonrpsee::core::server::helpers::BoundedSubscriptions;
+use jsonrpsee::core::server::helpers::BoundedSubscriptions;
 use jsonrpsee::core::server::helpers::MethodResponse;
 use jsonrpsee::core::server::helpers::MethodSink;
-use jsonrpsee::server::logger::{self, Logger, TransportProtocol};
+use jsonrpsee::core::server::rpc_module::MethodKind;
+use jsonrpsee::server::logger::{self, TransportProtocol};
 use jsonrpsee::server::RandomIntegerIdProvider;
 use jsonrpsee::types::error::{ErrorCode, BATCHES_NOT_SUPPORTED_CODE, BATCHES_NOT_SUPPORTED_MSG};
 use jsonrpsee::types::{ErrorObject, Id, InvalidRequest, Params, Request};
-//use jsonrpsee::{core::server::rpc_module::Methods, server::logger::Logger};
-use jsonrpsee::{BoundedSubscriptions, MethodCallback, Methods, SubscriptionState};
+use jsonrpsee::{core::server::rpc_module::Methods, server::logger::Logger};
 use serde_json::value::RawValue;
 
 use crate::routing_layer::RpcRouter;
-use crate::CLIENT_TARGET_API_VERSION_HEADER;
+use sui_json_rpc_api::CLIENT_TARGET_API_VERSION_HEADER;
 
 pub const MAX_RESPONSE_SIZE: u32 = 2 << 30;
 
@@ -157,8 +157,8 @@ async fn process_request<L: Logger>(
             );
             MethodResponse::error(id, ErrorObject::from(ErrorCode::MethodNotFound))
         }
-        Some((name, method)) => match method {
-            MethodCallback::Sync(callback) => {
+        Some((name, method)) => match method.inner() {
+            MethodKind::Sync(callback) => {
                 logger.on_call(
                     name,
                     params.clone(),
@@ -167,7 +167,7 @@ async fn process_request<L: Logger>(
                 );
                 (callback)(id, params, max_response_body_size as usize)
             }
-            MethodCallback::Async(callback) => {
+            MethodKind::Async(callback) => {
                 logger.on_call(
                     name,
                     params.clone(),
@@ -178,9 +178,9 @@ async fn process_request<L: Logger>(
                 let id = id.into_owned();
                 let params = params.into_owned();
 
-                (callback)(id, params, conn_id, max_response_body_size as usize).await
+                (callback)(id, params, conn_id, max_response_body_size as usize, None).await
             }
-            MethodCallback::Subscription(_) | MethodCallback::Unsubscription(_) => {
+            MethodKind::Subscription(_) | MethodKind::Unsubscription(_) => {
                 logger.on_call(
                     name,
                     params.clone(),
@@ -195,7 +195,8 @@ async fn process_request<L: Logger>(
 
     logger.on_result(
         name,
-        response.success_or_error,
+        response.success,
+        response.error_code,
         request_start,
         TransportProtocol::Http,
     );
@@ -203,7 +204,7 @@ async fn process_request<L: Logger>(
 }
 
 /// Figure out if this is a sufficiently complete request that we can extract an [`Id`] out of, or just plain
-/// unparseable garbage.
+/// unparsable garbage.
 pub fn prepare_error(data: &str) -> (Id<'_>, ErrorCode) {
     match serde_json::from_str::<InvalidRequest>(data) {
         Ok(InvalidRequest { id }) => (id, ErrorCode::InvalidRequest),
@@ -224,16 +225,19 @@ pub mod ws {
     use axum::{
         extract::{
             ws::{Message, WebSocket},
-            ConnectInfo, WebSocketUpgrade,
+            WebSocketUpgrade,
         },
         response::Response,
     };
-    //use futures::channel::mpsc;
+    use futures::channel::mpsc;
     use jsonrpsee::{
-        core::server::helpers::MethodSink, server::IdProvider,
-        types::error::reject_too_many_subscriptions, BoundedSubscriptions, SubscriptionState,
+        core::server::{
+            helpers::{BoundedSubscriptions, MethodSink},
+            rpc_module::ConnState,
+        },
+        server::IdProvider,
+        types::error::reject_too_many_subscriptions,
     };
-    use tokio::sync::mpsc;
 
     use super::*;
 
@@ -254,19 +258,14 @@ pub mod ws {
     pub async fn ws_json_rpc_upgrade<L: Logger>(
         ws: WebSocketUpgrade,
         State(service): State<JsonRpcService<L>>,
-    ) -> impl axum::response::IntoResponse {
+    ) -> Response {
         ws.on_upgrade(|ws| ws_json_rpc_handler(ws, service))
     }
 
     async fn ws_json_rpc_handler<L: Logger>(mut socket: WebSocket, service: JsonRpcService<L>) {
         #[allow(clippy::disallowed_methods)]
-        /*
-         * 23-11-10 TaiVV
-         * Upgrade to jsonrpsee 0.20.3
-         * Use limit channel instead of unbounded
-         */
-        let (tx, mut rx) = mpsc::channel::<String>(1024);
-        let mut sink = MethodSink::new_with_limit(tx, MAX_RESPONSE_SIZE, MAX_RESPONSE_SIZE);
+        let (tx, mut rx) = mpsc::unbounded::<String>();
+        let sink = MethodSink::new_with_limit(tx, MAX_RESPONSE_SIZE, MAX_RESPONSE_SIZE);
         let bounded_subscriptions = BoundedSubscriptions::new(100);
 
         loop {
@@ -277,19 +276,14 @@ pub mod ws {
                             let response =
                                 process_raw_request(&service, &msg, bounded_subscriptions.clone(), &sink).await;
                             if let Some(response) = response {
-                                //let _ = sink.send_raw(response.result);
-                                /*
-                                 * 23-11-10 TaiVV
-                                 * Upgrade to jsonrpsee 0.20.3
-                                 */
-                                let _ = sink.try_send(response.result);
+                                let _ = sink.send_raw(response.result);
                             }
                         }
                     } else {
                         break;
                     }
                 },
-                Some(response) = rx.recv() => {
+                Some(response) = rx.next() => {
                     if socket.send(Message::Text(response)).await.is_err() {
                         break;
                     }
@@ -349,8 +343,8 @@ pub mod ws {
                     ErrorObject::from(ErrorCode::MethodNotFound),
                 ))
             }
-            Some((name, method)) => match method {
-                MethodCallback::Sync(callback) => {
+            Some((name, method)) => match method.inner() {
+                MethodKind::Sync(callback) => {
                     logger.on_call(
                         name,
                         params.clone(),
@@ -359,7 +353,7 @@ pub mod ws {
                     );
                     Some((callback)(id, params, max_response_body_size as usize))
                 }
-                MethodCallback::Async(callback) => {
+                MethodKind::Async(callback) => {
                     logger.on_call(
                         name,
                         params.clone(),
@@ -370,10 +364,13 @@ pub mod ws {
                     let id = id.into_owned();
                     let params = params.into_owned();
 
-                    Some((callback)(id, params, conn_id, max_response_body_size as usize).await)
+                    Some(
+                        (callback)(id, params, conn_id, max_response_body_size as usize, None)
+                            .await,
+                    )
                 }
 
-                MethodCallback::Subscription(callback) => {
+                MethodKind::Subscription(callback) => {
                     logger.on_call(
                         name,
                         params.clone(),
@@ -381,12 +378,12 @@ pub mod ws {
                         TransportProtocol::WebSocket,
                     );
                     if let Some(cn) = bounded_subscriptions.acquire() {
-                        let conn_state = SubscriptionState {
+                        let conn_state = ConnState {
                             conn_id,
+                            close_notify: cn,
                             id_provider,
-                            subscription_permit: cn,
                         };
-                        let _ = callback(id.clone(), params, sink.clone(), conn_state).await;
+                        callback(id.clone(), params, sink.clone(), conn_state, None).await;
                         None
                     } else {
                         Some(MethodResponse::error(
@@ -396,7 +393,7 @@ pub mod ws {
                     }
                 }
 
-                MethodCallback::Unsubscription(callback) => {
+                MethodKind::Unsubscription(callback) => {
                     logger.on_call(
                         name,
                         params.clone(),
@@ -417,7 +414,8 @@ pub mod ws {
         if let Some(response) = &response {
             logger.on_result(
                 name,
-                response.success_or_error,
+                response.success,
+                response.error_code,
                 request_start,
                 TransportProtocol::WebSocket,
             );

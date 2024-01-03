@@ -12,7 +12,7 @@ use backoff::ExponentialBackoff;
 use serde::Serialize;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet, VecDeque};
-use scalar_config::node::TransactionKeyValueStoreWriteConfig;
+use sui_config::node::TransactionKeyValueStoreWriteConfig;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
 pub enum KVTable {
@@ -51,6 +51,7 @@ pub trait KVWriteClient {
     }
 }
 
+#[derive(Clone)]
 pub struct DynamoDbClient {
     dynamo_client: dynamodb::Client,
     s3_client: s3::Client,

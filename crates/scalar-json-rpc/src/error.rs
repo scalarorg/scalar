@@ -5,21 +5,16 @@ use fastcrypto::error::FastCryptoError;
 use hyper::header::InvalidHeaderValue;
 use itertools::Itertools;
 use jsonrpsee::core::Error as RpcError;
-use jsonrpsee::types::error::{
-    CALL_EXECUTION_FAILED_CODE, INTERNAL_ERROR_CODE, INVALID_PARAMS_CODE,
-};
-use jsonrpsee::types::{ErrorObject, ErrorObjectOwned};
-use scalar_types::error::{SuiError, SuiObjectResponseError, UserInputError};
-use scalar_types::quorum_driver_types::QuorumDriverError;
+use jsonrpsee::types::error::{CallError, INTERNAL_ERROR_CODE};
+use jsonrpsee::types::ErrorObject;
 use std::collections::BTreeMap;
-use std::fmt::format;
+use sui_json_rpc_api::{TRANSACTION_EXECUTION_CLIENT_ERROR_CODE, TRANSIENT_ERROR_CODE};
+use sui_types::error::{SuiError, SuiObjectResponseError, UserInputError};
+use sui_types::quorum_driver_types::QuorumDriverError;
 use thiserror::Error;
 use tokio::task::JoinError;
 
 use crate::authority_state::StateReadError;
-
-pub const TRANSIENT_ERROR_CODE: i32 = -32050;
-pub const TRANSACTION_EXECUTION_CLIENT_ERROR_CODE: i32 = -32002;
 
 pub type RpcInterimResult<T = ()> = Result<T, Error>;
 
@@ -84,266 +79,41 @@ impl From<SuiError> for Error {
         }
     }
 }
-/*
- * 23-11-10 TaiVV
- * Add converter from ErrorObject to Error
- */
-impl From<ErrorObjectOwned> for Error {
-    fn from(e: ErrorObjectOwned) -> Self {
-        Self::UnexpectedError(e.message().to_string())
-    }
-}
-/*
- * 23-11-09 TaiVV
- * For update jsonrpsee to version 0.20.3
- * Replace CallError::InvalidParams(e.into())
- * By ErrorObjectOwned::owned(INVALID_PARAMS_CODE, e.into(), None)
- */
+
 impl From<Error> for RpcError {
     /// `InvalidParams`/`INVALID_PARAMS_CODE` for client errors.
     fn from(e: Error) -> RpcError {
         match e {
-            Error::UserInputError(_) => RpcError::Call(ErrorObjectOwned::owned(
-                INVALID_PARAMS_CODE,
-                format!("{:?}", e),
-                None::<()>,
-            )),
-            Error::UnsupportedFeature(_) => RpcError::Call(ErrorObjectOwned::owned(
-                INVALID_PARAMS_CODE,
-                format!("{:?}", e),
-                None::<()>,
-            )),
-            Error::SuiObjectResponseError(err) => match err {
-                SuiObjectResponseError::NotExists { .. }
-                | SuiObjectResponseError::DynamicFieldNotFound { .. }
-                | SuiObjectResponseError::Deleted { .. }
-                | SuiObjectResponseError::DisplayError { .. } => RpcError::Call(
-                    ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", err), None::<()>),
-                ),
-                _ => RpcError::Call(ErrorObjectOwned::owned(
-                    CALL_EXECUTION_FAILED_CODE,
-                    format!("{:?}", err),
-                    None::<()>,
-                )),
-            },
-            Error::SuiRpcInputError(err) => RpcError::Call(ErrorObjectOwned::owned(
-                INVALID_PARAMS_CODE,
-                format!("{:?}", err),
-                None::<()>,
-            )),
-            Error::SuiError(sui_error) => match sui_error {
-                SuiError::TransactionNotFound { .. }
-                | SuiError::TransactionsNotFound { .. }
-                | SuiError::TransactionEventsNotFound { .. } => {
-                    RpcError::Call(ErrorObjectOwned::owned(
-                        INVALID_PARAMS_CODE,
-                        format!("{:?}", sui_error),
-                        None::<()>,
-                    ))
-                }
-                _ => RpcError::Call(ErrorObjectOwned::owned(
-                    CALL_EXECUTION_FAILED_CODE,
-                    format!("{:?}", sui_error),
-                    None::<()>,
-                )),
-            },
-            Error::StateReadError(err) => match err {
-                StateReadError::Client(_) => RpcError::Call(ErrorObjectOwned::owned(
-                    INVALID_PARAMS_CODE,
-                    format!("{:?}", err),
-                    None::<()>,
-                )),
-                _ => {
-                    let error_object = ErrorObject::owned(
-                        jsonrpsee::types::error::INTERNAL_ERROR_CODE,
-                        format!("{:?}", err),
-                        None::<()>,
-                    );
-                    RpcError::Call(error_object)
-                }
-            },
-            Error::QuorumDriverError(err) => {
-                match err {
-                    QuorumDriverError::InvalidUserSignature(err) => {
-                        let inner_error_str = match err {
-                            // TODO(wlmyng): update SuiError display trait to render UserInputError with display
-                            SuiError::UserInputError { error } => error.to_string(),
-                            _ => err.to_string(),
-                        };
-
-                        let error_message = format!("Invalid user signature: {inner_error_str}");
-
-                        let error_object = ErrorObject::owned(
-                            TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
-                            error_message,
-                            None::<()>,
-                        );
-                        RpcError::Call(error_object)
-                    }
-                    QuorumDriverError::TxAlreadyFinalizedWithDifferentUserSignatures => {
-                        let error_object = ErrorObject::owned(
-                            TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
-                            "The transaction is already finalized but with different user signatures",
-                            None::<()>,
-                        );
-                        RpcError::Call(error_object)
-                    }
-                    QuorumDriverError::TimeoutBeforeFinality
-                    | QuorumDriverError::FailedWithTransientErrorAfterMaximumAttempts { .. } => {
-                        let error_object = ErrorObject::owned(
-                            TRANSIENT_ERROR_CODE,
-                            format!("{:?}", err),
-                            None::<()>,
-                        );
-                        RpcError::Call(error_object)
-                    }
-                    QuorumDriverError::ObjectsDoubleUsed {
-                        conflicting_txes,
-                        retried_tx,
-                        retried_tx_success,
-                    } => {
-                        let error_message = format!(
-                        "Failed to sign transaction by a quorum of validators because of locked objects. Retried a conflicting transaction {:?}, success: {:?}",
-                        retried_tx,
-                        retried_tx_success
-                    );
-
-                        let new_map = conflicting_txes
-                            .into_iter()
-                            .map(|(digest, (pairs, _))| {
-                                (
-                                    digest,
-                                    pairs.into_iter().map(|(_, obj_ref)| obj_ref).collect(),
-                                )
-                            })
-                            .collect::<BTreeMap<_, Vec<_>>>();
-
-                        let error_object = ErrorObject::owned(
-                            TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
-                            error_message,
-                            Some(new_map),
-                        );
-                        RpcError::Call(error_object)
-                    }
-                    QuorumDriverError::NonRecoverableTransactionError { errors } => {
-                        let new_errors: Vec<String> = errors
-                            .into_iter()
-                            // sort by total stake, descending, so users see the most prominent one first
-                            .sorted_by(|(_, a, _), (_, b, _)| b.cmp(a))
-                            .filter_map(|(err, _, _)| {
-                                match &err {
-                                    // Special handling of UserInputError:
-                                    // ObjectNotFound and DependentPackageNotFound are considered
-                                    // retryable errors but they have different treatment
-                                    // in AuthorityAggregator.
-                                    // The optimal fix would be to examine if the total stake
-                                    // of ObjectNotFound/DependentPackageNotFound exceeds the
-                                    // quorum threshold, but it takes a Committee here.
-                                    // So, we take an easier route and consider them non-retryable
-                                    // at all. Combining this with the sorting above, clients will
-                                    // see the dominant error first.
-                                    SuiError::UserInputError { error } => Some(error.to_string()),
-                                    _ => {
-                                        if err.is_retryable().0 {
-                                            None
-                                        } else {
-                                            Some(err.to_string())
-                                        }
-                                    }
-                                }
-                            })
-                            .collect();
-
-                        assert!(
-                            !new_errors.is_empty(),
-                            "NonRecoverableTransactionError should have at least one non-retryable error"
-                        );
-
-                        let error_list = new_errors.join(", ");
-                        let error_msg = format!("Transaction execution failed due to issues with transaction inputs, please review the errors and try again: {}.", error_list);
-
-                        let error_object = ErrorObject::owned(
-                            TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
-                            error_msg,
-                            None::<()>,
-                        );
-                        RpcError::Call(error_object)
-                    }
-                    QuorumDriverError::QuorumDriverInternalError(_) => {
-                        let error_object = ErrorObject::owned(
-                            INTERNAL_ERROR_CODE,
-                            "Internal error occurred while executing transaction.",
-                            None::<()>,
-                        );
-                        RpcError::Call(error_object)
-                    }
-                    QuorumDriverError::SystemOverload { .. } => {
-                        let error_object = ErrorObject::owned(
-                            TRANSIENT_ERROR_CODE,
-                            format!("{:?}", err),
-                            None::<()>,
-                        );
-                        RpcError::Call(error_object)
-                    }
-                }
-            }
-            _ => RpcError::Call(ErrorObjectOwned::owned(
-                CALL_EXECUTION_FAILED_CODE,
-                format!("{:?}", e),
-                None::<()>,
-            )),
-        }
-    }
-}
-
-impl From<Error> for ErrorObjectOwned {
-    /// `InvalidParams`/`INVALID_PARAMS_CODE` for client errors.
-    fn from(e: Error) -> ErrorObjectOwned {
-        match e {
-            Error::UserInputError(_) => {
-                ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", e), None::<()>)
-            }
-            Error::UnsupportedFeature(_) => {
-                ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", e), None::<()>)
-            }
+            Error::UserInputError(_) => RpcError::Call(CallError::InvalidParams(e.into())),
+            Error::UnsupportedFeature(_) => RpcError::Call(CallError::InvalidParams(e.into())),
             Error::SuiObjectResponseError(err) => match err {
                 SuiObjectResponseError::NotExists { .. }
                 | SuiObjectResponseError::DynamicFieldNotFound { .. }
                 | SuiObjectResponseError::Deleted { .. }
                 | SuiObjectResponseError::DisplayError { .. } => {
-                    ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", err), None::<()>)
+                    RpcError::Call(CallError::InvalidParams(err.into()))
                 }
-                _ => ErrorObjectOwned::owned(
-                    CALL_EXECUTION_FAILED_CODE,
-                    format!("{:?}", err),
-                    None::<()>,
-                ),
+                _ => RpcError::Call(CallError::Failed(err.into())),
             },
-            Error::SuiRpcInputError(err) => {
-                ErrorObjectOwned::owned(INVALID_PARAMS_CODE, format!("{:?}", err), None::<()>)
-            }
+            Error::SuiRpcInputError(err) => RpcError::Call(CallError::InvalidParams(err.into())),
             Error::SuiError(sui_error) => match sui_error {
                 SuiError::TransactionNotFound { .. }
                 | SuiError::TransactionsNotFound { .. }
                 | SuiError::TransactionEventsNotFound { .. } => {
-                    ErrorObjectOwned::owned(INVALID_PARAMS_CODE, sui_error.to_string(), None::<()>)
+                    RpcError::Call(CallError::InvalidParams(sui_error.into()))
                 }
-
-                _ => ErrorObjectOwned::owned(
-                    CALL_EXECUTION_FAILED_CODE,
-                    sui_error.to_string(),
-                    None::<()>,
-                ),
+                _ => RpcError::Call(CallError::Failed(sui_error.into())),
             },
             Error::StateReadError(err) => match err {
-                StateReadError::Client(_) => {
-                    ErrorObjectOwned::owned(INVALID_PARAMS_CODE, err.to_string(), None::<()>)
+                StateReadError::Client(_) => RpcError::Call(CallError::InvalidParams(err.into())),
+                _ => {
+                    let error_object = ErrorObject::owned(
+                        jsonrpsee::types::error::INTERNAL_ERROR_CODE,
+                        err.to_string(),
+                        None::<()>,
+                    );
+                    RpcError::Call(CallError::Custom(error_object))
                 }
-                _ => ErrorObject::owned(
-                    jsonrpsee::types::error::INTERNAL_ERROR_CODE,
-                    err.to_string(),
-                    None::<()>,
-                ),
             },
             Error::QuorumDriverError(err) => {
                 match err {
@@ -356,22 +126,26 @@ impl From<Error> for ErrorObjectOwned {
 
                         let error_message = format!("Invalid user signature: {inner_error_str}");
 
-                        ErrorObject::owned(
+                        let error_object = ErrorObject::owned(
                             TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
                             error_message,
                             None::<()>,
-                        )
+                        );
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                     QuorumDriverError::TxAlreadyFinalizedWithDifferentUserSignatures => {
-                        ErrorObject::owned(
+                        let error_object = ErrorObject::owned(
                             TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
                             "The transaction is already finalized but with different user signatures",
                             None::<()>,
-                        )
+                        );
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                     QuorumDriverError::TimeoutBeforeFinality
                     | QuorumDriverError::FailedWithTransientErrorAfterMaximumAttempts { .. } => {
-                        ErrorObject::owned(TRANSIENT_ERROR_CODE, err.to_string(), None::<()>)
+                        let error_object =
+                            ErrorObject::owned(TRANSIENT_ERROR_CODE, err.to_string(), None::<()>);
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                     QuorumDriverError::ObjectsDoubleUsed {
                         conflicting_txes,
@@ -394,11 +168,12 @@ impl From<Error> for ErrorObjectOwned {
                             })
                             .collect::<BTreeMap<_, Vec<_>>>();
 
-                        ErrorObject::owned(
+                        let error_object = ErrorObject::owned(
                             TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
                             error_message,
                             Some(new_map),
-                        )
+                        );
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                     QuorumDriverError::NonRecoverableTransactionError { errors } => {
                         let new_errors: Vec<String> = errors
@@ -437,27 +212,29 @@ impl From<Error> for ErrorObjectOwned {
                         let error_list = new_errors.join(", ");
                         let error_msg = format!("Transaction execution failed due to issues with transaction inputs, please review the errors and try again: {}.", error_list);
 
-                        ErrorObject::owned(
+                        let error_object = ErrorObject::owned(
                             TRANSACTION_EXECUTION_CLIENT_ERROR_CODE,
                             error_msg,
                             None::<()>,
-                        )
+                        );
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                     QuorumDriverError::QuorumDriverInternalError(_) => {
-                        ErrorObject::owned(
+                        let error_object = ErrorObject::owned(
                             INTERNAL_ERROR_CODE,
                             "Internal error occurred while executing transaction.",
                             None::<()>,
-                        )
+                        );
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                     QuorumDriverError::SystemOverload { .. } => {
-                        ErrorObject::owned(TRANSIENT_ERROR_CODE, err.to_string(), None::<()>)
+                        let error_object =
+                            ErrorObject::owned(TRANSIENT_ERROR_CODE, err.to_string(), None::<()>);
+                        RpcError::Call(CallError::Custom(error_object))
                     }
                 }
             }
-            _ => {
-                ErrorObjectOwned::owned(CALL_EXECUTION_FAILED_CODE, format!("{:?}", e), None::<()>)
-            }
+            _ => RpcError::Call(CallError::Failed(e.into())),
         }
     }
 }
@@ -503,12 +280,7 @@ pub enum SuiRpcInputError {
 
 impl From<SuiRpcInputError> for RpcError {
     fn from(e: SuiRpcInputError) -> Self {
-        RpcError::Call(ErrorObjectOwned::owned(
-            INVALID_PARAMS_CODE,
-            format!("{:?}", e),
-            None::<()>,
-        ))
-        //RpcError::Call(CallError::InvalidParams(e.into()))
+        RpcError::Call(CallError::InvalidParams(e.into()))
     }
 }
 
@@ -517,15 +289,15 @@ mod tests {
     use super::*;
     use expect_test::expect;
     use jsonrpsee::types::ErrorObjectOwned;
-    use scalar_types::base_types::AuthorityName;
-    use scalar_types::base_types::ObjectID;
-    use scalar_types::base_types::ObjectRef;
-    use scalar_types::base_types::SequenceNumber;
-    use scalar_types::committee::StakeUnit;
-    use scalar_types::crypto::AuthorityPublicKey;
-    use scalar_types::crypto::AuthorityPublicKeyBytes;
-    use scalar_types::digests::ObjectDigest;
-    use scalar_types::digests::TransactionDigest;
+    use sui_types::base_types::AuthorityName;
+    use sui_types::base_types::ObjectID;
+    use sui_types::base_types::ObjectRef;
+    use sui_types::base_types::SequenceNumber;
+    use sui_types::committee::StakeUnit;
+    use sui_types::crypto::AuthorityPublicKey;
+    use sui_types::crypto::AuthorityPublicKeyBytes;
+    use sui_types::digests::ObjectDigest;
+    use sui_types::digests::TransactionDigest;
 
     fn test_object_ref() -> ObjectRef {
         (
@@ -589,7 +361,7 @@ mod tests {
 
         #[test]
         fn test_objects_double_used() {
-            use scalar_types::crypto::VerifyingKey;
+            use sui_types::crypto::VerifyingKey;
             let mut conflicting_txes: BTreeMap<
                 TransactionDigest,
                 (Vec<(AuthorityName, ObjectRef)>, StakeUnit),

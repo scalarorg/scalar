@@ -11,31 +11,30 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::RpcModule;
 
 use mysten_metrics::spawn_monitored_task;
-use scalar_core::authority::AuthorityState;
-use scalar_core::authority_client::NetworkAuthorityClient;
-use scalar_core::transaction_orchestrator::TransactiondOrchestrator;
-use scalar_json_rpc_types::{
+use shared_crypto::intent::{AppId, Intent, IntentMessage, IntentScope, IntentVersion};
+use sui_core::authority::AuthorityState;
+use sui_core::authority_client::NetworkAuthorityClient;
+use sui_core::transaction_orchestrator::TransactiondOrchestrator;
+use sui_json_rpc_api::{JsonRpcMetrics, WriteApiOpenRpc, WriteApiServer};
+use sui_json_rpc_types::{
     DevInspectResults, DryRunTransactionBlockResponse, SuiTransactionBlock,
     SuiTransactionBlockEvents, SuiTransactionBlockResponse, SuiTransactionBlockResponseOptions,
 };
-use scalar_types::base_types::SuiAddress;
-use scalar_types::crypto::default_hash;
-use scalar_types::digests::TransactionDigest;
-use scalar_types::effects::TransactionEffectsAPI;
-use scalar_types::quorum_driver_types::{
+use sui_open_rpc::Module;
+use sui_types::base_types::SuiAddress;
+use sui_types::crypto::default_hash;
+use sui_types::digests::TransactionDigest;
+use sui_types::effects::TransactionEffectsAPI;
+use sui_types::quorum_driver_types::{
     ExecuteTransactionRequest, ExecuteTransactionRequestType, ExecuteTransactionResponse,
 };
-use scalar_types::scalar_serde::BigInt;
-use scalar_types::signature::GenericSignature;
-use scalar_types::transaction::{
+use sui_types::signature::GenericSignature;
+use sui_types::sui_serde::BigInt;
+use sui_types::transaction::{
     InputObjectKind, Transaction, TransactionData, TransactionDataAPI, TransactionKind,
 };
-use shared_crypto::intent::{AppId, Intent, IntentMessage, IntentScope, IntentVersion};
-use sui_open_rpc::Module;
 use tracing::instrument;
 
-use crate::api::JsonRpcMetrics;
-use crate::api::WriteApiServer;
 use crate::authority_state::StateRead;
 use crate::error::{Error, SuiRpcInputError};
 use crate::{
@@ -104,7 +103,7 @@ impl TransactionExecutionApi {
         for sig in signatures {
             sigs.push(GenericSignature::from_bytes(&sig.to_vec()?)?);
         }
-        let txn = Transaction::from_generic_sig_data(tx_data, Intent::sui_transaction(), sigs);
+        let txn = Transaction::from_generic_sig_data(tx_data, sigs);
         let raw_transaction = if opts.show_raw_input {
             bcs::to_bytes(txn.data())?
         } else {
@@ -314,6 +313,6 @@ impl SuiRpcModule for TransactionExecutionApi {
     }
 
     fn rpc_doc_module() -> Module {
-        crate::api::WriteApiOpenRpc::module_doc()
+        WriteApiOpenRpc::module_doc()
     }
 }

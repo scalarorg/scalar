@@ -5,8 +5,8 @@ use crate::consensus_handler::{
     SequencedConsensusTransactionKind, VerifiedSequencedConsensusTransaction,
 };
 use mysten_metrics::monitored_scope;
-use scalar_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
 use sui_protocol_config::ConsensusTransactionOrdering;
+use sui_types::messages_consensus::{ConsensusTransaction, ConsensusTransactionKind};
 
 pub struct PostConsensusTxReorder {}
 
@@ -34,8 +34,8 @@ impl PostConsensusTxReorder {
                         tracking_id: _,
                         kind: ConsensusTransactionKind::UserTransaction(cert),
                     }) => cert.gas_price(),
-                    // Non-user transactions are considered to have gas price of MAX u64 and are put to the beginning.
-                    // This way consensus commit prologue transactions will stay at the beginning.
+                    // Non-user transactions are considered to have gas price of MAX u64 and are
+                    // put to the beginning.
                     _ => u64::MAX,
                 }
             })
