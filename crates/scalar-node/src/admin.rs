@@ -1,7 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::SuiNode;
+use crate::ScalarNode;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -58,11 +58,11 @@ const CAPABILITIES: &str = "/capabilities";
 const NODE_CONFIG: &str = "/node-config";
 
 struct AppState {
-    node: Arc<SuiNode>,
+    node: Arc<ScalarNode>,
     tracing_handle: TracingHandle,
 }
 
-pub async fn run_admin_server(node: Arc<SuiNode>, port: u16, tracing_handle: TracingHandle) {
+pub async fn run_admin_server(node: Arc<ScalarNode>, port: u16, tracing_handle: TracingHandle) {
     let filter = tracing_handle.get_log().unwrap();
 
     let app_state = AppState {

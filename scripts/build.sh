@@ -53,9 +53,9 @@ reth_test_client() {
 
 # Working from 2023-12-13
 scalar_reth() {
-    BIN_NAME=scalar-reth-node
+    BIN_NAME=scalar-reth
     WORKING_DIR=/scalar
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/reth-node/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}

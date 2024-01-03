@@ -1,11 +1,13 @@
 use clap::Parser;
 use futures::pin_mut;
 use reth_tasks::TaskManager;
-use scalar_reth::node::NodeCommand;
-use scalar_reth::runner::{tokio_runtime, CliContext};
-use scalar_reth::transaction_pool::{
-    DEFAULT_PRICE_BUMP, REPLACE_BLOB_PRICE_BUMP, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER,
-    TXPOOL_SUBPOOL_MAX_SIZE_MB_DEFAULT, TXPOOL_SUBPOOL_MAX_TXS_DEFAULT,
+use scalar_reth::{
+    commands::node::NodeCommand,
+    runner::{tokio_runtime, CliContext},
+    transaction_pool::{
+        DEFAULT_PRICE_BUMP, REPLACE_BLOB_PRICE_BUMP, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER,
+        TXPOOL_SUBPOOL_MAX_SIZE_MB_DEFAULT, TXPOOL_SUBPOOL_MAX_TXS_DEFAULT,
+    },
 };
 use std::future::Future;
 use tokio::sync::watch;
@@ -68,7 +70,11 @@ impl TestCluster {
         //     "--ws"
         // };
 
-        let no_local = if self.no_locals { "--txpool.nolocals" } else { "--" };
+        let no_local = if self.no_locals {
+            "--txpool.nolocals"
+        } else {
+            "--"
+        };
 
         let node_cmd = NodeCommand::<()>::try_parse_from([
             "reth node",
@@ -164,7 +170,9 @@ impl TestCluster {
             "http://{}:{}",
             self.http_addr,
             // http port base on instance number, see detail here: https://paradigmxyz.github.io/reth/cli/node.html
-            self.http_port.parse::<u32>().expect("http port should be a number")
+            self.http_port
+                .parse::<u32>()
+                .expect("http port should be a number")
                 - self.instance as u32
                 + 1
         )

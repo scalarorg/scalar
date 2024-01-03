@@ -306,6 +306,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-trie"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7b13840ded510d1cecf2722a84b8265424d172d4fa5552944ce339a307dc9d6"
+dependencies = [
+ "alloy-primitives",
+ "alloy-rlp",
+ "arbitrary",
+ "derive_arbitrary",
+ "derive_more",
+ "nybbles",
+ "proptest",
+ "proptest-derive 0.4.0",
+ "serde",
+ "smallvec",
+ "tracing",
+]
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5293,6 +5312,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fdlimit"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e182f7dbc2ef73d9ef67351c5fbbea084729c48362d3ce9dd44c28e32e277fe5"
+dependencies = [
+ "libc",
+ "thiserror",
+]
+
+[[package]]
 name = "ff"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6826,6 +6855,15 @@ name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
 dependencies = [
  "either",
 ]
@@ -9192,7 +9230,7 @@ version = "0.1.0"
 dependencies = [
  "anemo",
  "fastcrypto",
- "fdlimit",
+ "fdlimit 0.2.1",
  "indexmap 2.1.0",
  "itertools 0.10.5",
  "mysten-metrics",
@@ -11774,7 +11812,7 @@ dependencies = [
  "eyre",
  "futures",
  "heapless",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "metrics 0.21.1",
  "modular-bitfield",
  "page_size",
@@ -11851,7 +11889,7 @@ dependencies = [
  "alloy-rlp",
  "futures",
  "futures-util",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "metrics 0.21.1",
  "pin-project",
  "rayon",
@@ -11941,27 +11979,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "reth-ethereum-payload-builder"
+version = "0.1.0-alpha.13"
+dependencies = [
+ "reth-basic-payload-builder",
+ "reth-payload-builder",
+ "reth-primitives",
+ "reth-provider",
+ "reth-revm",
+ "reth-transaction-pool",
+ "revm",
+ "tracing",
+]
+
+[[package]]
 name = "reth-interfaces"
 version = "0.1.0-alpha.13"
 dependencies = [
- "async-trait",
  "auto_impl",
  "clap",
  "futures",
- "modular-bitfield",
  "parking_lot 0.12.1",
  "rand 0.8.5",
- "reth-codecs",
  "reth-eth-wire",
  "reth-network-api",
  "reth-nippy-jar",
  "reth-primitives",
  "reth-rpc-types",
- "revm-primitives",
  "secp256k1 0.27.0",
  "thiserror",
  "tokio",
- "tokio-stream",
  "tracing",
 ]
 
@@ -12126,6 +12173,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "reth-optimism-payload-builder"
+version = "0.1.0-alpha.13"
+dependencies = [
+ "reth-basic-payload-builder",
+ "reth-payload-builder",
+ "reth-primitives",
+ "reth-provider",
+ "reth-revm",
+ "reth-transaction-pool",
+ "revm",
+ "tracing",
+]
+
+[[package]]
 name = "reth-payload-builder"
 version = "0.1.0-alpha.13"
 dependencies = [
@@ -12159,8 +12220,10 @@ dependencies = [
 name = "reth-primitives"
 version = "0.1.0-alpha.13"
 dependencies = [
+ "ahash 0.8.6",
  "alloy-primitives",
  "alloy-rlp",
+ "alloy-trie",
  "arbitrary",
  "byteorder",
  "bytes",
@@ -12197,10 +12260,11 @@ dependencies = [
 name = "reth-provider"
 version = "0.1.0-alpha.13"
 dependencies = [
+ "ahash 0.8.6",
  "alloy-rlp",
  "auto_impl",
  "dashmap",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "metrics 0.21.1",
  "parking_lot 0.12.1",
  "pin-project",
@@ -12222,7 +12286,7 @@ dependencies = [
 name = "reth-prune"
 version = "0.1.0-alpha.13"
 dependencies = [
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "metrics 0.21.1",
  "rayon",
  "reth-config",
@@ -12389,7 +12453,7 @@ dependencies = [
  "alloy-rlp",
  "arbitrary",
  "bytes",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "jsonrpsee-types 0.20.3",
  "proptest",
  "proptest-derive 0.4.0",
@@ -12433,7 +12497,7 @@ dependencies = [
  "async-trait",
  "auto_impl",
  "futures-util",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "metrics 0.21.1",
  "num-traits",
  "pin-project",
@@ -12484,7 +12548,7 @@ dependencies = [
  "jsonrpsee 0.16.2",
  "rand 0.8.5",
  "reth-tasks",
- "scalar-reth-node",
+ "scalar-reth",
  "serde",
  "serde_json",
  "telemetry-subscribers 0.2.0 (git+https://github.com/MystenLabs/sui?rev=01a8af7fca6aa8d24cdafad87a1191e06ac75af8)",
@@ -12546,6 +12610,7 @@ dependencies = [
 name = "reth-trie"
 version = "0.1.0-alpha.13"
 dependencies = [
+ "ahash 0.8.6",
  "alloy-rlp",
  "auto_impl",
  "derive_more",
@@ -13480,7 +13545,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "scalar-reth-node"
+name = "scalar-reth"
 version = "1.16.0"
 dependencies = [
  "alloy-rlp",
@@ -13495,7 +13560,7 @@ dependencies = [
  "crossterm 0.27.0",
  "dirs-next",
  "eyre",
- "fdlimit",
+ "fdlimit 0.3.0",
  "futures",
  "futures-util",
  "human_bytes",
@@ -13509,6 +13574,7 @@ dependencies = [
  "metrics-exporter-prometheus",
  "metrics-process",
  "metrics-util",
+ "once_cell",
  "pin-project",
  "pretty_assertions",
  "proptest",
@@ -13527,13 +13593,16 @@ dependencies = [
  "reth-db",
  "reth-discv4",
  "reth-downloaders",
+ "reth-ethereum-payload-builder",
  "reth-interfaces",
  "reth-metrics",
  "reth-net-nat",
  "reth-network",
  "reth-network-api",
  "reth-nippy-jar",
+ "reth-optimism-payload-builder",
  "reth-payload-builder",
+ "reth-payload-validator",
  "reth-primitives",
  "reth-provider",
  "reth-prune",
@@ -17625,7 +17694,7 @@ dependencies = [
  "bincode",
  "collectable",
  "eyre",
- "fdlimit",
+ "fdlimit 0.2.1",
  "hdrhistogram",
  "itertools 0.10.5",
  "msim",
@@ -18851,7 +18920,7 @@ dependencies = [
  "fastrand 1.9.0",
  "fastrand 2.0.1",
  "fd-lock",
- "fdlimit",
+ "fdlimit 0.2.1",
  "ff 0.12.1",
  "ff 0.13.0",
  "ff_derive",

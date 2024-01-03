@@ -23,7 +23,7 @@ dotenvy = { version = "0.15", default-features = false }
 envy = "0.4"
 jsonrpsee.workspace = true
 rand.workspace = true
-scalar-reth-node = { path = "../crates/scalar-reth-node" }
+scalar-reth = { path = "../crates/scalar-reth" }
 reth-tasks = { path = "../reth/crates/tasks" }
 eyre.workspace = true
 
