@@ -98,12 +98,12 @@ fn main() {
     // Run node in a separate runtime so that admin/monitoring functions continue to work
     // if it deadlocks.
     let node_once_cell =
-        Arc::new(AsyncOnceCell::<Arc<scalar_test_cluster::node::ScalarNode>>::new());
+        Arc::new(AsyncOnceCell::<Arc<scalar_node::ScalarNode>>::new());
     let node_once_cell_clone = node_once_cell.clone();
     let rpc_runtime = runtimes.json_rpc.handle().clone();
 
     runtimes.sui_node.spawn(async move {
-        match scalar_test_cluster::node::ScalarNode::start_async(&config, registry_service).await {
+        match scalar_node::ScalarNode::start_async(&config, registry_service).await {
             Ok(scalar_node) => node_once_cell_clone
                 .set(scalar_node)
                 .expect("Failed to set node in AsyncOnceCell"),
@@ -140,7 +140,7 @@ fn main() {
             ))
             .unwrap();
 
-        scalar_test_cluster::node::admin::run_admin_server(
+        scalar_node::admin::run_admin_server(
             node,
             admin_interface_port,
             filter_handle,

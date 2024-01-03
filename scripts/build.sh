@@ -29,8 +29,8 @@ move_fullnode_cluster() {
 # HuongND 2023-12-14
 reth_test_cluster() {
     BIN_NAME=reth-test-cluster
-    WORKING_DIR=/reth
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/scalar/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
@@ -41,8 +41,8 @@ reth_test_cluster() {
 
 reth_test_client() {
     BIN_NAME=reth-test-client
-    WORKING_DIR=/reth
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/scalar/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
@@ -53,9 +53,9 @@ reth_test_client() {
 
 # Working from 2023-12-13
 scalar_reth() {
-    BIN_NAME=scalar-reth
-    WORKING_DIR=/reth
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/scalar/reth-node/Cargo.toml --profile dev --bin ${BIN_NAME}
+    BIN_NAME=scalar-reth-node
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/reth-node/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
@@ -63,7 +63,7 @@ scalar_reth() {
 
 reth() {
     BIN_NAME=reth
-    WORKING_DIR=/reth
+    WORKING_DIR=/scalar/reth
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
@@ -90,7 +90,7 @@ consensus() {
 
 sui() {
     BIN_NAME=sui
-    RKING_DIR=/scalar
+    RKING_DIR=/scalar/sui
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin

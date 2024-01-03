@@ -12,7 +12,6 @@ use futures::{future::BoxFuture, stream::FuturesUnordered, StreamExt};
 use mysten_metrics::histogram::Histogram;
 use mysten_metrics::{monitored_future, spawn_monitored_task, GaugeGuard};
 use mysten_network::config::Config;
-use sui_swarm_config::network_config::NetworkConfig;
 use std::convert::AsRef;
 use sui_authority_aggregation::ReduceOutput;
 use sui_authority_aggregation::{quorum_map_then_reduce_with_timeout, AsyncResult};
@@ -20,6 +19,7 @@ use sui_config::genesis::Genesis;
 use sui_network::{
     default_mysten_network_config, DEFAULT_CONNECT_TIMEOUT_SEC, DEFAULT_REQUEST_TIMEOUT_SEC,
 };
+use sui_swarm_config::network_config::NetworkConfig;
 use sui_types::crypto::{AuthorityPublicKeyBytes, AuthoritySignInfo};
 use sui_types::error::UserInputError;
 use sui_types::fp_ensure;

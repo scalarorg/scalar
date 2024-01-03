@@ -130,6 +130,7 @@ pub mod metrics;
 pub mod scalar_node;
 pub mod validator;
 pub mod validator_component;
+pub use scalar_node::ScalarNode;
 pub struct ValidatorComponents {
     validator_server_handle: JoinHandle<Result<()>>,
     consensus_manager: ConsensusManager,

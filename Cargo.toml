@@ -11,7 +11,9 @@ members = [
     "crates/scalar-json-rpc",
     "crates/scalar-rest-api",
     "crates/scalar-telemetry",
+    "crates/scalar-reth-node",
     "scalar-test-cluster",
+    "reth-test-cluster",
 ]
 
 exclude = [
@@ -196,11 +198,63 @@ exclude = [
     "sui/sui-execution/v1/sui-adapter",
     "sui/sui-execution/v1/sui-move-natives",
     "sui/sui-execution/v1/sui-verifier",
-]
 
+    "reth/crates/blockchain-tree/",
+    "reth/crates/config/",
+    "reth/crates/consensus/auto-seal/",
+    "reth/crates/consensus/beacon/",
+    "reth/crates/consensus/common/",
+    "reth/crates/ethereum-forks/",
+    "reth/crates/interfaces/",
+    "reth/crates/metrics/",
+    "reth/crates/metrics/metrics-derive/",
+    "reth/crates/net/common/",
+    "reth/crates/net/discv4/",
+    "reth/crates/net/dns/",
+    "reth/crates/net/downloaders/",
+    "reth/crates/net/ecies/",
+    "reth/crates/net/eth-wire/",
+    "reth/crates/net/nat/",
+    "reth/crates/net/network/",
+    "reth/crates/net/network-api/",
+    "reth/crates/payload/basic/",
+    "reth/crates/payload/builder/",
+    "reth/crates/payload/validator/",
+    "reth/crates/primitives/",
+    "reth/crates/prune/",
+    "reth/crates/revm/",
+    "reth/crates/revm/revm-inspectors/",
+    "reth/crates/rpc/ipc/",
+    "reth/crates/rpc/rpc/",
+    "reth/crates/rpc/rpc-api/",
+    "reth/crates/rpc/rpc-builder/",
+    "reth/crates/rpc/rpc-engine-api/",
+    "reth/crates/rpc/rpc-testing-util/",
+    "reth/crates/rpc/rpc-types/",
+    "reth/crates/rpc/rpc-types-compat/",
+    "reth/crates/snapshot/",
+    "reth/crates/stages/",
+    "reth/crates/storage/codecs/",
+    "reth/crates/storage/codecs/derive/",
+    "reth/crates/storage/db/",
+    "reth/crates/storage/libmdbx-rs/",
+    "reth/crates/storage/libmdbx-rs/mdbx-sys/",
+    "reth/crates/storage/nippy-jar/",
+    "reth/crates/storage/provider/",
+    "reth/crates/tasks/",
+    "reth/crates/tokio-util/",
+    "reth/crates/tracing/",
+    "reth/crates/transaction-pool/",
+    "reth/crates/trie/",
+]
 [workspace.package]
 # This version string will be inherited by sui-core, sui-faucet, sui-node, sui-tools, sui-sdk, sui-move-build, and sui crates.
 version = "1.16.0"
+edition = "2021"
+rust-version = "1.70"
+license = "MIT OR Apache-2.0"
+homepage = "https://scalar.org"
+repository = "https://github.com/scalar.org/scalar"
 
 [profile.release]
 # debug = 1 means line charts only, which is minimum needed for good stack traces
