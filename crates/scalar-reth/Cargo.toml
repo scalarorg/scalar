@@ -1,12 +1,16 @@
+[workspace]
 [package]
 name = "scalar-reth"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
-license.workspace = true
-homepage.workspace = true
-repository.workspace = true
+version = "0.1.0"
+authors = ["Scalar org <build@scalar.org>"]
+publish = false
+edition = "2021"
+rust-version = "1.70"
+license = "Apache-2.0"
+homepage = "https://scalar.org"
+repository = "https://github.com/scalar.org/scalar"
 description = "Reth node implementation"
+
 
 [package.metadata.cargo-udeps.ignore]
 normal = [
@@ -75,16 +79,16 @@ secp256k1 = { version = "0.27.0", default-features = false, features = [
 ] }
 
 # tracing
-tracing.workspace = true
+tracing = "0.1.0"
 
 # io
 fdlimit = "0.3.0"
-serde.workspace = true
-serde_json.workspace = true
+serde_json = "1.0.94"
+serde = { version = "1.0", default-features = false }
 shellexpand = "3.0.0"
 dirs-next = "2.0.0"
 confy = "0.5"
-toml = { workspace = true, features = ["display"] }
+toml = { version = "0.8", features = ["display"] }
 
 # metrics
 metrics-exporter-prometheus = "0.12.1"
@@ -94,8 +98,8 @@ reth-metrics = { path = "../../reth/crates/metrics" }
 metrics = "0.21.1"
 
 # test vectors generation
-proptest.workspace = true
-rand.workspace = true
+proptest = "1.4"
+rand = "0.8.5"
 
 # tui
 comfy-table = "7.0"
@@ -105,36 +109,36 @@ human_bytes = "0.4.1"
 
 # async
 async-stream = "0.3.5"
-tokio = { workspace = true, features = [
+tokio = { version = "1.21", features = [
     "sync",
     "macros",
     "time",
     "rt-multi-thread",
 ] }
-tokio-stream.workspace = true
-futures.workspace = true
+tokio-stream = "0.1.11"
+futures = "0.3.26"
 futures-util = "0.3.25"
 pin-project = "1.0.12"
 
 # http/rpc
-jsonrpsee = { workspace = true, features = ["server"] }
+jsonrpsee = { version = "0.20", features = ["server"] }
 tower-http = { version = "0.4", features = ["full"] }
 tower = { version = "0.4", features = ["full"] }
 hyper = "0.14"
 # misc
 aquamarine = "0.3"
-eyre.workspace = true
+eyre = "0.6"
 clap = "4"
-tempfile.workspace = true
+tempfile = "3.8"
 backon = "0.4"
 once_cell = "1.17"
-thiserror.workspace = true
+thiserror = "1.0"
 pretty_assertions = "1.3.0"
 humantime = "2.1.0"
 const-str = "0.5.6"
 boyer-moore-magiclen = "0.2.16"
-itertools.workspace = true
-rayon.workspace = true
+itertools = "0.12"
+rayon = "1.7"
 prost = "0.12.1"
 protobuf = { version = "2.28", features = ["with-bytes"] }
 protobuf-src = "1.1.0"

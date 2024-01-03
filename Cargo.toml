@@ -11,9 +11,7 @@ members = [
     "crates/scalar-json-rpc",
     "crates/scalar-rest-api",
     "crates/scalar-telemetry",
-    "crates/scalar-reth",
     "scalar-test-cluster",
-    "reth-test-cluster",
 ]
 
 exclude = [
