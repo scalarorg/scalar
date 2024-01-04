@@ -46,6 +46,7 @@ use tokio::time::{self, sleep, timeout};
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::consensus_handler::{classify, SequencedConsensusTransactionKey};
 use crate::consensus_throughput_calculator::{ConsensusThroughputProfiler, Level};
+use crate::consensus_types::ConsensusTransactionWrapper;
 use crate::epoch::reconfiguration::{ReconfigState, ReconfigurationInitiator};
 use mysten_metrics::{spawn_monitored_task, GaugeGuard, GaugeGuardFutureExt};
 use sui_protocol_config::ProtocolConfig;
@@ -189,7 +190,7 @@ pub trait SubmitToConsensus: Sync + Send + 'static {
     ) -> SuiResult;
     async fn submit_ns_transaction_to_consensus(
         &self,
-        transaction: &NsTransaction,
+        transaction: NsTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult;
 }
@@ -217,11 +218,12 @@ impl SubmitToConsensus for TransactionsClient<sui_network::tonic::transport::Cha
     }
     async fn submit_ns_transaction_to_consensus(
         &self,
-        transaction: &NsTransaction,
+        transaction: NsTransaction,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
-        let serialized =
-            bcs::to_bytes(transaction).expect("Serializing consensus transaction cannot fail");
+        let transaction_wrapper = ConsensusTransactionWrapper::Namespace(transaction);
+        let serialized = bcs::to_bytes(&transaction_wrapper)
+            .expect("Serializing consensus transaction cannot fail");
         let bytes = Bytes::from(serialized.clone());
 
         self.clone()
@@ -312,7 +314,7 @@ impl SubmitToConsensus for LazyNarwhalClient {
 
     async fn submit_ns_transaction_to_consensus(
         &self,
-        transaction: &NsTransaction,
+        transaction: NsTransaction,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
         // let transaction =
@@ -328,8 +330,9 @@ impl SubmitToConsensus for LazyNarwhalClient {
                 self.client.load()
             }
         };
+        let wrapper = ConsensusTransactionWrapper::Namespace(transaction);
         let client = client.as_ref().unwrap().load();
-        let tx_bytes = bcs::to_bytes(transaction).expect("Serialization should not fail.");
+        let tx_bytes = bcs::to_bytes(&wrapper).expect("Serialization should not fail.");
         client
             .submit_transaction(tx_bytes)
             .await
@@ -1189,7 +1192,7 @@ impl SubmitToConsensus for Arc<ConsensusAdapter> {
     }
     async fn submit_ns_transaction_to_consensus(
         &self,
-        transaction: &NsTransaction,
+        transaction: NsTransaction,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
         self.consensus_client

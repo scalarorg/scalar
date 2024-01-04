@@ -25,8 +25,10 @@ use sui_types::{
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::{error, instrument, trace, warn};
 
-use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use crate::authority::{AuthorityMetrics, AuthorityStore};
+use crate::{
+    authority::authority_per_epoch_store::AuthorityPerEpochStore, consensus_types::NsTransaction,
+};
 use sui_types::transaction::SenderSignedData;
 use tap::TapOptional;
 
@@ -58,6 +60,7 @@ pub struct TransactionManager {
         VerifiedExecutableTransaction,
         Option<TransactionEffectsDigest>,
     )>,
+    tx_commited_transactions: UnboundedSender<Vec<NsTransaction>>,
     metrics: Arc<AuthorityMetrics>,
     inner: RwLock<Inner>,
 }
@@ -336,6 +339,7 @@ impl TransactionManager {
             VerifiedExecutableTransaction,
             Option<TransactionEffectsDigest>,
         )>,
+        tx_commited_transactions: UnboundedSender<Vec<NsTransaction>>,
         metrics: Arc<AuthorityMetrics>,
     ) -> TransactionManager {
         let transaction_manager = TransactionManager {
@@ -343,6 +347,7 @@ impl TransactionManager {
             metrics: metrics.clone(),
             inner: RwLock::new(Inner::new(epoch_store.epoch(), metrics)),
             tx_ready_certificates,
+            tx_commited_transactions,
         };
         transaction_manager
             .enqueue(epoch_store.all_pending_execution().unwrap(), epoch_store)
@@ -364,7 +369,7 @@ impl TransactionManager {
         // if (filtered_transactions.len() > 0) {
         //     self.tx_commited_transactions.send(filtered_transactions);
         // }
-        self.tx_commited_transactions.send(transactions);
+        let _ = self.tx_commited_transactions.send(transactions);
         Ok(())
     }
     /// Enqueues certificates / verified transactions into TransactionManager. Once all of the input objects are available

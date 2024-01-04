@@ -91,7 +91,7 @@ impl ConsensusService {
             &transaction_in
         );
         let ns_transaction = NsTransaction::from(transaction_in);
-        // let transaction_wrapper = ConsensusTransactionWrapper::Namespace(ns_transaction);
+        //let transaction_wrapper = ConsensusTransactionWrapper::Namespace(ns_transaction);
         //self.validator_service.handle_transaction_for_testing(transaction.into()).await;
         // if let Ok(cetificate_tran) = self.create_certificate_transaction(transaction) {
         //     // self.validator_service.execute_certificate_for_testing(cetificate_tran).await;
@@ -104,7 +104,7 @@ impl ConsensusService {
         //     .map_err(|err| anyhow!("{:?}", err))
         //     .expect("Serialization should not fail.");
         self.consensus_adapter
-            .submit_ns_transaction_to_consensus(&ns_transaction, &self.epoch_store)
+            .submit_ns_transaction_to_consensus(ns_transaction, &self.epoch_store)
             .await
             .map_err(|err| anyhow!(err.to_string()))
     }

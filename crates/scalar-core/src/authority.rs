@@ -2238,10 +2238,12 @@ impl AuthorityState {
 
         let metrics = Arc::new(AuthorityMetrics::new(prometheus_registry));
         let (tx_ready_certificates, rx_ready_certificates) = unbounded_channel();
+        let (tx_commited_transactions, rx_commited_transactions) = unbounded_channel();
         let transaction_manager = Arc::new(TransactionManager::new(
             store.clone(),
             &epoch_store,
             tx_ready_certificates,
+            tx_commited_transactions,
             metrics.clone(),
         ));
         let (tx_execution_shutdown, rx_execution_shutdown) = oneshot::channel();
@@ -2283,7 +2285,14 @@ impl AuthorityState {
             overload_threshold_config,
             consensus_listeners: Arc::new(ConsensusListener::default()),
         });
-
+        /*
+         * 231213 TaiVV
+         * Start consensus result notifier
+         */
+        let consensus_listeners = state.get_consensus_listeners();
+        consensus_listeners
+            .start_notifier(rx_commited_transactions)
+            .await;
         // Start a task to execute ready certificates.
         let authority_state = Arc::downgrade(&state);
         spawn_monitored_task!(execution_process(
