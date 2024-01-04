@@ -631,6 +631,8 @@ impl NodeConfig {
     pub fn consensus(&self) -> Arc<dyn Consensus> {
         if self.dev.dev {
             Arc::new(AutoSealConsensus::new(Arc::clone(&self.chain)))
+        } else if self.consensus.narwhal {
+            Arc::new(ScalarConsensus::new(Arc::clone(&self.chain)))
         } else {
             Arc::new(BeaconConsensus::new(Arc::clone(&self.chain)))
         }

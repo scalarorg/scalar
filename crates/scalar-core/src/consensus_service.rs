@@ -1,9 +1,8 @@
 use crate::{
     authority::authority_per_epoch_store::AuthorityPerEpochStore,
     authority::AuthorityState,
-    authority_server::ValidatorService,
     consensus_adapter::{ConsensusAdapter, SubmitToConsensus},
-    consensus_types::{ConsensusTransactionWrapper, NsTransaction},
+    consensus_types::NsTransaction,
 };
 use anyhow::anyhow;
 use prometheus::Registry;

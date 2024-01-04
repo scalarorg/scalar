@@ -1,13 +1,13 @@
 //! The mode the auto seal miner is operating in.
 
 use futures_util::{stream::Fuse, StreamExt};
-use reth_primitives::TxHash;
+use reth_primitives::{revm_primitives::FixedBytes, Address, TxHash};
 use reth_transaction_pool::{TransactionPool, ValidPoolTransaction};
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     fmt,
     pin::Pin,
-    sync::Arc,
+    sync::{Arc, Mutex},
     task::{Context, Poll},
     time::Duration,
 };
@@ -65,6 +65,8 @@ impl<Pool: TransactionPool> ScalarMiningMode<Pool> {
             rx_commited_transactions: UnboundedReceiverStream::new(rx_commited_transactions).fuse(),
             pending_transaction_queue: Default::default(),
             pending_commited_transactions: Default::default(),
+            expected_nonces: Default::default(),
+            deferred_commited_transactions: Default::default(),
         })
     }
 
@@ -197,6 +199,10 @@ pub struct NarwhalTransactionMiner<Pool: TransactionPool> {
     /// Receives hashes of transactions that are ready
     rx_pending_transaction: Fuse<ReceiverStream<TxHash>>,
     rx_commited_transactions: Fuse<UnboundedReceiverStream<Vec<ExternalTransaction>>>,
+    // Todo: store and load this map from the db
+    expected_nonces: Mutex<HashMap<Address, u64>>,
+    // Các transaction trước đó chưa được đưa vào block
+    deferred_commited_transactions: Vec<ExternalTransaction>,
     pending_transaction_queue:
         VecDeque<Arc<ValidPoolTransaction<<Pool as TransactionPool>::Transaction>>>,
     pending_commited_transactions: VecDeque<Vec<ExternalTransaction>>,
@@ -213,16 +219,17 @@ impl<Pool: TransactionPool> NarwhalTransactionMiner<Pool> {
     where
         Pool: TransactionPool,
     {
+        info!("Poll next commited transactions");
         while let Poll::Ready(Some(comitted_transactions)) =
             Pin::new(&mut self.rx_commited_transactions).poll_next(cx)
         {
+            info!("Push pending commited transactions {:?}", comitted_transactions.len());
             if comitted_transactions.len() > 0 {
                 self.pending_commited_transactions
                     .push_back(comitted_transactions);
             }
         }
-
-        // drain the notification stream
+        info!("drain the notification stream");
         while let Poll::Ready(Some(tx_hash)) =
             Pin::new(&mut self.rx_pending_transaction).poll_next(cx)
         {
@@ -238,88 +245,14 @@ impl<Pool: TransactionPool> NarwhalTransactionMiner<Pool> {
             }
         }
 
-        // let transactions = pool.best_transactions().collect::<Vec<_>>();
-
-        // there are pending transactions if we didn't drain the pool
-        // self.has_pending_txs = Some(transactions.len() >= self.max_transactions);
-        if self.pending_commited_transactions.is_empty() {
+        if self.pending_commited_transactions.is_empty()
+            && self.deferred_commited_transactions.is_empty()
+        {
+            info!("Both pending commited_transactions and deferred_commited_transactions are empty");
             return Poll::Pending;
         }
-        let commited_transactions = self.pending_commited_transactions.get(0).expect("not null");
-        let mut transactions = vec![];
-        let hash_set: HashSet<Vec<u8>> = commited_transactions
-            .iter()
-            .map(|tran| tran.tx_bytes.clone())
-            .collect();
-        let commited_len = commited_transactions.len();
-        let mut indexes = vec![];
-        let mut index = 0;
-        info!(
-            "Try to form a block with {:?} commited transactions. Pending queue size {:?}",
-            commited_len,
-            self.pending_transaction_queue.len()
-        );
-        while let Some(tran) = self.pending_transaction_queue.get(index) {
-            let key = tran.hash().as_slice().to_vec();
-            if hash_set.contains(&key) {
-                info!(
-                    "Found transaction with nonce {:?} and hash {:?} at index {}",
-                    tran.nonce(),
-                    &key,
-                    index
-                );
-                transactions.push(Arc::clone(tran));
-                indexes.push(index);
-                if transactions.len() == commited_len {
-                    info!("Found all commited transaction in pending cache, form a new block");
-                    //Clean up pending cache
-                    for i in indexes.into_iter().rev() {
-                        self.pending_transaction_queue.remove(i);
-                    }
-                    break;
-                }
-            } else {
-                info!(
-                    "Pending transaction with nonce {:?} is not commited",
-                    tran.nonce()
-                );
-            }
-            index += 1;
-        }
-        if transactions.len() < hash_set.len() {
-            warn!("Missing some transactions in pending queue");
-            return Poll::Pending;
-        }
-        // for transaction in commited_transactions.iter() {
-        //     //Find transaction in the pending queue with current hash
-        //     let mut index = 0;
-        //     let mut found = false;
-        //     loop {
-        //         if let Some(tran) = self.pending_transaction_queue.get(index) {
-        //             if tran.hash().as_slice() == transaction.tx_bytes.as_slice() {
-        //                 transactions.push(Arc::clone(tran));
-        //                 info!(
-        //                     "Found transaction with nonce {:?} and hash {:?}",
-        //                     tran.nonce(),
-        //                     &transaction.tx_bytes
-        //                 );
-        //                 found = true;
-        //                 break;
-        //             } else {
-        //                 index += 1;
-        //             }
-        //         } else {
-        //             break;
-        //         }
-        //     }
-        //     if found {
-        //         self.pending_transaction_queue.remove(index);
-        //     } else {
-        //         warn!("Missing transaction with hash {:?}", &transaction.tx_bytes);
-        //         return Poll::Pending;
-        //     }
-        // }
-        self.pending_commited_transactions.pop_front();
+        info!("Process next block");
+        let transactions = self.process_next_block(pool);
         if transactions.is_empty() {
             return Poll::Pending;
         }
@@ -332,5 +265,80 @@ impl<Pool: TransactionPool> fmt::Debug for NarwhalTransactionMiner<Pool> {
         f.debug_struct("NarwhalTransactionMiner")
             .field("max_transactions", &self.max_transactions)
             .finish_non_exhaustive()
+    }
+}
+/*
+ * TaiVV 2023 Jan 04
+ * Mỗi commited nhận được từ consensus sẽ kết hợp với các commited trước đó để chuẩn bị tạo 1 block.
+ * Loop through all pending transactions
+ * Các transaction trong pool được đưa vào block tiếp theo nếu thoả mãn 2 điều kiện
+ * 1. Số nonce trùng với expected nonce
+ * 2. Transaction hash được committed
+ * Todo: Thuật toán này phục vụ nhu cầu demo,
+ * Sẽ phải update cho các version tiếp theo
+ */
+
+impl<Pool: TransactionPool> NarwhalTransactionMiner<Pool> {
+    fn process_next_block(
+        &mut self,
+        pool: &Pool,
+    ) -> Vec<Arc<ValidPoolTransaction<<Pool as TransactionPool>::Transaction>>> {
+        let mut transactions = vec![];
+        //1. Join defferred commited transaction with current commited transactions to form unique set
+        let mut commited_txs_set: HashSet<Vec<u8>> = self
+            .deferred_commited_transactions
+            .iter()
+            .map(|tran| tran.tx_bytes.clone())
+            .collect();
+        let current_commited_transactions = self
+            .pending_commited_transactions
+            .pop_front()
+            .unwrap_or_else(|| vec![]);
+        current_commited_transactions.iter().for_each(|tran| {
+            commited_txs_set.insert(tran.tx_bytes.clone());
+        });
+        let mut new_pending_queue = VecDeque::default();
+        let mut sealed_txs: HashSet<Vec<u8>> = Default::default();
+        //2. Loop throught pending transactions. Push transaction to block if its' nonce is expected
+        while let Some(pending_tx) = self.pending_transaction_queue.pop_front() {
+            let key = pending_tx.hash().as_slice().to_vec();
+            let nonce = pending_tx.nonce();
+            let sender = pending_tx.sender();
+            if let Ok(mut expected_nonces) = self.expected_nonces.lock() {
+                let expected_nonce = expected_nonces.get(&sender)
+                    .map(|nonce| nonce.clone())
+                    .unwrap_or(0_u64);
+                if nonce == expected_nonce && commited_txs_set.contains(&key) {
+                    sealed_txs.insert(key);
+                    transactions.push(pending_tx);
+                    (*expected_nonces).insert(sender, nonce + 1);
+                } else {
+                    if nonce != expected_nonce {
+                        warn!("Pending transaction {} from sender {} not matches with expected nonce {}", &nonce, &sender, &expected_nonce);
+                    } else {
+                        warn!("Pending transaction {} from sender {} not found in committed cache", &nonce, &sender);
+                    }
+                    new_pending_queue.push_back(pending_tx);
+                }
+            } else {
+                new_pending_queue.push_back(pending_tx);
+            }
+            
+        }
+        self.pending_transaction_queue = new_pending_queue;
+        //3. Remove sealed transactions
+        self.deferred_commited_transactions
+            .retain(|key| !sealed_txs.contains(&key.tx_bytes));
+        current_commited_transactions.into_iter().for_each(|tx| {
+            if !sealed_txs.contains(&tx.tx_bytes) {
+                self.deferred_commited_transactions.push(tx);
+            }
+        });
+        info!("Expected nonces {:?}. Pending transaction queue size {}. Deffered commited transaction size {}", 
+            &self.expected_nonces,
+            self.pending_transaction_queue.len(), 
+            self.deferred_commited_transactions.len()
+        );
+        transactions
     }
 }
