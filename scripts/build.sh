@@ -14,7 +14,9 @@ validator_cluster() {
     WORKING_DIR=/scalar
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    cp ${SCRIPT_DIR}/${BIN_NAME} ${SCRIPT_DIR}/scalar-validator
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${SCRIPT_DIR}
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 move_fullnode_cluster() {
@@ -58,6 +60,7 @@ scalar_reth() {
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${SCRIPT_DIR}
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 

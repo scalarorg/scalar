@@ -35,7 +35,9 @@ containers() {
     docker-compose ${COMPOSE_FILE} down
   fi  
 }
-
+cluster() {
+  docker-compose -f ${DIR}/../docker-cluster.yaml up -d
+}
 builder() {
   docker exec -it ${BUILDER} bash
 }
