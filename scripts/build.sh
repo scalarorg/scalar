@@ -8,6 +8,27 @@ BIN_DIR=${SCRIPT_DIR}/validator/${PROFILE}
 SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
+scalar_validator() {
+    BIN_NAME=scalar-validator
+    WORKING_DIR=/scalar
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${SCRIPT_DIR}
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
+# Working from 2023-12-13
+scalar_reth() {
+    BIN_NAME=scalar-reth
+    WORKING_DIR=/scalar/crates/${BIN_NAME}
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${SCRIPT_DIR}
+    rm ${SCRIPT_DIR}/${BIN_NAME}
+}
+
 # Working from 2023-12-13
 validator_cluster() {
     BIN_NAME=validator-cluster
@@ -51,17 +72,6 @@ reth_test_client() {
     docker cp ${SCRIPT_DIR}/test-genesis.json ${RUNNER}:/usr/local/bin
     rm ${SCRIPT_DIR}/${BIN_NAME}
     rm ${SCRIPT_DIR}/test-genesis.json
-}
-
-# Working from 2023-12-13
-scalar_reth() {
-    BIN_NAME=scalar-reth
-    WORKING_DIR=/scalar/crates/${BIN_NAME}
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
-    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${SCRIPT_DIR}
-    rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 
 reth() {

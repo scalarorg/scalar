@@ -35,9 +35,13 @@ containers() {
     docker-compose ${COMPOSE_FILE} down
   fi  
 }
+
 cluster() {
-  docker-compose -f ${DIR}/../docker-cluster.yaml up -d
+  export ROOT=${DIR}/../runtime
+  COMMAND=${1:-up -d}
+  docker-compose -f ${ROOT}/docker-cluster.yaml $COMMAND
 }
+
 builder() {
   docker exec -it ${BUILDER} bash
 }

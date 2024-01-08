@@ -1,8 +1,8 @@
 version: "3.9"
 
 services:
-  reth_execution:
-    image: scalar-reth
+  reth:
+    image: scalar-runner
     container_name: scalar-reth-${NODE_NAME}
     environment:
       - LD_PRELOAD
@@ -19,11 +19,11 @@ services:
       - "${PEER_PORT}:30303" # Peering ports
       - "${PEER_PORT}:30303/udp" # Peering ports
       - "${RPC_HTTP_PORT}:8545" # http
-      - "${RPC_HTTP_PORT}:8546" # ws
+      - "${RPC_WS_PORT}:8546" # ws
       - "${PROMETHEUS_PORT}:9001" # Metrics
 
   validator:
-    image: scalar-validator
+    image: scalar-runner
     container_name: scalar-validator-${NODE_NAME}
     environment:
       - LD_PRELOAD
@@ -37,5 +37,5 @@ services:
       - ../configs/scalar:/scalar
       - ../scripts/entry.sh:/entry.sh
     ports:
-      - "CONSENSUS_SERVICE_PORT:9090" # Consensus grpc port
+      - "${CONSENSUS_SERVICE_PORT}:9090" # Consensus grpc port
 
