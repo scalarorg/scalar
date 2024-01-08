@@ -1,9 +1,8 @@
 use crate::{
     authority::authority_per_epoch_store::AuthorityPerEpochStore,
     authority::AuthorityState,
-    authority_server::ValidatorService,
     consensus_adapter::{ConsensusAdapter, SubmitToConsensus},
-    consensus_types::{ConsensusTransactionWrapper, NsTransaction},
+    consensus_types::NsTransaction,
 };
 use anyhow::anyhow;
 use prometheus::Registry;
@@ -65,7 +64,6 @@ fn from_ns_transactions(ns_transactions: Vec<NsTransaction>) -> CommitedTransact
 pub struct ConsensusService {
     state: Arc<AuthorityState>,
     consensus_adapter: Arc<ConsensusAdapter>,
-    validator_service: ValidatorService,
     epoch_store: Arc<AuthorityPerEpochStore>,
     metrics: Arc<ConsensusServiceMetrics>,
 }
@@ -73,14 +71,12 @@ impl ConsensusService {
     pub fn new(
         state: Arc<AuthorityState>,
         consensus_adapter: Arc<ConsensusAdapter>,
-        validator_service: ValidatorService,
         epoch_store: Arc<AuthorityPerEpochStore>,
         prometheus_registry: &Registry,
     ) -> Self {
         Self {
             state,
             consensus_adapter,
-            validator_service,
             epoch_store,
             metrics: Arc::new(ConsensusServiceMetrics::new(prometheus_registry)),
         }
@@ -94,7 +90,7 @@ impl ConsensusService {
             &transaction_in
         );
         let ns_transaction = NsTransaction::from(transaction_in);
-        // let transaction_wrapper = ConsensusTransactionWrapper::Namespace(ns_transaction);
+        //let transaction_wrapper = ConsensusTransactionWrapper::Namespace(ns_transaction);
         //self.validator_service.handle_transaction_for_testing(transaction.into()).await;
         // if let Ok(cetificate_tran) = self.create_certificate_transaction(transaction) {
         //     // self.validator_service.execute_certificate_for_testing(cetificate_tran).await;
@@ -107,7 +103,7 @@ impl ConsensusService {
         //     .map_err(|err| anyhow!("{:?}", err))
         //     .expect("Serialization should not fail.");
         self.consensus_adapter
-            .submit_ns_transaction_to_consensus(&ns_transaction, &self.epoch_store)
+            .submit_ns_transaction_to_consensus(ns_transaction, &self.epoch_store)
             .await
             .map_err(|err| anyhow!(err.to_string()))
     }

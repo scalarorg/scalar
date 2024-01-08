@@ -29,8 +29,8 @@ move_fullnode_cluster() {
 # HuongND 2023-12-14
 reth_test_cluster() {
     BIN_NAME=reth-test-cluster
-    WORKING_DIR=/scalar
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
+    WORKING_DIR=/scalar/reth-test-cluster
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
@@ -41,8 +41,8 @@ reth_test_cluster() {
 
 reth_test_client() {
     BIN_NAME=reth-test-client
-    WORKING_DIR=/scalar
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/reth-test-cluster/Cargo.toml --profile dev --bin ${BIN_NAME}
+    WORKING_DIR=/scalar/reth-test-cluster
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json

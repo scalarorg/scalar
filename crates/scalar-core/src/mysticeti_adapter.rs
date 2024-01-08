@@ -11,6 +11,7 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::time::{sleep, timeout};
 
 use crate::authority::authority_per_epoch_store::AuthorityPerEpochStore;
+use crate::consensus_types::ConsensusTransactionWrapper;
 use crate::{consensus_adapter::SubmitToConsensus, consensus_types::NsTransaction};
 use sui_types::messages_consensus::ConsensusTransaction;
 use tracing::warn;
@@ -131,13 +132,14 @@ impl SubmitToConsensus for LazyMysticetiClient {
     }
     async fn submit_ns_transaction_to_consensus(
         &self,
-        transaction: &NsTransaction,
+        transaction: NsTransaction,
         _epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult {
         // The retrieved MysticetiClient can be from the past epoch. Submit would fail after
         // Mysticeti shuts down, so there should be no correctness issue.
+        let wrapper = ConsensusTransactionWrapper::Namespace(transaction);
         let client = self.get().await;
-        let tx_bytes = bcs::to_bytes(transaction).expect("Serialization should not fail.");
+        let tx_bytes = bcs::to_bytes(&wrapper).expect("Serialization should not fail.");
         client
             .as_ref()
             .expect("Client should always be returned")

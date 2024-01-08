@@ -15,6 +15,7 @@ members = [
 ]
 
 exclude = [
+    "reth-test-cluster",
     "sui/external-crates/move/crates/bytecode-interpreter-crypto",
     "sui/external-crates/move/crates/bytecode-interpreter-testsuite",
     "sui/external-crates/move/crates/bytecode-verifier-libfuzzer",

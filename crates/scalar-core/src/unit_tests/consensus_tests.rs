@@ -135,7 +135,7 @@ async fn submit_transaction_to_consensus_adapter() {
         }
         async fn submit_ns_transaction_to_consensus(
             &self,
-            transaction: &NsTransaction,
+            transaction: NsTransaction,
             epoch_store: &Arc<AuthorityPerEpochStore>,
         ) -> SuiResult {
             // epoch_store

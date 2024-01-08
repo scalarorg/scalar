@@ -290,7 +290,7 @@ where
     while let Some(received) = resp_stream.next().await {
         match received {
             Ok(CommitedTransactions { transactions }) => {
-                info!("Received commited transactions {:?}.", transactions);
+                info!("Received commited transactions {:?}.", transactions.len());
                 if let Err(err) = tx_commited_transactions.send(transactions) {
                     error!("{:?}", err);
                 }

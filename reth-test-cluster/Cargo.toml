@@ -7,25 +7,25 @@ publish = false
 edition = "2021"
 
 [dependencies]
-futures.workspace = true
-serde_json.workspace = true
-serde.workspace = true
-tokio = { workspace = true, features = ["full"] }
-tracing.workspace = true
-clap.workspace = true
-async-trait.workspace = true
+futures = "0.3.26"
+serde_json = "1.0.94"
+serde = { version = "1.0", default-features = false }
+tokio = { version = "1.21", features = ["full"] }
+tracing = "0.1.0"
+clap = "4"
+async-trait = "0.1.61"
 anyhow = "1.0.71"
 telemetry-subscribers = { git = "https://github.com/MystenLabs/sui", rev = "01a8af7fca6aa8d24cdafad87a1191e06ac75af8", package = "telemetry-subscribers" }
 derivative = "2.2.0"
-tempfile.workspace = true
+tempfile = "3.8"
 ethers = { version = "2.0", features = ["rustls"] }
 dotenvy = { version = "0.15", default-features = false }
 envy = "0.4"
-jsonrpsee.workspace = true
-rand.workspace = true
+jsonrpsee = { version = "0.20", features = ["server"] }
+rand = "0.8.5"
 scalar-reth = { path = "../crates/scalar-reth" }
 reth-tasks = { path = "../reth/crates/tasks" }
-eyre.workspace = true
+eyre = "0.6"
 
 [[bin]]
 name = "reth-test-client"

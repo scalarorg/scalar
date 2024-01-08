@@ -19,6 +19,7 @@ use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
 use narwhal_network::metrics::{NetworkConnectionMetrics, NetworkMetrics};
 use prometheus::Registry;
+use scalar_consensus_common::ConsensusApiServer;
 use scalar_core::authority::authority_per_epoch_store::AuthorityPerEpochStore;
 use scalar_core::authority::authority_store_tables::AuthorityPerpetualTables;
 use scalar_core::authority::epoch_start_configuration::EpochStartConfigTrait;
@@ -36,16 +37,18 @@ use scalar_core::consensus_adapter::{
 };
 use scalar_core::consensus_adapter::{LazyNarwhalClient, SubmitToConsensus};
 use scalar_core::consensus_manager::{ConsensusManager, ConsensusManagerTrait};
+use scalar_core::consensus_service::ConsensusService;
 use scalar_core::consensus_throughput_calculator::{
     ConsensusThroughputCalculator, ConsensusThroughputProfiler, ThroughputProfileRanges,
 };
-use scalar_core::consensus_validator::{SuiTxValidator, SuiTxValidatorMetrics};
 use scalar_core::db_checkpoint_handler::DBCheckpointHandler;
 use scalar_core::epoch::committee_store::CommitteeStore;
 use scalar_core::epoch::data_removal::EpochDataRemover;
 use scalar_core::epoch::epoch_metrics::EpochMetrics;
 use scalar_core::epoch::reconfiguration::ReconfigurationInitiator;
 use scalar_core::module_cache_metrics::ResolverMetrics;
+use scalar_core::scalar_validator::ScalarTxValidator;
+use scalar_core::scalar_validator::ScalarTxValidatorMetrics;
 use scalar_core::signature_verifier::SignatureVerifierMetrics;
 use scalar_core::state_accumulator::StateAccumulator;
 use scalar_core::storage::RocksDbStore;
@@ -132,7 +135,7 @@ pub struct ValidatorComponents {
     // channel. When the sender is dropped, a change is triggered and those tasks will exit.
     checkpoint_service_exit: watch::Sender<()>,
     checkpoint_metrics: Arc<CheckpointMetrics>,
-    sui_tx_validator_metrics: Arc<SuiTxValidatorMetrics>,
+    scalar_tx_validator_metrics: Arc<ScalarTxValidatorMetrics>,
 }
 
 #[cfg(msim)]
@@ -1057,13 +1060,14 @@ impl ValidatorNode {
         consensus_epoch_data_remover.run().await;
 
         let checkpoint_metrics = CheckpointMetrics::new(&registry_service.default_registry());
-        let sui_tx_validator_metrics =
-            SuiTxValidatorMetrics::new(&registry_service.default_registry());
+        let scalar_tx_validator_metrics =
+            ScalarTxValidatorMetrics::new(&registry_service.default_registry());
 
         let validator_server_handle = Self::start_grpc_validator_service(
             config,
             state.clone(),
             consensus_adapter.clone(),
+            epoch_store.clone(),
             &registry_service.default_registry(),
         )
         .await?;
@@ -1081,7 +1085,7 @@ impl ValidatorNode {
             validator_server_handle,
             checkpoint_metrics,
             sui_node_metrics,
-            sui_tx_validator_metrics,
+            scalar_tx_validator_metrics,
         )
         .await
     }
@@ -1099,7 +1103,7 @@ impl ValidatorNode {
         validator_server_handle: JoinHandle<Result<()>>,
         checkpoint_metrics: Arc<CheckpointMetrics>,
         sui_node_metrics: Arc<SuiNodeMetrics>,
-        sui_tx_validator_metrics: Arc<SuiTxValidatorMetrics>,
+        scalar_tx_validator_metrics: Arc<ScalarTxValidatorMetrics>,
     ) -> Result<ValidatorComponents> {
         let (checkpoint_service, checkpoint_service_exit) = Self::start_checkpoint_service(
             config,
@@ -1141,17 +1145,17 @@ impl ValidatorNode {
             low_scoring_authorities,
             throughput_calculator,
         );
-
+        // Scalar Todo: Disable TxValidator for testing
         consensus_manager
             .start(
                 config,
                 epoch_store.clone(),
                 consensus_handler_initializer,
-                SuiTxValidator::new(
+                ScalarTxValidator::new(
                     epoch_store.clone(),
                     checkpoint_service.clone(),
                     state.transaction_manager().clone(),
-                    sui_tx_validator_metrics.clone(),
+                    scalar_tx_validator_metrics.clone(),
                 ),
             )
             .await;
@@ -1173,7 +1177,7 @@ impl ValidatorNode {
             consensus_adapter,
             checkpoint_service_exit,
             checkpoint_metrics,
-            sui_tx_validator_metrics,
+            scalar_tx_validator_metrics,
         })
     }
 
@@ -1254,11 +1258,12 @@ impl ValidatorNode {
         config: &NodeConfig,
         state: Arc<AuthorityState>,
         consensus_adapter: Arc<ConsensusAdapter>,
+        epoch_store: Arc<AuthorityPerEpochStore>,
         prometheus_registry: &Registry,
     ) -> Result<tokio::task::JoinHandle<Result<()>>> {
         let validator_service = ValidatorService::new(
             state.clone(),
-            consensus_adapter,
+            consensus_adapter.clone(),
             Arc::new(ValidatorServiceMetrics::new(prometheus_registry)),
         );
 
@@ -1267,7 +1272,13 @@ impl ValidatorNode {
         server_conf.load_shed = config.grpc_load_shed;
         let mut server_builder =
             ServerBuilder::from_config(&server_conf, GrpcMetrics::new(prometheus_registry));
-
+        /*
+         * Scalar: Add consensus grpc server
+         */
+        let consensus_service =
+            ConsensusService::new(state, consensus_adapter, epoch_store, prometheus_registry);
+        server_builder = server_builder.add_service(ConsensusApiServer::new(consensus_service));
+        /************And adding consensus grpc server ****************/
         server_builder = server_builder.add_service(ValidatorServer::new(validator_service));
 
         let server = server_builder
@@ -1443,7 +1454,7 @@ impl ValidatorNode {
                 consensus_adapter,
                 checkpoint_service_exit,
                 checkpoint_metrics,
-                sui_tx_validator_metrics,
+                scalar_tx_validator_metrics,
             }) = self.validator_components.lock().await.take()
             {
                 info!("Reconfiguring the validator.");
@@ -1482,7 +1493,7 @@ impl ValidatorNode {
                             validator_server_handle,
                             checkpoint_metrics,
                             self.metrics.clone(),
-                            sui_tx_validator_metrics,
+                            scalar_tx_validator_metrics,
                         )
                         .await?,
                     )
