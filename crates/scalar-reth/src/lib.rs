@@ -27,7 +27,6 @@
 #![warn(missing_docs, unreachable_pub, rustdoc::all)]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-
 pub mod args;
 pub mod builder;
 pub mod cli;
@@ -38,6 +37,7 @@ pub mod init;
 pub mod prometheus_exporter;
 pub mod proto;
 pub mod runner;
+pub mod scalar_ext;
 pub mod utils;
 pub mod version;
 pub const NAMESPACE: &str = "reth";
