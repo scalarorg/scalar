@@ -35,8 +35,14 @@ reth_test_cluster() {
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
     docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
     docker cp ${SCRIPT_DIR}/test-genesis.json ${RUNNER}:/usr/local/bin
+    docker cp ${BUILDER}:${WORKING_DIR}/contracts ${SCRIPT_DIR}/contracts
+    docker exec -it ${RUNNER} mkdir -p ${WORKING_DIR}/contracts
+    docker cp ${SCRIPT_DIR}/contracts ${RUNNER}:${WORKING_DIR}
+    docker exec -it ${RUNNER} mv ${WORKING_DIR}/contracts/solc /usr/local/bin
+    docker exec -it ${RUNNER} chmod +x /usr/local/bin/solc
     rm ${SCRIPT_DIR}/${BIN_NAME}
     rm ${SCRIPT_DIR}/test-genesis.json
+    rm -rf ${SCRIPT_DIR}/contracts
 }
 
 reth_test_client() {

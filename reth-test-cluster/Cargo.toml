@@ -26,6 +26,7 @@ rand = "0.8.5"
 scalar-reth = { path = "../crates/scalar-reth" }
 reth-tasks = { path = "../reth/crates/tasks" }
 eyre = "0.6"
+ethers-solc = "2.0.11"
 
 [[bin]]
 name = "reth-test-client"

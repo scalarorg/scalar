@@ -6356,6 +6356,7 @@ dependencies = [
  "dotenvy",
  "envy",
  "ethers",
+ "ethers-solc",
  "eyre",
  "futures",
  "jsonrpsee",

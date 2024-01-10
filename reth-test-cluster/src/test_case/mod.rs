@@ -1,1 +1,2 @@
+pub mod deploy_and_call_smart_contract_test;
 pub mod send_raw_transaction_test;

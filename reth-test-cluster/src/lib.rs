@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use cluster::{Cluster, ClusterFactory};
 use config::ClusterTestOpt;
 use test_case::send_raw_transaction_test::SendRawTransactionTest;
+use test_case::deploy_and_call_smart_contract_test::DeployAndCallSmartContractTest;
 use tracing::{error, info};
 use wallet_client::WalletClient;
 
@@ -79,7 +80,10 @@ impl ClusterTest {
             .await
             .unwrap_or_else(|e| panic!("Failed to setup test context: {e}"));
 
-        let tests = vec![TestCase::new(SendRawTransactionTest {})];
+        let tests = vec![
+            // TestCase::new(SendRawTransactionTest {}),
+            TestCase::new(DeployAndCallSmartContractTest {})
+        ];
 
         // TODO: improve the runner parallelism for efficiency
         // For now we run tests serially
