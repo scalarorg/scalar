@@ -54,4 +54,4 @@ services:
       - "30303:30303/udp"     # Peering ports
       - "8545:8545"           # http
       - "8546:8546"           # ws
-      - "9001:9001"           # Metrics
+      # - "9001:9001"           # Metrics

@@ -79,10 +79,12 @@ reth_test_client() {
 reth() {
     BIN_NAME=reth
     WORKING_DIR=/scalar/reth
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
 }
 
 scalar() {

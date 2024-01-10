@@ -37,9 +37,15 @@ containers() {
 }
 
 cluster() {
-  export ROOT=${SCRIPT_DIR}/../runtime
+  export RUNTIME=${SCRIPT_DIR}/../runtime
   COMMAND=${1:-up -d}
-  docker-compose -f ${SCRIPT_DIR}/../docker/docker-cluster.yaml $COMMAND
+  docker-compose -f ${SCRIPT_DIR}/../docker/docker-cluster.yml --env-file ${RUNTIME}/.env $COMMAND
+}
+
+blockscout() {
+  export RUNTIME=${SCRIPT_DIR}/../runtime/blockscout
+  COMMAND=${1:-up}
+  docker-compose -f ${SCRIPT_DIR}/../docker/blockscout/docker-compose.yml --env-file ${RUNTIME}/.env $COMMAND
 }
 
 builder() {

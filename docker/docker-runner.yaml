@@ -3,7 +3,7 @@ version: "3.9"
 services:
   reth:
     image: scalar-runner
-    container_name: scalar-reth-${NODE_NAME}
+    container_name: scalar-reth
     environment:
       - LD_PRELOAD
       - RUST_JSON_LOG=true
@@ -15,16 +15,16 @@ services:
     volumes:
       - ../configs/reth:/reth
       - ../scripts/entry.sh:/entry.sh
-    ports:
-      - "${PEER_PORT}:30303" # Peering ports
-      - "${PEER_PORT}:30303/udp" # Peering ports
-      - "${RPC_HTTP_PORT}:8545" # http
-      - "${RPC_WS_PORT}:8546" # ws
-      - "${PROMETHEUS_PORT}:9001" # Metrics
+    # ports:
+    #   - "${PEER_PORT}:30303" # Peering ports
+    #   - "${PEER_PORT}:30303/udp" # Peering ports
+    #   - "${RPC_HTTP_PORT}:8545" # http
+    #   - "${RPC_WS_PORT}:8546" # ws
+    #   - "${PROMETHEUS_PORT}:9001" # Metrics
 
   validator:
     image: scalar-runner
-    container_name: scalar-validator-${NODE_NAME}
+    container_name: scalar-validator
     environment:
       - LD_PRELOAD
       - RUST_JSON_LOG=true
@@ -36,6 +36,9 @@ services:
     volumes:
       - ../configs/scalar:/scalar
       - ../scripts/entry.sh:/entry.sh
-    ports:
-      - "${CONSENSUS_SERVICE_PORT}:9090" # Consensus grpc port
-
+    # ports:
+    #   - "${CONSENSUS_JSON_RPC_PORT}:8083"
+    #   - "${CONSENSUS_METRICS_PORT}:9184"
+    #   - "${CONSENSUS_NETWORK_PORT}:8080" # Consensus grpc port
+    #   - "${CONSENSUS_P2P_PORT}:8084" # P2p port
+    #   - "${CONSENSUS_PROMETHEUS_PORT}:33291"
