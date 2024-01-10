@@ -1,5 +1,16 @@
 #!/bin/sh
 
+init_validator() {
+    /usr/local/bin/sui genesis --force --epoch-duration-ms 3600000 \
+        --working-dir ${SUI_CONFIG_DIR} 
+    cd /opt/scalar/key-pairs    
+    #/usr/local/bin/sui keytool generate ed25519    
+    /usr/local/bin/sui validator make-validator-info ${NAME} "${DESCRIPTION}" ${IMAGE_URL} ${PROJECT_URL} ${HOSTNAME} ${GAS_PRICE}
+   
+    # /usr/local/bin/scalar-validator \
+    #     --config-path /opt/scalar/validator.yaml
+}
+
 validator_cluster() {
     RUST_LOG=info /usr/local/bin/validator-cluster \
         --cluster-size 4 \
@@ -23,6 +34,13 @@ reth_test_client() {
     TX_COUNT=${1:-20}
     RUST_LOG=info /usr/local/bin/reth-test-client send_raw_tx ${TX_COUNT}
 }  
+
+scalar_validator() {
+    RUST_LOG=info /usr/local/bin/scalar-validator \
+        --consensus-rpc-host 0.0.0.0 \
+        --consensus-rpc-port 9090 \
+        --epoch-duration-ms 3600000
+}
 
 scalar_reth() {
     RUST_LOG=info /usr/local/bin/scalar-reth node \

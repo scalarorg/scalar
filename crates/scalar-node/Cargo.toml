@@ -58,3 +58,7 @@ workspace-hack = { path = "../../sui/crates/workspace-hack" }
 
 [target.'cfg(msim)'.dependencies]
 sui-simulator = { path = "../../sui/crates/sui-simulator" }
+
+[[bin]]
+name = "scalar-validator"
+path = "src/main.rs"

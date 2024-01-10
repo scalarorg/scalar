@@ -1,21 +1,21 @@
 #!/bin/bash
-DIR="$( cd "$( dirname "$0" )" && pwd )"
+export SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 OS=$(uname)
 BUILDER=scalar-builder
 RUNNER=scalar-runner
 
-COMPOSE_FILE="-f ${DIR}/../docker/docker-compose.yaml"
+COMPOSE_FILE="-f ${SCRIPT_DIR}/../docker/docker-compose.yaml"
 if [ "$OS" == "Darwin" ]
 then
     ARCH=$(uname -m)
     if [ "$ARCH" == "arm64" ]
     then
-        COMPOSE_FILE="-f ${DIR}/../docker/docker-compose-arm64.yaml"
+        COMPOSE_FILE="-f ${SCRIPT_DIR}/../docker/docker-compose-arm64.yaml"
     fi
 fi 
 
-#COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-geth.yaml"
-#COMPOSE_FILE="${COMPOSE_FILE} -f ${DIR}/../docker/docker-compose-reth.yaml"
+#COMPOSE_FILE="${COMPOSE_FILE} -f ${SCRIPT_DIR}/../docker/docker-compose-geth.yaml"
+#COMPOSE_FILE="${COMPOSE_FILE} -f ${SCRIPT_DIR}/../docker/docker-compose-reth.yaml"
 
 init() {
   export UID=$(id -u)
@@ -37,9 +37,9 @@ containers() {
 }
 
 cluster() {
-  export ROOT=${DIR}/../runtime
+  export ROOT=${SCRIPT_DIR}/../runtime
   COMMAND=${1:-up -d}
-  docker-compose -f ${ROOT}/docker-cluster.yaml $COMMAND
+  docker-compose -f ${SCRIPT_DIR}/../docker/docker-cluster.yaml $COMMAND
 }
 
 builder() {

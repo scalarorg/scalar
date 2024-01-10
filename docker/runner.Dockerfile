@@ -11,6 +11,5 @@ ENV LD_PRELOAD /usr/lib/x86_64-linux-gnu/libjemalloc.so
 # LABEL build-date=$BUILD_DATE
 # LABEL git-revision=$GIT_REVISION
 COPY scalar-* /usr/local/bin
-WORKDIR /usr/local/bin
-
+COPY sui* /usr/local/bin
 ENTRYPOINT [ "sleep", "infinity"]

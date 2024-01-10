@@ -1,0 +1,14 @@
+version: "3.9"
+include:
+  - path: ${ROOT}/node1/docker-compose.yaml
+    env_file:
+      - ${ROOT}/node1/.env
+  - path: ${ROOT}/node2/docker-compose.yaml
+    env_file:
+      - ${ROOT}/node2/.env
+  - path: ${ROOT}/node3/docker-compose.yaml
+    env_file:
+      - ${ROOT}/node3/.env
+  - path: ${ROOT}/node4/docker-compose.yaml
+    env_file:
+      - ${ROOT}/node4/.env
