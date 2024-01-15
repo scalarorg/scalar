@@ -44,7 +44,7 @@ cluster() {
 
 blockscout() {
   export RUNTIME=${SCRIPT_DIR}/../runtime/blockscout
-  COMMAND=${1:-up}
+  COMMAND=${1:-up -d}
   docker-compose -f ${SCRIPT_DIR}/../docker/blockscout/docker-compose.yml --env-file ${RUNTIME}/.env $COMMAND
 }
 

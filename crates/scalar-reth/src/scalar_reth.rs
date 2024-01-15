@@ -1,5 +1,6 @@
 use clap::Parser;
-use scalar_reth::{cli::Cli, scalar_ext::ScalarExt};
+use reth::cli::Cli;
+use scalar_reth::scalar_ext::ScalarExt;
 // We use jemalloc for performance reasons
 #[cfg(all(feature = "jemalloc", unix))]
 #[global_allocator]

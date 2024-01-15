@@ -20,6 +20,7 @@ normal = [
 
 [dependencies]
 # reth
+reth = { path = "../../reth/bin/reth" }
 reth-config = { path = "../../reth/crates/config" }
 reth-primitives = { path = "../../reth/crates/primitives", features = [
     "arbitrary",

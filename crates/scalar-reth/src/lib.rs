@@ -32,6 +32,7 @@ pub mod builder;
 pub mod cli;
 pub mod commands;
 pub mod consensus;
+pub mod consensus_adapter;
 pub mod dirs;
 pub mod init;
 pub mod prometheus_exporter;

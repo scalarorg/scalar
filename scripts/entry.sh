@@ -52,8 +52,8 @@ scalar_reth() {
         --ws \
         --ws.addr 0.0.0.0 \
         --metrics 127.0.0.1:9001 \
-        --narwhal \
-        --narwhal.port 9090
+        --consensus.enable \
+        --consensus.port 9090
 }
 
 scalar() {
