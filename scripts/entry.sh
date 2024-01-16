@@ -1,5 +1,26 @@
 #!/bin/sh
 
+# Create config for 4 genesis validator nodes 
+init_genesis() {
+    /usr/local/bin/sui genesis --write-config ${SUI_CONFIG_DIR}/genesis.yaml 
+}
+# Generate validator configs from modified genesis.yaml
+init_validators() {
+    /usr/local/bin/sui genesis --force \
+        --from-config /opt/scalar/genesis.yaml \
+        --working-dir ${SUI_CONFIG_DIR} 
+}
+# Generate random validator configs for testing
+generate_test_validators() {
+    /usr/local/bin/sui genesis --force \
+        --working-dir ${SUI_CONFIG_DIR} 
+}
+# Start validator with config generated in genesis step
+start_validator() {
+    /usr/local/bin/scalar-validator \
+         --config-path /opt/scalar/config/validator.yaml
+}
+
 init_validator() {
     /usr/local/bin/sui genesis --force --epoch-duration-ms 3600000 \
         --working-dir ${SUI_CONFIG_DIR} 

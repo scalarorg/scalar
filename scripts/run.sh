@@ -1,6 +1,25 @@
-#!/bin/sh
+#!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 RUNNER=scalar-runner
+
+validators() {
+  export RUNTIME=${SCRIPT_DIR}/../runtime
+  export ROOT=${SCRIPT_DIR}/..
+  docker exec validator1 /usr/local/bin/sui genesis --force \
+      --from-config /opt/scalar/genesis.yaml \
+      --working-dir /opt/scalar/config
+  declare -a validators=("validator1" "validator2" "validator3" "validator4")
+  docker cp validator1:/opt/scalar/config/genesis.blob ${RUNTIME}/genesis.blob
+  for validator in "${validators[@]}"
+  do
+    docker cp ${RUNTIME}/genesis.blob ${validator}:/opt/scalar/config/genesis.blob
+    docker cp validator1:/opt/scalar/config/${validator}-8080.yaml ${RUNTIME}/${validator}-8080.yaml
+    docker cp ${RUNTIME}/${validator}-8080.yaml ${validator}:/opt/scalar/validator.yaml
+    echo "finish create config for $validator"
+    #docker exec $validator /entry.sh start_validator
+  done
+}
+
 
 validator_cluster() {
   docker exec -it ${RUNNER} /entry.sh validator_cluster

@@ -33,8 +33,11 @@ services:
     env_file:
       - ../configs/scalar/.env
     restart: unless-stopped
+    entrypoint: ["/entry.sh", "start_validator"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "validator.scalar.org:host-gateway"
     volumes:
-      - ../configs/scalar:/scalar
       - ../scripts/entry.sh:/entry.sh
     # ports:
     #   - "${CONSENSUS_JSON_RPC_PORT}:8083"

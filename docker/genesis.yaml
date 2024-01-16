@@ -1,0 +1,96 @@
+---
+ssfn_config_info: ~
+validator_config_info:
+  - network_address: /dns/validator1/tcp/8080/http
+    p2p_address: /ip4/0.0.0.0/udp/8184
+    gas_price: 1000
+    commission_rate: 1000
+    narwhal_primary_address: /dns/validator1/udp/8000
+    narwhal_worker_address: /dns/validator1/udp/8001
+    p2p_listen_address: 0.0.0.0:8184
+    metrics_address: 0.0.0.0:9184
+    narwhal_metrics_address: /ip4/0.0.0.0/tcp/9185
+    consensus_address: /dns/validator1/tcp/8083/http
+    consensus_internal_worker_address: ~
+    stake: 20000000000000000
+  - network_address: /dns/validator2/tcp/8080/http
+    p2p_address: /ip4/0.0.0.0/udp/8284
+    gas_price: 1000
+    commission_rate: 1000
+    narwhal_primary_address: /dns/validator2/udp/8000
+    narwhal_worker_address: /dns/validator2/udp/8001
+    p2p_listen_address: 0.0.0.0:8284
+    metrics_address: 0.0.0.0:9284
+    narwhal_metrics_address: /ip4/0.0.0.0/tcp/9285
+    consensus_address: /dns/validator2/tcp/8083/http
+    consensus_internal_worker_address: ~
+    stake: 20000000000000000
+  - network_address: /dns/validator3/tcp/8080/http
+    p2p_address: /ip4/0.0.0.0/udp/8384
+    gas_price: 1000
+    commission_rate: 1000
+    narwhal_primary_address: /dns/validator3/udp/8000
+    narwhal_worker_address: /dns/validator3/udp/8001
+    p2p_listen_address: 0.0.0.0:8384
+    metrics_address: 0.0.0.0:9384
+    narwhal_metrics_address: /ip4/0.0.0.0/tcp/9385
+    consensus_address: /dns/validator3/tcp/8083/http
+    consensus_internal_worker_address: ~
+    stake: 20000000000000000
+  - network_address: /dns/validator4/tcp/8080/http
+    p2p_address: /ip4/0.0.0.0/udp/8484
+    gas_price: 1000
+    commission_rate: 1000
+    narwhal_primary_address: /dns/validator4/udp/8000
+    narwhal_worker_address: /dns/validator4/udp/8001
+    p2p_listen_address: 0.0.0.0:8484
+    metrics_address: 0.0.0.0:9484
+    narwhal_metrics_address: /ip4/0.0.0.0/tcp/9485
+    consensus_address: /dns/validator4/tcp/8083/http
+    consensus_internal_worker_address: ~
+    stake: 20000000000000000
+parameters:
+  chain_start_timestamp_ms: 1705375177984
+  protocol_version: 32
+  allow_insertion_of_extra_objects: true
+  epoch_duration_ms: 86400000
+  stake_subsidy_start_epoch: 0
+  stake_subsidy_initial_distribution_amount: 1000000000000000
+  stake_subsidy_period_length: 10
+  stake_subsidy_decrease_rate: 1000
+accounts:
+  - address: "0x6ce39368d0cc16ea9ba102125a0d9f2414b3a3eaa66cbae00c2654588ec8ab42"
+    gas_amounts:
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+  - address: "0x7aebbbde8b19bc1cbabdc887cb49ffbfdfdbd2f2162191a48d6cb0afebf665db"
+    gas_amounts:
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+  - address: "0xd8a4643b75d7cc8dffb7430cf586d186ccd0ec34dc3fce2ff564ad59257d7b46"
+    gas_amounts:
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+  - address: "0xd9ff01d805ac7e2de8f675475d1eb0bf285e08cad0e3b3787d4c4aea771b44fc"
+    gas_amounts:
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+  - address: "0xe91f59e52962164625c52cf3d197ffd61b8fce191d8afc9ddb8618228edfe3c2"
+    gas_amounts:
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000
+      - 30000000000000000

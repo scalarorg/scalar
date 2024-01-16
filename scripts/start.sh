@@ -37,8 +37,17 @@ containers() {
 }
 
 cluster() {
-  export RUNTIME=${SCRIPT_DIR}/../runtime
+  export ROOT=${SCRIPT_DIR}/..
+  export RUNTIME=${ROOT}/runtime
   COMMAND=${1:-up -d}
+  mkdir -p ${RUNTIME}/genesis/scalar
+  declare -a nodes=("node1" "node2" "node3" "node4")
+  declare -a validators=("validator1" "validator2" "validator3" "validator4")
+  for node in "${nodes[@]}"
+  do
+   mkdir ${RUNTIME}/${node}/scalar/config/consensus_db
+   mkdir ${RUNTIME}/${node}/scalar/config/authorities_db
+  done
   docker-compose -f ${SCRIPT_DIR}/../docker/docker-cluster.yml --env-file ${RUNTIME}/.env $COMMAND
 }
 
