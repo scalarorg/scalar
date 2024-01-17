@@ -8,13 +8,38 @@ BIN_DIR=${SCRIPT_DIR}/validator/${PROFILE}
 SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
+scalar_validator() {
+    BIN_NAME=scalar-validator
+    WORKING_DIR=/scalar
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/${BIN_NAME}
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
+}
+
+# Working from 2023-12-13
+scalar_reth() {
+    BIN_NAME=scalar-reth
+    WORKING_DIR=/scalar/crates/${BIN_NAME}
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/${BIN_NAME}
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
+}
+
 # Working from 2023-12-13
 validator_cluster() {
     BIN_NAME=validator-cluster
     WORKING_DIR=/scalar
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
+    cp ${SCRIPT_DIR}/${BIN_NAME} ${SCRIPT_DIR}/scalar-validator
     docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${SCRIPT_DIR}
     rm ${SCRIPT_DIR}/${BIN_NAME}
 }
 move_fullnode_cluster() {
@@ -51,23 +76,15 @@ reth_test_client() {
     rm ${SCRIPT_DIR}/test-genesis.json
 }
 
-# Working from 2023-12-13
-scalar_reth() {
-    BIN_NAME=scalar-reth
-    WORKING_DIR=/scalar/crates/${BIN_NAME}
-    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/${BIN_NAME}
-}
-
 reth() {
     BIN_NAME=reth
     WORKING_DIR=/scalar/reth
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
 }
 
 scalar() {
@@ -90,13 +107,14 @@ consensus() {
 
 sui() {
     BIN_NAME=sui
-    RKING_DIR=/scalar/sui
+    WORKING_DIR=/scalar/sui
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
 }
-
 
 
 relayer() {

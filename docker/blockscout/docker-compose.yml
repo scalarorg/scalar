@@ -1,0 +1,111 @@
+version: '3.9'
+
+services:
+  redis_db:
+    extends:
+      file: ./services/redis.yml
+      service: redis_db
+    container_name: blockscout-redis_db
+
+  db-init:
+    extends:
+      file: ./services/db.yml
+      service: db-init
+    container_name: blockscout-db-init
+
+  db:
+    extends:
+      file: ./services/db.yml
+      service: db
+    container_name: blockscout-db
+
+  backend:
+    depends_on:
+      - db
+      - redis_db
+    extends:
+      file: ./services/backend.yml
+      service: backend
+    container_name: blockscout-backend
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      args:
+        CACHE_EXCHANGE_RATES_PERIOD: ""
+        API_V1_READ_METHODS_DISABLED: "false"
+        DISABLE_WEBAPP: "false"
+        API_V1_WRITE_METHODS_DISABLED: "false"
+        CACHE_TOTAL_GAS_USAGE_COUNTER_ENABLED: ""
+        CACHE_ADDRESS_WITH_BALANCES_UPDATE_INTERVAL: ""
+        ADMIN_PANEL_ENABLED: ""
+        RELEASE_VERSION: 6.0.0
+    links:
+      - db:database
+    environment:
+        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8145/
+        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:8145/
+        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8146/
+        CHAIN_ID: '1337'
+
+  visualizer:
+    extends:
+      file: ./services/visualizer.yml
+      service: visualizer
+    container_name: blockscout-visualizer
+
+  sig-provider:
+    extends:
+      file: ./services/sig-provider.yml
+      service: sig-provider
+    container_name: blockscout-sig-provider
+
+  frontend:
+    depends_on:
+      - backend
+    extends:
+      file: ./services/frontend.yml
+      service: frontend
+    container_name: blockscout-frontend
+    environment:
+        NEXT_PUBLIC_API_HOST: ${NEXT_PUBLIC_API_HOST}
+        NEXT_PUBLIC_APP_HOST: ${NEXT_PUBLIC_APP_HOST}
+        NEXT_PUBLIC_STATS_API_HOST: ${NEXT_PUBLIC_STATS_API_HOST}
+        NEXT_PUBLIC_VISUALIZE_API_HOST: ${NEXT_PUBLIC_VISUALIZE_API_HOST}
+
+  stats-db-init:
+    extends:
+      file: ./services/stats.yml
+      service: stats-db-init
+    container_name: blockscout-stats-db-init
+
+  stats-db:
+    depends_on:
+      - backend
+    extends:
+      file: ./services/stats.yml
+      service: stats-db
+    container_name: blockscout-stats-db
+
+  stats:
+    depends_on:
+      - stats-db
+    extends:
+      file: ./services/stats.yml
+      service: stats
+    container_name: blockscout-stats
+
+  proxy:
+    depends_on:
+      - backend
+      - frontend
+      - stats
+    extends:
+      file: ./services/nginx.yml
+      service: proxy
+    container_name: blockscout-proxy
+    env_file:
+      - ${RUNTIME}/.env
+
+# networks:
+#   blockscout:
+#     driver: 'bridge'

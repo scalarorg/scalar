@@ -1,0 +1,152 @@
+version: "3.9"
+
+services:
+  validator_genesis:
+    extends:
+      file: ./docker-runner.yaml
+      service: validator
+    restart: "no"
+    container_name: validator_genesis
+    volumes:
+      - ${RUNTIME}/genesis/scalar:/opt/scalar
+      - ${ROOT}/docker/genesis.yaml:/opt/scalar/genesis.yaml
+    environment:
+      - SUI_CONFIG_DIR=/opt/scalar/config
+    #entrypoint: ["/entry.sh", "init_validators"]
+    entrypoint: ["sleep", "infinity"]
+
+  validator1:
+    extends:
+      file: ./docker-runner.yaml
+      service: validator
+    container_name: validator1
+    depends_on:
+      - validator_genesis
+    ports:
+      - "${NODE1_CONSENSUS_JSON_RPC_PORT}:8083"
+      - "${NODE1_CONSENSUS_METRICS_PORT}:9184"
+      - "${NODE1_CONSENSUS_NETWORK_PORT}:8080" # Consensus grpc port
+      - "${NODE1_CONSENSUS_P2P_PORT}:8084" # P2p port
+      - "${NODE1_CONSENSUS_PROMETHEUS_PORT}:33291"
+    env_file:
+      - ${RUNTIME}/node1/.env
+    volumes:
+      - ${RUNTIME}/node1/scalar:/opt/scalar
+      - ${RUNTIME}/genesis/scalar/config/genesis.blob:/opt/scalar/config/genesis.blob
+      - ${RUNTIME}/genesis/scalar/config/validator1-8080.yaml:/opt/scalar/config/validator.yaml
+
+  reth1:
+    extends:
+      file: ./docker-runner.yaml
+      service: reth
+    container_name: reth1
+    ports:
+      - "${NODE1_RETH_PEER_PORT}:30303" # Peering ports
+      - "${NODE1_RETH_PEER_PORT}:30303/udp" # Peering ports
+      - "${NODE1_RETH_RPC_HTTP_PORT}:8545" # http
+      - "${NODE1_RETH_RPC_WS_PORT}:8546" # ws
+      - "${NODE1_RETH_PROMETHEUS_PORT}:9001" # Metrics
+    env_file:
+      - ${RUNTIME}/node1/.env
+
+  validator2:
+    extends:
+      file: ./docker-runner.yaml
+      service: validator
+    container_name: validator2
+    depends_on:
+      - validator_genesis
+    ports:
+      - "${NODE2_CONSENSUS_JSON_RPC_PORT}:8083"
+      - "${NODE2_CONSENSUS_METRICS_PORT}:9184"
+      - "${NODE2_CONSENSUS_NETWORK_PORT}:8080" # Consensus grpc port
+      - "${NODE2_CONSENSUS_P2P_PORT}:8084" # P2p port
+      - "${NODE2_CONSENSUS_PROMETHEUS_PORT}:33291"
+    env_file:
+      - ${RUNTIME}/node2/.env
+    volumes:
+      - ${RUNTIME}/node2/scalar:/opt/scalar/config
+      - ${RUNTIME}/genesis/scalar/config/genesis.blob:/opt/scalar/config/genesis.blob
+      - ${RUNTIME}/genesis/scalar/config/validator2-8080.yaml:/opt/scalar/config/validator.yaml
+
+  reth2:
+    extends:
+      file: ./docker-runner.yaml
+      service: reth
+    container_name: reth2
+    ports:
+      - "${NODE2_RETH_PEER_PORT}:30303" # Peering ports
+      - "${NODE2_RETH_PEER_PORT}:30303/udp" # Peering ports
+      - "${NODE2_RETH_RPC_HTTP_PORT}:8545" # http
+      - "${NODE2_RETH_RPC_WS_PORT}:8546" # ws
+      - "${NODE2_RETH_PROMETHEUS_PORT}:9001" # Metrics
+    env_file:
+      - ${RUNTIME}/node2/.env
+
+  validator3:
+    extends:
+      file: ./docker-runner.yaml
+      service: validator
+    container_name: validator3
+    depends_on:
+      - validator_genesis
+    ports:
+      - "${NODE3_CONSENSUS_JSON_RPC_PORT}:8083"
+      - "${NODE3_CONSENSUS_METRICS_PORT}:9184"
+      - "${NODE3_CONSENSUS_NETWORK_PORT}:8080" # Consensus grpc port
+      - "${NODE3_CONSENSUS_P2P_PORT}:8084" # P2p port
+      - "${NODE3_CONSENSUS_PROMETHEUS_PORT}:33291"
+    env_file:
+      - ${RUNTIME}/node3/.env
+    volumes:
+      - ${RUNTIME}/node3/scalar:/opt/scalar/config
+      - ${RUNTIME}/genesis/scalar/config/genesis.blob:/opt/scalar/config/genesis.blob
+      - ${RUNTIME}/genesis/scalar/config/validator3-8080.yaml:/opt/scalar/config/validator.yaml
+
+  reth3:
+    extends:
+      file: ./docker-runner.yaml
+      service: reth
+    container_name: reth3
+    ports:
+      - "${NODE3_RETH_PEER_PORT}:30303" # Peering ports
+      - "${NODE3_RETH_PEER_PORT}:30303/udp" # Peering ports
+      - "${NODE3_RETH_RPC_HTTP_PORT}:8545" # http
+      - "${NODE3_RETH_RPC_WS_PORT}:8546" # ws
+      - "${NODE3_RETH_PROMETHEUS_PORT}:9001" # Metrics
+    env_file:
+      - ${RUNTIME}/node3/.env
+
+  validator4:
+    extends:
+      file: ./docker-runner.yaml
+      service: validator
+    container_name: validator4
+    depends_on:
+      - validator_genesis
+    ports:
+      - "${NODE4_CONSENSUS_JSON_RPC_PORT}:8083"
+      - "${NODE4_CONSENSUS_METRICS_PORT}:9184"
+      - "${NODE4_CONSENSUS_NETWORK_PORT}:8080" # Consensus grpc port
+      - "${NODE4_CONSENSUS_P2P_PORT}:8084" # P2p port
+      - "${NODE4_CONSENSUS_PROMETHEUS_PORT}:33291"
+    env_file:
+      - ${RUNTIME}/node4/.env
+    volumes:
+      - ${RUNTIME}/node4/scalar:/opt/scalar/config
+      - ${RUNTIME}/genesis/scalar/config/genesis.blob:/opt/scalar/config/genesis.blob
+      - ${RUNTIME}/genesis/scalar/config/validator4-8080.yaml:/opt/scalar/config/validator.yaml
+
+  reth4:
+    extends:
+      file: ./docker-runner.yaml
+      service: reth
+    container_name: reth4
+    ports:
+      - "${NODE4_RETH_PEER_PORT}:30303" # Peering ports
+      - "${NODE4_RETH_PEER_PORT}:30303/udp" # Peering ports
+      - "${NODE4_RETH_RPC_HTTP_PORT}:8545" # http
+      - "${NODE4_RETH_RPC_WS_PORT}:8546" # ws
+      - "${NODE4_RETH_PROMETHEUS_PORT}:9001" # Metrics
+    env_file:
+      - ${RUNTIME}/node4/.env

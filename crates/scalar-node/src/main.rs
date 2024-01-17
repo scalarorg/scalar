@@ -50,7 +50,12 @@ fn main() {
     // ProtocolConfig::poison_get_for_min_version();
 
     let args = Args::parse();
-    let mut config = NodeConfig::load(&args.config_path).unwrap();
+    let config = NodeConfig::load(&args.config_path);
+    if config.is_err() {
+        println!("Exit main process due to {:?}", &config);
+        return;
+    }
+    let mut config = config.unwrap();
     assert!(
         config.supported_protocol_versions.is_none(),
         "supported_protocol_versions cannot be read from the config file"

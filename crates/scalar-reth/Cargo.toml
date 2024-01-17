@@ -20,6 +20,7 @@ normal = [
 
 [dependencies]
 # reth
+reth = { path = "../../reth/bin/reth" }
 reth-config = { path = "../../reth/crates/config" }
 reth-primitives = { path = "../../reth/crates/primitives", features = [
     "arbitrary",
@@ -184,4 +185,4 @@ vergen = { version = "8.0.0", features = ["build", "cargo", "git", "gitcl"] }
 
 [[bin]]
 name = "scalar-reth"
-path = "src/main.rs"
+path = "src/scalar_reth.rs"
