@@ -1,5 +1,6 @@
 //! Scalar reth extend
 use std::{
+    marker::PhantomData,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
@@ -9,7 +10,6 @@ use clap::Args;
 use reth_basic_payload_builder::{BasicPayloadJobGenerator, BasicPayloadJobGeneratorConfig};
 use reth_beacon_consensus::BeaconEngineMessage;
 use reth_payload_builder::{PayloadBuilderHandle, PayloadBuilderService};
-use reth_provider::providers::BlockchainProvider;
 use reth_tasks::TaskSpawner;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
@@ -25,7 +25,7 @@ use reth::cli::{
     config::{PayloadBuilderConfig, RethNetworkConfig, RethRpcConfig},
     ext::{RethCliExt, RethNodeCommandConfig, RethNodeCommandExt},
 };
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 /// default grpc consensus component's port
 pub const DEFAULT_CONSENSUS_PROTOCOL: &str = "narwhal";
@@ -36,6 +36,9 @@ pub const DEFAULT_BLOCK_TIME: u32 = 12000;
 /// Maximum number of transactions in each block
 pub const DEFAULT_MAX_BLOCK_TRANSACTIONS: u32 = 2000;
 
+///
+/// Consensus args
+///
 #[derive(Debug, Clone, Args)]
 pub struct ConsensusArgs {
     /// Enable the Narwhal client
@@ -75,19 +78,26 @@ impl Default for ConsensusArgs {
         }
     }
 }
-
-/// The Scalar Ext configuration for the reth node command
-/// [Command](crate::commands::node::NodeCommand).
 ///
-/// This is a convenience type for [NoArgs<()>].
-#[derive(Debug, Clone, Default, Args)]
-#[non_exhaustive]
-pub struct ScalarRethNodeCommandConfig {
-    #[clap(flatten)]
+/// Trait for injection config parameters into the scalar logic handler
+///
+
+pub trait ScalarExtTrait: Default {
+    ///
+    /// Set consensus args for logic handler
+    ///
+    fn set_consensus_args(&mut self, consensus_args: Option<ConsensusArgs>);
+}
+///
+/// Scalar extend logic for reth
+///
+#[derive(Debug, Clone, Default)]
+pub struct ScalarExt {
     consensus: Option<ConsensusArgs>,
+    rpc_server_handles: Option<RethRpcServerHandles>,
 }
 
-impl ScalarRethNodeCommandConfig {
+impl ScalarExt {
     fn start_consensus_adapter<Reth: RethNodeComponents>(
         &mut self,
         components: &Reth,
@@ -113,10 +123,13 @@ impl ScalarRethNodeCommandConfig {
         let task_executor = components.task_executor();
         task_executor.spawn(Box::pin(mining_task));
         //Start tokio task for send request to the consensus engine api
-        let beacon_client = BeaconConsensusClient::new(rx_engine);
-        let _beacon_client_handle = tokio::spawn(async {
-            beacon_client.start().await;
-        });
+        if let Some(handles) = self.rpc_server_handles.as_ref() {
+            let beacon_client = BeaconConsensusClient::new(handles.auth.clone(), rx_engine);
+            let _beacon_client_handle = tokio::spawn(async {
+                beacon_client.start().await;
+            });
+        }
+
         let consensus_address = SocketAddr::new(consensus_addr, consensus_port);
         tokio::spawn(async move {
             (move || {
@@ -130,42 +143,16 @@ impl ScalarRethNodeCommandConfig {
             .notify(|err, _| error!("Scalar consensus client error: {}. Retrying...", err))
             .await
         });
-        // let (_, client, mut task) = ScalarBuilder::new(
-        //     Arc::clone(&self.config.chain),
-        //     blockchain_db.clone(),
-        //     transaction_pool.clone(),
-        //     mining_mode,
-        //     consensus_engine_tx.clone(),
-        //     canon_state_notification_sender,
-        //     tx_commited_transactions,
-        //     self.config.consensus.clone(),
-        // )
-        // .build();
-
-        // let mut pipeline = self
-        //     .config
-        //     .build_networked_pipeline(
-        //         &config.stages,
-        //         client.clone(),
-        //         Arc::clone(&consensus),
-        //         provider_factory.clone(),
-        //         &executor.clone(),
-        //         sync_metrics_tx,
-        //         prune_config.clone(),
-        //         max_block,
-        //     )
-        //     .await?;
-
-        // let pipeline_events = pipeline.events();
-        // task.set_pipeline_events(pipeline_events);
-        // debug!(target: "reth::cli", "Spawning auto mine task");
-        // executor.spawn(Box::pin(task));
-        // (pipeline, EitherDownloader::Scalar(client))
         Ok(())
     }
 }
 
-impl RethNodeCommandConfig for ScalarRethNodeCommandConfig {
+impl ScalarExtTrait for ScalarExt {
+    fn set_consensus_args(&mut self, consensus_args: Option<ConsensusArgs>) {
+        self.consensus = consensus_args;
+    }
+}
+impl RethNodeCommandConfig for ScalarExt {
     /// Invoked with the network configuration before the network is configured.
     ///
     /// This allows additional configuration of the network before it is launched.
@@ -219,7 +206,8 @@ impl RethNodeCommandConfig for ScalarRethNodeCommandConfig {
         let _ = config;
         let _ = components;
         let _ = rpc_components;
-        let _ = handles;
+        //let _ = handles;
+        self.rpc_server_handles = Some(handles);
         Ok(())
     }
 
@@ -298,8 +286,161 @@ impl RethNodeCommandConfig for ScalarRethNodeCommandConfig {
 }
 
 /// Extend Cli for Reth
-pub struct ScalarExt {}
+/// A helper type for [RethCliExt] extension that don't require any additional clap Arguments.
+#[derive(Debug, Clone, Copy)]
+pub struct ScalarCliExt<Conf>(PhantomData<Conf>);
 
-impl RethCliExt for ScalarExt {
-    type Node = ScalarRethNodeCommandConfig;
+impl<Conf: RethNodeCommandConfig + ScalarExtTrait> RethCliExt for ScalarCliExt<Conf> {
+    type Node = ScalarArg<Conf>;
+}
+
+/// Extend reth with consensus argument and inner logic handler
+#[derive(Debug, Clone, Args, Default)]
+pub struct ScalarArg<T> {
+    #[clap(flatten)]
+    consensus: Option<ConsensusArgs>,
+    #[clap(skip)]
+    inner: Option<T>,
+}
+
+impl<T> ScalarArg<T> {
+    /// Creates a new instance of the wrapper type.
+    pub fn with(inner: T) -> Self {
+        Self {
+            consensus: None,
+            inner: Some(inner),
+        }
+    }
+
+    /// Sets the inner value.
+    pub fn set(&mut self, inner: T) {
+        self.inner = Some(inner)
+    }
+
+    /// Transforms the configured value.
+    pub fn map<U>(self, inner: U) -> ScalarArg<U> {
+        ScalarArg::with(inner)
+    }
+
+    /// Returns the inner value if it exists.
+    pub fn inner(&self) -> Option<&T> {
+        self.inner.as_ref()
+    }
+
+    /// Consumes the wrapper and returns the inner value if it exists.
+    pub fn into_inner(self) -> Option<T> {
+        self.inner
+    }
+}
+impl<T: ScalarExtTrait> ScalarArg<T> {
+    /// Returns a mutable reference to the inner value if it exists.
+    pub fn inner_mut(&mut self) -> Option<&mut T> {
+        if self.inner.is_none() {
+            self.inner = Some(Default::default());
+            self.inner
+                .as_mut()
+                .unwrap()
+                .set_consensus_args(self.consensus.clone());
+        }
+        self.inner.as_mut()
+    }
+}
+
+impl<T> From<T> for ScalarArg<T> {
+    fn from(value: T) -> Self {
+        Self::with(value)
+    }
+}
+
+impl<T: RethNodeCommandConfig + ScalarExtTrait> RethNodeCommandConfig for ScalarArg<T> {
+    fn configure_network<Conf, Reth>(
+        &mut self,
+        config: &mut Conf,
+        components: &Reth,
+    ) -> eyre::Result<()>
+    where
+        Conf: RethNetworkConfig,
+        Reth: RethNodeComponents,
+    {
+        debug!("configure_network {:?}", self);
+        if let Some(conf) = self.inner_mut() {
+            conf.configure_network(config, components)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn on_components_initialized<Reth: RethNodeComponents>(
+        &mut self,
+        components: &Reth,
+    ) -> eyre::Result<()> {
+        debug!("on_components_initialized {:?}", self);
+        if let Some(conf) = self.inner_mut() {
+            conf.on_components_initialized(components)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn on_node_started<Reth: RethNodeComponents>(&mut self, components: &Reth) -> eyre::Result<()> {
+        debug!("on_node_started {:?}", self);
+        let consensus = self.consensus.clone();
+        if let Some(conf) = self.inner_mut() {
+            conf.on_node_started(components)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn on_rpc_server_started<Conf, Reth>(
+        &mut self,
+        config: &Conf,
+        components: &Reth,
+        rpc_components: RethRpcComponents<'_, Reth>,
+        handles: RethRpcServerHandles,
+    ) -> eyre::Result<()>
+    where
+        Conf: RethRpcConfig,
+        Reth: RethNodeComponents,
+    {
+        debug!("on_rpc_server_started {:?}", self);
+        if let Some(conf) = self.inner_mut() {
+            conf.on_rpc_server_started(config, components, rpc_components, handles)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn extend_rpc_modules<Conf, Reth>(
+        &mut self,
+        config: &Conf,
+        components: &Reth,
+        rpc_components: RethRpcComponents<'_, Reth>,
+    ) -> eyre::Result<()>
+    where
+        Conf: RethRpcConfig,
+        Reth: RethNodeComponents,
+    {
+        debug!("extend_rpc_modules {:?}", self);
+        if let Some(conf) = self.inner_mut() {
+            conf.extend_rpc_modules(config, components, rpc_components)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn spawn_payload_builder_service<Conf, Reth>(
+        &mut self,
+        conf: &Conf,
+        components: &Reth,
+    ) -> eyre::Result<PayloadBuilderHandle>
+    where
+        Conf: PayloadBuilderConfig,
+        Reth: RethNodeComponents,
+    {
+        debug!("spawn_payload_builder_service {:?}", self);
+        self.inner_mut()
+            .ok_or_else(|| eyre::eyre!("Inner logic value must be set"))?
+            .spawn_payload_builder_service(conf, components)
+    }
 }

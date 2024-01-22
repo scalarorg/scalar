@@ -47,7 +47,7 @@ services:
       file: ./docker-runner.yaml
       service: reth
     container_name: reth1
-    entrypoint: ["/entry.sh", "scalar_reth_mvp"]
+    entrypoint: ["/entry.sh", "scalar_reth"]
     ports:
       - "${NODE1_RETH_PEER_PORT}:30303" # Peering ports
       - "${NODE1_RETH_PEER_PORT}:30303/udp" # Peering ports
@@ -89,7 +89,7 @@ services:
       file: ./docker-runner.yaml
       service: reth
     container_name: reth2
-    entrypoint: ["/entry.sh", "scalar_reth_mvp"]
+    entrypoint: ["/entry.sh", "scalar_reth"]
     ports:
       - "${NODE2_RETH_PEER_PORT}:30303" # Peering ports
       - "${NODE2_RETH_PEER_PORT}:30303/udp" # Peering ports
@@ -131,7 +131,7 @@ services:
       file: ./docker-runner.yaml
       service: reth
     container_name: reth3
-    entrypoint: ["/entry.sh", "scalar_reth_mvp"]
+    entrypoint: ["/entry.sh", "scalar_reth"]
     ports:
       - "${NODE3_RETH_PEER_PORT}:30303" # Peering ports
       - "${NODE3_RETH_PEER_PORT}:30303/udp" # Peering ports
@@ -173,7 +173,7 @@ services:
       file: ./docker-runner.yaml
       service: reth
     container_name: reth4
-    entrypoint: ["/entry.sh", "scalar_reth_mvp"]
+    entrypoint: ["/entry.sh", "scalar_reth"]
     ports:
       - "${NODE4_RETH_PEER_PORT}:30303" # Peering ports
       - "${NODE4_RETH_PEER_PORT}:30303/udp" # Peering ports

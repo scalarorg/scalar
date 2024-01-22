@@ -41,6 +41,8 @@ pub struct ScalarMiningTask<Client, Pool: TransactionPool> {
     queued: VecDeque<Vec<Arc<ValidPoolTransaction<<Pool as TransactionPool>::Transaction>>>>,
     /// TODO: ideally this would just be a sender of hashes
     to_engine: UnboundedSender<BeaconEngineMessage>,
+    /// Used to notify consumers of new blocks
+    canon_state_notification: CanonStateNotificationSender,
     /// The pipeline events to listen on
     pipe_line_events: Option<UnboundedReceiverStream<PipelineEvent>>,
 }
@@ -54,6 +56,7 @@ impl<Client, Pool: TransactionPool> ScalarMiningTask<Client, Pool> {
         client: Client,
         miner: ScalarMiningMode<Pool>,
         to_engine: UnboundedSender<BeaconEngineMessage>,
+        canon_state_notification: CanonStateNotificationSender,
         storage: Storage,
         pool: Pool,
     ) -> Self {
@@ -64,8 +67,9 @@ impl<Client, Pool: TransactionPool> ScalarMiningTask<Client, Pool> {
             insert_task: None,
             storage,
             pool,
-            to_engine,
             queued: Default::default(),
+            to_engine,
+            canon_state_notification,
             pipe_line_events: None,
         }
     }
@@ -109,7 +113,7 @@ where
                 let chain_spec = Arc::clone(&this.chain_spec);
                 let pool = this.pool.clone();
                 let events = this.pipe_line_events.take();
-                //let canon_state_notification = this.canon_state_notification.clone();
+                let canon_state_notification = this.canon_state_notification.clone();
 
                 // Create the mining future that creates a block, notifies the engine that drives
                 // the pipeline
@@ -197,9 +201,9 @@ where
                             let chain =
                                 Arc::new(Chain::new(vec![sealed_block_with_senders], bundle_state));
 
-                            // // send block notification
-                            // let _ = canon_state_notification
-                            //     .send(reth_provider::CanonStateNotification::Commit { new: chain });
+                            // send block notification
+                            let _ = canon_state_notification
+                                .send(reth_provider::CanonStateNotification::Commit { new: chain });
                         }
                         Err(err) => {
                             warn!(target: "consensus::auto", ?err, "failed to execute block")

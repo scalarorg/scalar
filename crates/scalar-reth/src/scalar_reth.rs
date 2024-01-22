@@ -1,6 +1,6 @@
 use clap::Parser;
 use reth::cli::Cli;
-use scalar_reth::scalar_ext::ScalarExt;
+use scalar_reth::scalar_ext::{ScalarCliExt, ScalarExt};
 // We use jemalloc for performance reasons
 #[cfg(all(feature = "jemalloc", unix))]
 #[global_allocator]
@@ -12,6 +12,7 @@ compile_error!("Cannot build the `reth` binary with the `optimism` feature flag 
 #[cfg(not(feature = "optimism"))]
 fn main() {
     if let Err(err) = run() {
+        println!("Error in cli parse {:?}", err);
         std::process::exit(1);
     }
 }
@@ -19,5 +20,5 @@ fn main() {
 /// Convenience function for parsing CLI options, set up logging and run the chosen command.
 #[inline]
 pub fn run() -> eyre::Result<()> {
-    Cli::<ScalarExt>::parse().run()
+    Cli::<ScalarCliExt<ScalarExt>>::parse().run()
 }

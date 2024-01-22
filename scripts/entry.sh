@@ -75,7 +75,8 @@ scalar_reth() {
         --p2p-secret-key ${P2P_SECRET_KEY} \
         --metrics 127.0.0.1:9001 \
         --consensus.enable \
-        --consensus.port 9090 \
+        --consensus.addr ${NARWHAL_ADDR} \
+        --consensus.port ${NARWHAL_PORT:-9090} \
         --bootnodes "${BOOTNODE_RETH1},${BOOTNODE_RETH2},${BOOTNODE_RETH3},${BOOTNODE_RETH4}"
 }
 

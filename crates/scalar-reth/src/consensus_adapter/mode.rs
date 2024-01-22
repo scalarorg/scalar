@@ -383,51 +383,9 @@ impl<Pool: TransactionPool> NarwhalTransactionMiner<Pool> {
                 break;
             }
         }
-        /*
-         *2. Loop throught pending transactions. Push transaction to block if its' nonce is expected
-         * Thử lấy transaction đầu tiên trong queue
-         */
 
-        // while let Some(pending_tx) = self.pending_transaction_queue.front() {
-        //     let key = pending_tx.hash().as_slice().to_vec();
-        //     let nonce = pending_tx.nonce();
-        //     let sender = pending_tx.sender();
-        //     info!("Transaction {} from sender {}.", nonce, &sender);
-        //     // Nếu transaction chưa được committed, đưa vào hàng đợi tạm để xử lý transaction tiếp theo
-        //     if !committed_txs_set.contains(&key) {
-        //         // Các message gửi tới consensus layer trước nhưng chưa nhận lại trong commit
-        //         warn!("Pending transaction {} from sender {} not found in committed cache. Stop to seal new block", &nonce, &sender);
-        //         //new_pending_queue.push_back(pending_tx);
-        //         break;
-        //     } else {
-        //         let expected_nonce = self.expected_nonces.get(&sender)
-        //             .map(|nonce| nonce.clone())
-        //             .unwrap_or(0_u64);
-        //         info!("Transaction {} from sender {}. Expected nonce {}", nonce, &sender, expected_nonce);
-        //         if nonce == expected_nonce {
-        //             sealed_txs.insert(key);
-        //             let tx = self.pending_transaction_queue.pop_front().unwrap();
-        //             transactions.push(tx);
-        //             self.expected_nonces.insert(sender, nonce + 1);
-        //         } else {
-        //             warn!("Pending transaction {} from sender {} not matches with expected nonce {}", &nonce, &sender, &expected_nonce);
-        //             // new_pending_queue.push_back(pending_tx);
-        //         }
-        //     }
-        // }
-        // // Nếu có transactions chưa được xử lý thì đưa ngược trở lại vào queue với đúng thứ tự cũ
-        // while let Some(tx) = new_pending_queue.pop_back() {
-        //     self.pending_transaction_queue.push_front(tx);
-        // }
         self.sealed_trans += sealed_txs.len() as u64;
-        // //3. Remove sealed transactions
-        // self.deferred_commited_transactions
-        //     .retain(|key| !sealed_txs.contains(&key.tx_bytes));
-        // current_commited_transactions.into_iter().for_each(|tx| {
-        //     if !sealed_txs.contains(&tx.tx_bytes) {
-        //         self.deferred_commited_transactions.push(tx);
-        //     }
-        // });
+
         info!("Expected nonces {:?}. Pool size {:?}. Deffered commited transaction size {}. Block size {}, Total sealed trans {}", 
             &self.expected_nonces,
             // self.map_pending_trans.len(), 

@@ -68,18 +68,22 @@ where
             pool.pending_transactions_listener(),
             rx_committed_transactions,
         );
-
+        let (canon_state_notification_sender, _receiver) = tokio::sync::broadcast::channel(2);
         ScalarMiningTask::new(
             chain_spec,
             client,
             mining_mode,
             to_engine,
+            canon_state_notification_sender,
             storage,
             pool.clone(),
         )
     }
 }
 
+///
+/// Start consensus client
+///
 pub async fn start_consensus_client<Pool>(
     socket_addr: SocketAddr,
     tx_pool: Pool,
