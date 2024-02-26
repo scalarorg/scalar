@@ -183,6 +183,11 @@ prost-build = "0.12.1"
 tonic-build = { version = "0.10", features = ["prost", "transport"] }
 vergen = { version = "8.0.0", features = ["build", "cargo", "git", "gitcl"] }
 
+# Mvp version, add some modifications to reth code base
+[[bin]]
+name = "scalar-reth-mvp"
+path = "src/main.rs"
+
 [[bin]]
 name = "scalar-reth"
 path = "src/scalar_reth.rs"

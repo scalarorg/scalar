@@ -7,11 +7,12 @@ services:
     environment:
       - LD_PRELOAD
       - RUST_JSON_LOG=true
-      - RUST_LOG=info
+      - RUST_LOG=debug
       # don't use debug, it generates volumes of data.
     env_file:
       - ../configs/reth/.env
     restart: unless-stopped
+    entrypoint: ["/entry.sh", "scalar_reth"]
     volumes:
       - ../configs/reth:/reth
       - ../scripts/entry.sh:/entry.sh

@@ -57,12 +57,15 @@ const FORCE_CLOSE_EPOCH: &str = "/force-close-epoch";
 const CAPABILITIES: &str = "/capabilities";
 const NODE_CONFIG: &str = "/node-config";
 
+// type Node = crate::ScalarNode;
+type Node = crate::ValidatorNode;
+
 struct AppState {
-    node: Arc<ScalarNode>,
+    node: Arc<Node>,
     tracing_handle: TracingHandle,
 }
 
-pub async fn run_admin_server(node: Arc<ScalarNode>, port: u16, tracing_handle: TracingHandle) {
+pub async fn run_admin_server(node: Arc<Node>, port: u16, tracing_handle: TracingHandle) {
     let filter = tracing_handle.get_log().unwrap();
 
     let app_state = AppState {

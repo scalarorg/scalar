@@ -1,5 +1,6 @@
-// Copyright (c) Mysten Labs, Inc.
+// Copyright (c) Scalar Org.
 // SPDX-License-Identifier: Apache-2.0
+// 2024 Feb 02, Clone seperated version for Validator node
 
 use anemo::Network;
 use anemo_tower::callback::CallbackLayer;
@@ -40,9 +41,9 @@ use tower::ServiceBuilder;
 use tracing::{debug, error, warn};
 use tracing::{error_span, info, Instrument};
 
+use crate::handle::SuiNodeHandle;
 use checkpoint_executor::CheckpointExecutor;
 use fastcrypto_zkp::bn254::zk_login::JWK;
-pub use handle::SuiNodeHandle;
 use mysten_metrics::{spawn_monitored_task, RegistryService};
 use mysten_network::server::ServerBuilder;
 use narwhal_network::metrics::MetricsMakeCallbackHandler;
@@ -123,16 +124,7 @@ use typed_store::rocks::default_db_options;
 use typed_store::DBMetrics;
 
 use crate::metrics::{GrpcMetrics, SuiNodeMetrics};
-pub mod admin;
-pub mod fullnode;
-pub mod handle;
-pub mod metrics;
-pub mod scalar_node;
-pub mod validator;
-pub mod validator_component;
-pub mod validator_node;
-pub use scalar_node::ScalarNode;
-pub use validator_node::ValidatorNode;
+
 pub struct ValidatorComponents {
     validator_server_handle: JoinHandle<Result<()>>,
     consensus_manager: ConsensusManager,
@@ -205,8 +197,8 @@ use scalar_core::mysticeti_adapter::LazyMysticetiClient;
 #[cfg(msim)]
 pub use simulator::set_jwk_injector;
 
-pub struct SuiNode {
-    config: NodeConfig,
+pub struct ValidatorNode {
+    pub config: NodeConfig,
     validator_components: Mutex<Option<ValidatorComponents>>,
     /// The http server responsible for serving JSON-RPC as well as the experimental rest service
     _http_server: Option<tokio::task::JoinHandle<()>>,
@@ -238,9 +230,9 @@ pub struct SuiNode {
     _kv_store_uploader_handle: Option<oneshot::Sender<()>>,
 }
 
-impl fmt::Debug for SuiNode {
+impl fmt::Debug for ValidatorNode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("SuiNode")
+        f.debug_struct("ValidatorNode")
             .field("name", &self.state.name.concise())
             .finish()
     }
@@ -248,12 +240,12 @@ impl fmt::Debug for SuiNode {
 
 static MAX_JWK_KEYS_PER_FETCH: usize = 100;
 
-impl SuiNode {
+impl ValidatorNode {
     pub async fn start(
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
-    ) -> Result<Arc<SuiNode>> {
+    ) -> Result<Arc<ValidatorNode>> {
         Self::start_async(config, registry_service, custom_rpc_runtime).await
     }
 
@@ -396,7 +388,7 @@ impl SuiNode {
         config: &NodeConfig,
         registry_service: RegistryService,
         custom_rpc_runtime: Option<Handle>,
-    ) -> Result<Arc<SuiNode>> {
+    ) -> Result<Arc<ValidatorNode>> {
         NodeConfigMetrics::new(&registry_service.default_registry()).record_metrics(config);
         let mut config = config.clone();
         if config.supported_protocol_versions.is_none() {
@@ -406,9 +398,13 @@ impl SuiNode {
             );
             config.supported_protocol_versions = Some(SupportedProtocolVersions::SYSTEM_DEFAULT);
         }
-
         let is_validator = config.consensus_config().is_some();
         let is_full_node = !is_validator;
+        if is_validator {
+            info!("Start validator node.");
+        } else {
+            info!("Start full node.");
+        }
         let prometheus_registry = registry_service.default_registry();
 
         info!(node =? config.protocol_public_key(),
@@ -501,7 +497,6 @@ impl SuiNode {
                 "buffer_stake_for_protocol_upgrade_bps is currently overridden"
             );
         }
-
         let checkpoint_store = CheckpointStore::new(&config.db_path().join("checkpoints"));
         checkpoint_store.insert_genesis_checkpoint(
             genesis.checkpoint(),
@@ -525,7 +520,6 @@ impl SuiNode {
         } else {
             None
         };
-
         let chain_identifier = ChainIdentifier::from(*genesis.checkpoint().digest());
         // It's ok if the value is already set due to data races.
         let _ = CHAIN_IDENTIFIER.set(chain_identifier);
@@ -544,6 +538,7 @@ impl SuiNode {
             archive_readers.clone(),
             &prometheus_registry,
         )?;
+
         // We must explicitly send this instead of relying on the initial value to trigger
         // watch value change, so that state-sync is able to process it.
         send_trusted_peer_change(
@@ -606,6 +601,7 @@ impl SuiNode {
             archive_readers,
         )
         .await;
+
         // ensure genesis txn was executed
         if epoch_store.epoch() == 0 {
             let txn = &genesis.transaction();
@@ -623,7 +619,6 @@ impl SuiNode {
                 .await
                 .unwrap();
         }
-
         if config
             .expensive_safety_check_config
             .enable_secondary_index_checks()
@@ -636,7 +631,7 @@ impl SuiNode {
 
         let (end_of_epoch_channel, end_of_epoch_receiver) =
             broadcast::channel(config.end_of_epoch_broadcast_channel_capacity);
-
+        //For validator node
         let transaction_orchestrator = if is_full_node {
             Some(Arc::new(
                 TransactiondOrchestrator::new_with_network_clients(
@@ -649,8 +644,8 @@ impl SuiNode {
         } else {
             None
         };
-
-        let http_server: Option<JoinHandle<()>> = build_http_server(
+        // http server for Move fullnode
+        let http_server = build_http_server(
             state.clone(),
             &transaction_orchestrator.clone(),
             &config,
@@ -681,35 +676,26 @@ impl SuiNode {
             connection_statuses,
             authority_names_to_peer_ids,
         };
-
         let connection_monitor_status = Arc::new(connection_monitor_status);
         let sui_node_metrics = Arc::new(SuiNodeMetrics::new(&registry_service.default_registry()));
-
-        let validator_components = if state.is_validator(&epoch_store) {
-            let components = Self::construct_validator_components(
-                &config,
-                state.clone(),
-                committee,
-                epoch_store.clone(),
-                checkpoint_store.clone(),
-                state_sync_handle.clone(),
-                accumulator.clone(),
-                connection_monitor_status.clone(),
-                &registry_service,
-                sui_node_metrics.clone(),
-            )
-            .await?;
-            // This is only needed during cold start.
-            components.consensus_adapter.submit_recovered(&epoch_store);
-
-            Some(components)
-        } else {
-            None
-        };
-
+        let components = Self::construct_validator_components(
+            &config,
+            state.clone(),
+            committee,
+            epoch_store.clone(),
+            checkpoint_store.clone(),
+            state_sync_handle.clone(),
+            accumulator.clone(),
+            connection_monitor_status.clone(),
+            &registry_service,
+            sui_node_metrics.clone(),
+        )
+        .await?;
+        // This is only needed during cold start.
+        components.consensus_adapter.submit_recovered(&epoch_store);
         let node = Self {
             config,
-            validator_components: Mutex::new(validator_components),
+            validator_components: Mutex::new(Some(components)),
             _http_server: http_server,
             state,
             transaction_orchestrator,
@@ -734,7 +720,7 @@ impl SuiNode {
             _kv_store_uploader_handle: kv_store_uploader_handle,
         };
 
-        info!("SuiNode started!");
+        info!("ValidatorNode started!");
         let node = Arc::new(node);
         let node_copy = node.clone();
         spawn_monitored_task!(async move { Self::monitor_reconfiguration(node_copy).await });
@@ -1619,7 +1605,7 @@ impl SuiNode {
 }
 
 #[cfg(not(msim))]
-impl SuiNode {
+impl ValidatorNode {
     async fn fetch_jwks(
         _authority: AuthorityName,
         provider: &OIDCProvider,
@@ -1633,7 +1619,7 @@ impl SuiNode {
 }
 
 #[cfg(msim)]
-impl SuiNode {
+impl ValidatorNode {
     pub fn get_sim_node_id(&self) -> sui_simulator::task::NodeId {
         self.sim_state.sim_node.id()
     }
@@ -1734,7 +1720,6 @@ pub fn build_http_server(
         let kv_store = build_kv_store(&state, config, prometheus_registry)?;
 
         let metrics = Arc::new(JsonRpcMetrics::new(prometheus_registry));
-
         server.register_module(ReadApi::new(
             state.clone(),
             kv_store.clone(),
@@ -1800,7 +1785,6 @@ pub fn build_http_server(
 
     Ok(Some(handle))
 }
-
 #[cfg(not(test))]
 fn max_tx_per_checkpoint(protocol_config: &ProtocolConfig) -> usize {
     protocol_config.max_transactions_per_checkpoint() as usize

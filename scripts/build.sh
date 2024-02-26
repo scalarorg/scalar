@@ -12,7 +12,7 @@ scalar_validator() {
     BIN_NAME=scalar-validator
     WORKING_DIR=/scalar
     CONTEXT=${SCRIPT_DIR}/../runtime
-    OUT_FILE=${CONTEXT}/${BIN_NAME}
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
     docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
@@ -24,7 +24,19 @@ scalar_reth() {
     BIN_NAME=scalar-reth
     WORKING_DIR=/scalar/crates/${BIN_NAME}
     CONTEXT=${SCRIPT_DIR}/../runtime
-    OUT_FILE=${CONTEXT}/${BIN_NAME}
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
+}
+
+# Working from 2024-01-17
+scalar_reth_mvp() {
+    BIN_NAME=scalar-reth-mvp
+    WORKING_DIR=/scalar/crates/scalar-reth
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
     docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
@@ -55,13 +67,15 @@ move_fullnode_cluster() {
 reth_test_cluster() {
     BIN_NAME=reth-test-cluster
     WORKING_DIR=/scalar/reth-test-cluster
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
-    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${SCRIPT_DIR}/${BIN_NAME}
-    docker cp ${SCRIPT_DIR}/${BIN_NAME} ${RUNNER}:/usr/local/bin
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
     docker cp ${BUILDER}:${WORKING_DIR}/test-genesis.json ${SCRIPT_DIR}/test-genesis.json
     docker cp ${SCRIPT_DIR}/test-genesis.json ${RUNNER}:/usr/local/bin
-    rm ${SCRIPT_DIR}/${BIN_NAME}
-    rm ${SCRIPT_DIR}/test-genesis.json
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
+    #rm ${SCRIPT_DIR}/test-genesis.json
 }
 
 reth_test_client() {
@@ -80,7 +94,7 @@ reth() {
     BIN_NAME=reth
     WORKING_DIR=/scalar/reth
     CONTEXT=${SCRIPT_DIR}/../runtime
-    OUT_FILE=${CONTEXT}/${BIN_NAME}
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
     docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
@@ -109,7 +123,7 @@ sui() {
     BIN_NAME=sui
     WORKING_DIR=/scalar/sui
     CONTEXT=${SCRIPT_DIR}/../runtime
-    OUT_FILE=${CONTEXT}/${BIN_NAME}
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
     docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
     docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
     docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin

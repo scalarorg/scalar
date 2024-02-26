@@ -10,8 +10,8 @@ ENV LD_PRELOAD /usr/lib/x86_64-linux-gnu/libjemalloc.so
 # ARG GIT_REVISION
 # LABEL build-date=$BUILD_DATE
 # LABEL git-revision=$GIT_REVISION
-COPY scalar-* /usr/local/bin
-COPY sui* /usr/local/bin
-COPY reth* /usr/local/bin
+COPY bin/scalar-* /usr/local/bin
+COPY bin/sui* /usr/local/bin
+COPY bin/reth* /usr/local/bin
 
 ENTRYPOINT [ "sleep", "infinity"]

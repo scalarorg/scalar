@@ -29,29 +29,29 @@ services:
     volumes:
       - ../:/scalar
 
-  runner:
-    build:
-      context: ../
-      dockerfile: ./docker/runner.Dockerfile
-      args:
-        BUILD_DATE: today
-    image: scalar-runner
-    environment:
-      - LD_PRELOAD
-      - RUST_JSON_LOG=true
-      - RUST_LOG=info
-      # don't use debug, it generates volumes of data.
-    env_file:
-      - ../configs/reth/.env  
-    container_name: scalar-runner
-    restart: unless-stopped
-    volumes:
-      - ../configs/scalar:/scalar
-      - ../configs/reth:/reth
-      - ../scripts/entry.sh:/entry.sh
-    ports:
-      - "30303:30303"         # Peering ports
-      - "30303:30303/udp"     # Peering ports
-      - "8545:8545"           # http
-      - "8546:8546"           # ws
-      # - "9001:9001"           # Metrics
+  # runner:
+  #   build:
+  #     context: ../
+  #     dockerfile: ./docker/runner.Dockerfile
+  #     args:
+  #       BUILD_DATE: today
+  #   image: scalar-runner
+  #   environment:
+  #     - LD_PRELOAD
+  #     - RUST_JSON_LOG=true
+  #     - RUST_LOG=info
+  #     # don't use debug, it generates volumes of data.
+  #   env_file:
+  #     - ../configs/reth/.env  
+  #   container_name: scalar-runner
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ../configs/scalar:/scalar
+  #     - ../configs/reth:/reth
+  #     - ../scripts/entry.sh:/entry.sh
+  #   ports:
+  #     - "30303:30303"         # Peering ports
+  #     - "30303:30303/udp"     # Peering ports
+  #     - "8545:8545"           # http
+  #     - "8546:8546"           # ws
+  #     # - "9001:9001"           # Metrics
