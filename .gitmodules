@@ -4,3 +4,9 @@
 [submodule "reth"]
 	path = reth
 	url = git@github.com:paradigmxyz/reth.git
+[submodule "go-ethereum"]
+	path = go-ethereum
+	url = https://github.com/ethereum/go-ethereum.git
+[submodule "evmos"]
+	path = evmos
+	url = https://github.com/evmos/evmos.git

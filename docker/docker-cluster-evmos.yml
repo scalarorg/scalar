@@ -1,0 +1,66 @@
+version: "3.9"
+networks:
+  scalar_evmos:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+services:
+  scalar-evmos1:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-evmos1
+    ports:
+      - "26616-26617:26656-26657"
+    env_file:
+      - ../runtime/node1/evmos/.env
+    volumes:
+      - ../runntime/node1/evmos:/opt/evmos
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.11"
+
+  scalar-evmos2:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-evmos2
+    ports:
+      - "26626-26627:26656-26657"
+    env_file:
+      - ../runtime/node2/evmos/.env
+    volumes:
+      - ../runntime/node2/evmos:/opt/evmos
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.12"
+
+  scalar-evmos3:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-evmos3
+    ports:
+      - "26636-26637:26656-26657"
+    env_file:
+      - ../runtime/node3/evmos/.env
+    volumes:
+      - ../runntime/node3/evmos:/opt/evmos
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.13"
+
+  scalar-evmos4:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-evmos4
+    ports:
+      - "26646-26647:26656-26657"
+    env_file:
+      - ../runtime/node4/evmos/.env
+    volumes:
+      - ../runntime/node4/evmos:/opt/evmos
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.14"
