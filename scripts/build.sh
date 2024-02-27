@@ -31,6 +31,18 @@ scalar_reth() {
     docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
 }
 
+# Working from 2024-02-27
+scalar_eth_server() {
+    BIN_NAME=scalar-eth-server
+    WORKING_DIR=/scalar/crates/${BIN_NAME}
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
+}
+
 # Working from 2024-01-17
 scalar_reth_mvp() {
     BIN_NAME=scalar-reth-mvp

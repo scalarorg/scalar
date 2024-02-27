@@ -79,6 +79,25 @@ scalar_reth() {
         --bootnodes "${BOOTNODE_RETH1},${BOOTNODE_RETH2},${BOOTNODE_RETH3},${BOOTNODE_RETH4}"
 }
 
+# Start scalar-eth-server independent node (with heavily modification reth's code base)
+scalar_eth_server() {
+    RUST_LOG=info /usr/local/bin/scalar-eth-server node \
+        --chain ${CHAIN} \
+        --http \
+        --http.addr 0.0.0.0 \
+        --http.corsdomain "*" \
+        --http.api admin,debug,eth,net,trace,txpool,web3,rpc \
+        --ws \
+        --ws.addr 0.0.0.0 \
+        --p2p-secret-key ${P2P_SECRET_KEY} \
+        --metrics 127.0.0.1:9001 \
+        --narwhal \
+        --narwhal.addr ${NARWHAL_ADDR} \
+        --narwhal.port ${NARWHAL_PORT:-9090} \
+        --bootnodes "${BOOTNODE_RETH1},${BOOTNODE_RETH2},${BOOTNODE_RETH3},${BOOTNODE_RETH4}"
+
+}
+
 # Start scalar-reth mvp independent node (with heavily modification reth's code base)
 scalar_reth_mvp() {
     RUST_LOG=info /usr/local/bin/scalar-reth-mvp node \
