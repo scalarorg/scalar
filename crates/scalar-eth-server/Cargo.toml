@@ -47,8 +47,8 @@ reth-auto-seal-consensus = { path = "../../reth/crates/consensus/auto-seal" }
 reth-consensus-common = { path = "../../reth/crates/consensus/common" }
 reth-blockchain-tree = { path = "../../reth/crates/blockchain-tree" }
 reth-rpc-engine-api = { path = "../../reth/crates/rpc/rpc-engine-api" }
-reth-rpc-builder = { path = "../../reth/crates/rpc/rpc-builder" }
-reth-rpc = { path = "../../reth/crates/rpc/rpc" }
+reth-rpc-builder = { path = "../scalar-eth-rpc-builder" }
+reth-rpc = { path = "../scalar-eth-rpc" }
 reth-rpc-types = { path = "../../reth/crates/rpc/rpc-types" }
 reth-rpc-types-compat = { path = "../../reth/crates/rpc/rpc-types-compat" }
 reth-rpc-api = { path = "../../reth/crates/rpc/rpc-api", features = ["client"] }
