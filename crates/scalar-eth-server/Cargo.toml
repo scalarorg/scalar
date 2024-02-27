@@ -1,0 +1,193 @@
+[workspace]
+[package]
+name = "scalar-eth-server"
+version = "0.1.0"
+authors = ["Scalar org <build@scalar.org>"]
+publish = false
+edition = "2021"
+rust-version = "1.70"
+license = "Apache-2.0"
+homepage = "https://scalar.org"
+repository = "https://github.com/scalar.org/scalar"
+description = "Reth node implementation"
+
+
+[package.metadata.cargo-udeps.ignore]
+normal = [
+    # Used for diagrams in docs
+    "aquamarine",
+]
+
+[dependencies]
+# reth
+reth = { path = "../../reth/bin/reth" }
+reth-config = { path = "../../reth/crates/config" }
+reth-primitives = { path = "../../reth/crates/primitives", features = [
+    "arbitrary",
+    "clap",
+] }
+reth-db = { path = "../../reth/crates/storage/db", features = [
+    "mdbx",
+    "test-utils",
+] }
+# TODO: Temporary use of the test-utils feature
+reth-provider = { path = "../../reth/crates/storage/provider", features = [
+    "test-utils",
+] }
+reth-revm = { path = "../../reth/crates/revm" }
+reth-revm-inspectors = { path = "../../reth/crates/revm/revm-inspectors" }
+reth-stages = { path = "../../reth/crates/stages" }
+reth-interfaces = { path = "../../reth/crates/interfaces", features = [
+    "test-utils",
+    "clap",
+] }
+reth-transaction-pool = { path = "../../reth/crates/transaction-pool" }
+reth-beacon-consensus = { path = "../../reth/crates/consensus/beacon" }
+reth-auto-seal-consensus = { path = "../../reth/crates/consensus/auto-seal" }
+reth-consensus-common = { path = "../../reth/crates/consensus/common" }
+reth-blockchain-tree = { path = "../../reth/crates/blockchain-tree" }
+reth-rpc-engine-api = { path = "../../reth/crates/rpc/rpc-engine-api" }
+reth-rpc-builder = { path = "../../reth/crates/rpc/rpc-builder" }
+reth-rpc = { path = "../../reth/crates/rpc/rpc" }
+reth-rpc-types = { path = "../../reth/crates/rpc/rpc-types" }
+reth-rpc-types-compat = { path = "../../reth/crates/rpc/rpc-types-compat" }
+reth-rpc-api = { path = "../../reth/crates/rpc/rpc-api", features = ["client"] }
+reth-network = { path = "../../reth/crates/net/network", features = ["serde"] }
+reth-network-api = { path = "../../reth/crates/net/network-api" }
+reth-downloaders = { path = "../../reth/crates/net/downloaders", features = [
+    "test-utils",
+] }
+reth-tracing = { path = "../../reth/crates/tracing" }
+reth-tasks = { path = "../../reth/crates/tasks" }
+reth-net-nat = { path = "../../reth/crates/net/nat" }
+reth-optimism-payload-builder = { path = "../../reth/crates/payload/optimism", optional = true }
+reth-ethereum-payload-builder = { path = "../../reth/crates/payload/ethereum" }
+reth-payload-builder = { path = "../../reth/crates/payload/builder" }
+reth-payload-validator = { path = "../../reth/crates/payload/validator" }
+reth-basic-payload-builder = { path = "../../reth/crates/payload/basic" }
+reth-discv4 = { path = "../../reth/crates/net/discv4" }
+reth-prune = { path = "../../reth/crates/prune" }
+reth-snapshot = { path = "../../reth/crates/snapshot", features = ["clap"] }
+reth-trie = { path = "../../reth/crates/trie" }
+reth-nippy-jar = { path = "../../reth/crates/storage/nippy-jar" }
+
+alloy-rlp = "0.3"
+# crypto
+secp256k1 = { version = "0.27.0", default-features = false, features = [
+    "global-context",
+    "rand-std",
+    "recovery",
+] }
+
+# tracing
+tracing = "0.1.0"
+
+# io
+fdlimit = "0.3.0"
+serde_json = "1.0.94"
+serde = { version = "1.0", default-features = false }
+shellexpand = "3.0.0"
+dirs-next = "2.0.0"
+confy = "0.5"
+toml = { version = "0.8", features = ["display"] }
+
+# metrics
+metrics-exporter-prometheus = "0.12.1"
+metrics-util = "0.15.0"
+metrics-process = "1.0.9"
+reth-metrics = { path = "../../reth/crates/metrics" }
+metrics = "0.21.1"
+
+# test vectors generation
+proptest = "1.4"
+rand = "0.8.5"
+
+# tui
+comfy-table = "7.0"
+crossterm = "0.27.0"
+tui = "0.19.0"
+human_bytes = "0.4.1"
+
+# async
+async-stream = "0.3.5"
+tokio = { version = "1.21", features = [
+    "sync",
+    "macros",
+    "time",
+    "rt-multi-thread",
+] }
+tokio-stream = "0.1.11"
+futures = "0.3.26"
+futures-util = "0.3.25"
+pin-project = "1.0.12"
+
+# http/rpc
+jsonrpsee = { version = "0.20", features = ["server"] }
+tower-http = { version = "0.4", features = ["full"] }
+tower = { version = "0.4", features = ["full"] }
+hyper = "0.14"
+# misc
+aquamarine = "0.3"
+eyre = "0.6"
+clap = "4"
+tempfile = "3.8"
+backon = "0.4"
+once_cell = "1.17"
+thiserror = "1.0"
+pretty_assertions = "1.3.0"
+humantime = "2.1.0"
+const-str = "0.5.6"
+boyer-moore-magiclen = "0.2.16"
+itertools = "0.12"
+rayon = "1.7"
+prost = "0.12.1"
+protobuf = { version = "2.28", features = ["with-bytes"] }
+protobuf-src = "1.1.0"
+tonic = { version = "0.10", features = ["transport", "tls"] }
+
+[target.'cfg(not(windows))'.dependencies]
+jemallocator = { version = "0.5.0", optional = true }
+jemalloc-ctl = { version = "0.5.0", optional = true }
+
+[features]
+default = ["jemalloc"]
+jemalloc = ["dep:jemallocator", "dep:jemalloc-ctl"]
+jemalloc-prof = ["jemalloc", "jemallocator?/profiling"]
+min-error-logs = ["tracing/release_max_level_error"]
+min-warn-logs = ["tracing/release_max_level_warn"]
+min-info-logs = ["tracing/release_max_level_info"]
+min-debug-logs = ["tracing/release_max_level_debug"]
+min-trace-logs = ["tracing/release_max_level_trace"]
+optimism = [
+    "reth-primitives/optimism",
+    "reth-revm/optimism",
+    "reth-interfaces/optimism",
+    "reth-rpc/optimism",
+    "reth-rpc-engine-api/optimism",
+    "reth-transaction-pool/optimism",
+    "reth-provider/optimism",
+    "reth-beacon-consensus/optimism",
+    "reth-auto-seal-consensus/optimism",
+    "reth-network/optimism",
+    "reth-network-api/optimism",
+    "reth-blockchain-tree/optimism",
+    "reth-payload-builder/optimism",
+    "reth-optimism-payload-builder/optimism",
+    "reth-ethereum-payload-builder/optimism",
+]
+# no-op feature flag for switching between the `optimism` and default functionality in CI matrices
+ethereum = []
+
+[build-dependencies]
+prost-build = "0.12.1"
+tonic-build = { version = "0.10", features = ["prost", "transport"] }
+vergen = { version = "8.0.0", features = ["build", "cargo", "git", "gitcl"] }
+
+# Mvp version, add some modifications to reth code base
+[[bin]]
+name = "scalar-eth-server"
+path = "src/main.rs"
+
+# [[bin]]
+# name = "scalar-reth"
+# path = "src/scalar_reth.rs"
