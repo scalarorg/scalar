@@ -1,0 +1,11 @@
+[package]
+name = "scalar-eth-adapter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+description = "Scalar adapter for eth rpc & abci interface"
+[dependencies]
+scalar-consensus-client = { path = "../scalar-consensus-client" }

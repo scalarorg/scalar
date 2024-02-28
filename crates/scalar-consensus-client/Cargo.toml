@@ -1,0 +1,31 @@
+[package]
+name = "scalar-consensus-client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+description = "Scalar consensus client implementation"
+[dependencies]
+# async
+async-stream = "0.3.5"
+tokio = { version = "1.21", features = [
+    "sync",
+    "macros",
+    "time",
+    "rt-multi-thread",
+] }
+
+#retry
+backon = "0.4"
+
+prost = "0.12.1"
+protobuf = { version = "2.28", features = ["with-bytes"] }
+protobuf-src = "1.1.0"
+tonic = { version = "0.10", features = ["transport", "tls"] }
+
+[build-dependencies]
+prost-build = "0.12.1"
+tonic-build = { version = "0.10", features = ["prost", "transport"] }
+vergen = { version = "8.0.0", features = ["build", "cargo", "git", "gitcl"] }
