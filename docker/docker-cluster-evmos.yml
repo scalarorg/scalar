@@ -15,7 +15,7 @@ services:
     env_file:
       - ../runtime/node1/evmos/.env
     volumes:
-      - ../runntime/node1/evmos:/opt/evmos
+      - ../runtime/node1/evmos:/opt/evmos
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.11"
@@ -30,7 +30,7 @@ services:
     env_file:
       - ../runtime/node2/evmos/.env
     volumes:
-      - ../runntime/node2/evmos:/opt/evmos
+      - ../runtime/node2/evmos:/opt/evmos
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.12"
@@ -45,7 +45,7 @@ services:
     env_file:
       - ../runtime/node3/evmos/.env
     volumes:
-      - ../runntime/node3/evmos:/opt/evmos
+      - ../runtime/node3/evmos:/opt/evmos
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.13"
@@ -60,7 +60,7 @@ services:
     env_file:
       - ../runtime/node4/evmos/.env
     volumes:
-      - ../runntime/node4/evmos:/opt/evmos
+      - ../runtime/node4/evmos:/opt/evmos
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.14"

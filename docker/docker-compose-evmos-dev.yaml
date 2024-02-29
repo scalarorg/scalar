@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  scalar-evmos-dev:
+    image: golang:1.22.0-bullseye
+    container_name: scalar-evmos-dev
+    restart: unless-stopped
+    volumes:
+      - ../evmos:/evmos
+    command: ["/bin/sh","-c","sleep infinity"]  
+    #environment:
+    #  - CHAIN_ID=escalar_2024-1
+    #  - MONIKER=scalarevm
+    #  - KEYRING=file

@@ -8,17 +8,15 @@ services:
       dockerfile: ./Dockerfile
     image: scalar-evmos
     container_name: scalar-evmos
-    restart: unless-stopped
+    #restart: unless-stopped
+    restart: no
     volumes:
-      - ../configs/evmos/dev/genesis.json:/opt/evmos/genesis.json
-    command:
-      - /evmosd start --home /opt/evmos  
-    #entrypoint: "sleep infinity"
-    #command: ["init", "genesis.json"]
-    ports:
-      - "8545:8545"
-      - "8546:8546"
-      - "9090:9090"
-      - "26656:26656"
-      - "26657:26657"
-      - "1317:1317"
+      - ../scripts/evmos:/scripts
+    command: ["/scripts/start-docker.sh"]  
+    #command: ["evmosd", "start", "--home", "/opt/evmos"]  
+    #command: ["/bin/sh","-c","sleep infinity"]  
+    # ports:
+    #   - "8545-8546:8545-8546"
+    #   - "9090:9090"
+    #   - "26656-26657:26656-26657"
+    #   - "1317:1317"
