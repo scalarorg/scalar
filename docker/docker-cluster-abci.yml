@@ -1,0 +1,70 @@
+version: "3.9"
+networks:
+  scalar_evmos:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+services:
+  scalar-abci1:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-abci1
+    ports:
+      - "26617:26657"
+    env_file:
+      - ../runtime/node1/evmos/.env
+    volumes:
+      - ../runtime/node1/evmos:/opt/evmos
+    command: ["/scripts/start-abci.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.11"
+
+  scalar-abci2:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-abci2
+    ports:
+      - "26627:26657"
+    env_file:
+      - ../runtime/node2/evmos/.env
+    volumes:
+      - ../runtime/node2/evmos:/opt/evmos
+    command: ["/scripts/start-abci.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.12"
+
+  scalar-abci3:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-abci3
+    ports:
+      - "26637:26657"
+    env_file:
+      - ../runtime/node3/evmos/.env
+    volumes:
+      - ../runtime/node3/evmos:/opt/evmos
+    command: ["/scripts/start-abci.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.13"
+
+  scalar-abci4:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-abci4
+    ports:
+      - "26647:26657"
+    env_file:
+      - ../runtime/node4/evmos/.env
+    volumes:
+      - ../runtime/node4/evmos:/opt/evmos
+    command: ["/scripts/start-abci.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.14"

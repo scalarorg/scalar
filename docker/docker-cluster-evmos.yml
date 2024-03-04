@@ -5,62 +5,138 @@ networks:
       config:
         - subnet: 172.22.0.0/24
 services:
-  scalar-evmos1:
+  scalar-abci1:
     extends:
       file: ./docker-compose-evmos.yaml
       service: scalar-evmos
-    container_name: scalar-evmos1
+    container_name: scalar-abci1
     ports:
-      - "26616-26617:26656-26657"
+      - "26617:26657"
     env_file:
-      - ../runtime/node1/evmos/.env
+      - ../runtime/node1/abci/.env
     volumes:
-      - ../runtime/node1/evmos:/opt/evmos
+      - ../runtime/node1/abci:/opt/abci
+    command: ["/scripts/start-abci.sh"]
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.11"
 
-  scalar-evmos2:
+  scalar-abci2:
     extends:
       file: ./docker-compose-evmos.yaml
       service: scalar-evmos
-    container_name: scalar-evmos2
+    container_name: scalar-abci2
     ports:
-      - "26626-26627:26656-26657"
+      - "26627:26657"
     env_file:
-      - ../runtime/node2/evmos/.env
+      - ../runtime/node2/abci/.env
     volumes:
-      - ../runtime/node2/evmos:/opt/evmos
+      - ../runtime/node2/abci:/opt/abci
+    command: ["/scripts/start-abci.sh"]
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.12"
 
-  scalar-evmos3:
+  scalar-abci3:
     extends:
       file: ./docker-compose-evmos.yaml
       service: scalar-evmos
-    container_name: scalar-evmos3
+    container_name: scalar-abci3
     ports:
-      - "26636-26637:26656-26657"
+      - "26637:26657"
     env_file:
-      - ../runtime/node3/evmos/.env
+      - ../runtime/node3/abci/.env
     volumes:
-      - ../runtime/node3/evmos:/opt/evmos
+      - ../runtime/node3/abci:/opt/abci
+    command: ["/scripts/start-abci.sh"]
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.13"
 
-  scalar-evmos4:
+  scalar-abci4:
     extends:
       file: ./docker-compose-evmos.yaml
       service: scalar-evmos
-    container_name: scalar-evmos4
+    container_name: scalar-abci4
     ports:
-      - "26646-26647:26656-26657"
+      - "26647:26657"
     env_file:
-      - ../runtime/node4/evmos/.env
+      - ../runtime/node4/abci/.env
     volumes:
-      - ../runtime/node4/evmos:/opt/evmos
+      - ../runtime/node4/abci:/opt/abci
+    command: ["/scripts/start-abci.sh"]
     networks:
       scalar_evmos:
         ipv4_address: "172.22.0.14"
+
+  scalar-tendermint1:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-tendermint1
+    ports:
+      - "26616:26656"
+    env_file:
+      - ../runtime/node1/tendermint/.env
+      - ../runtime/tendermint/seeds/scalartendermint1
+    volumes:
+      - ../runtime/node1/tendermint:/opt/tendermint
+      - ../runtime/tendermint/seeds:/opt/seeds
+    command: ["/scripts/start-tendermint.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.21"
+
+  scalar-tendermint2:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-tendermint2
+    ports:
+      - "26626:26656"
+    env_file:
+      - ../runtime/node2/tendermint/.env
+      - ../runtime/tendermint/seeds/scalartendermint2
+    volumes:
+      - ../runtime/node2/tendermint:/opt/tendermint
+      - ../runtime/tendermint/seeds:/opt/seeds
+    command: ["/scripts/start-tendermint.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.22"
+
+  scalar-tendermint3:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-tendermint3
+    ports:
+      - "26636:26656"
+    env_file:
+      - ../runtime/node3/tendermint/.env
+      - ../runtime/tendermint/seeds/scalartendermint3
+    volumes:
+      - ../runtime/node3/tendermint:/opt/tendermint
+      - ../runtime/tendermint/seeds:/opt/seeds
+    command: ["/scripts/start-tendermint.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.23"
+
+  scalar-tendermint4:
+    extends:
+      file: ./docker-compose-evmos.yaml
+      service: scalar-evmos
+    container_name: scalar-tendermint4
+    ports:
+      - "26646:26656"
+    env_file:
+      - ../runtime/node4/tendermint/.env
+      - ../runtime/tendermint/seeds/scalartendermint4
+    volumes:
+      - ../runtime/node4/tendermint:/opt/tendermint
+      - ../runtime/tendermint/seeds:/opt/seeds
+    command: ["/scripts/start-tendermint.sh"]
+    networks:
+      scalar_evmos:
+        ipv4_address: "172.22.0.24"
