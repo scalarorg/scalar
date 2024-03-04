@@ -50,8 +50,8 @@ for i in {1..4}; do
 done
 echo "starting evmos node $KEYNAME in background ..."
 ${EVMOSD} start --pruning=nothing --rpc.unsafe --keyring-backend ${KEYRING} --with-tendermint=true \
-   --p2p.seeds=${SEEDS} --node=${ABCI_URL} \
-   --proxy_app=${PROXY_APP} \
+   --p2p.seeds=${SEEDS} \
+   --proxy-app=${PROXY_APP} --transport="grpc" \
    --home $DATA_DIR #>$DATA_DIR/node.log 2>&1 & disown
 
 echo "started evmos node"

@@ -1,10 +1,32 @@
-1. Init genesis
-   Run scripts/evmos/init-docker.sh in each docker container to generate config for each node
-2. Update config
-   Collect node_id, and add to seeds config in the config/config.toml
-   seeds = "41358a7e68e5add634d453c0c06fa2f141a8fa25@172.22.0.12:26656,d738e7eb9b00389d8343d7dd9b49fa5e27fd2220@172.22.0.13:26656,81182437e73e10a078f8f74d0f7c71c04c36e52c@172.22.0.14:26656"
-   Each node's seeds list does not contain its own's id
-3. Start node
-   Start node with scripts/evmos/start-docker.sh
-4. Todo
-   Write script for generate node_id
+1. Modify Evmos code base
+
+   Add flowing line into the evmos/server/start.go
+
+   ```
+   ....
+   server cmd.Flags().String(srvflags.ProxyApp, "tcp://127.0.0.1:26658", "Abci server address")
+   .....
+   cmd.Flags().String(srvflags.Transport, "socket", "Transport protocol: socket, grpc")
+   ```
+
+   evmos/server/flags/flags.go
+
+   ```
+   // Tendermint/cosmos-sdk full-node start flags
+   const (
+       WithTendermint = "with-tendermint"
+       ProxyApp = "proxy-app" //Add constant for the abci app endpoint
+       Address = "address"
+       Transport = "transport"
+       TraceStore = "trace-store"
+       CPUProfile = "cpu-profile"
+       // The type of database for application and snapshots databases
+       AppDBBackend = "app-db-backend"
+   )
+
+   ```
+
+2. Start dockers
+   ```
+   docker-compose -f docker/docker-cluster-evmos.yml up
+   ```

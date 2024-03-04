@@ -27,7 +27,9 @@ echo "prepare genesis: Run validate-genesis to ensure everything worked and that
 ${EVMOSD} validate-genesis --home $DATA_DIR
 
 echo "starting evmos node $KEYNAME in background ..."
-${EVMOSD} start --pruning=nothing --rpc.unsafe --keyring-backend ${KEYRING} --with-tendermint=false --home $DATA_DIR #>$DATA_DIR/node.log 2>&1 & disown
+${EVMOSD} start --pruning=nothing --rpc.unsafe --keyring-backend ${KEYRING} --with-tendermint=false \
+    --transport="grpc" \
+    --home $DATA_DIR #>$DATA_DIR/node.log 2>&1 & disown
 
 echo "started evmos node"
 tail -f /dev/null
