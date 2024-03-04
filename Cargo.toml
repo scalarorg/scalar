@@ -12,7 +12,10 @@ members = [
     "crates/scalar-rest-api",
     "crates/scalar-telemetry",
     "scalar-test-cluster",
-    "crates/scalar-consensus-client"
+    "crates/scalar-consensus-client",
+    "crates/scalar-eth-adapter",
+    "crates/scalar-eth-rpc",
+    "crates/scalar-eth-rpc-builder",
 ]
 
 exclude = [

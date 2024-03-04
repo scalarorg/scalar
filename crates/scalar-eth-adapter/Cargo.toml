@@ -7,5 +7,21 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 description = "Scalar adapter for eth rpc & abci interface"
+
 [dependencies]
+# reth
+reth-primitives = { path = "../../reth/crates/primitives", features = [
+    "arbitrary",
+    "clap",
+] }
+
+# scalar
 scalar-consensus-client = { path = "../scalar-consensus-client" }
+
+# async
+tokio = { version = "1.21", features = [
+    "sync",
+    "macros",
+    "time",
+    "rt-multi-thread",
+] }

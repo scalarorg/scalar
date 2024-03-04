@@ -8,6 +8,10 @@ homepage.workspace = true
 repository.workspace = true
 description = "Reth RPC implementation"
 [dependencies]
+# Huong_04032024
+# Scalar
+scalar-eth-adapter = { path = "../scalar-eth-adapter" }
+
 # reth
 reth-interfaces = { path = "../../reth/crates/interfaces" }
 reth-primitives = { path = "../../reth/crates/primitives" }

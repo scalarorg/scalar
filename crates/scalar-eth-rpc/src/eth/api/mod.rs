@@ -26,6 +26,7 @@ use reth_provider::{
 use reth_rpc_types::{SyncInfo, SyncStatus};
 use reth_tasks::{TaskSpawner, TokioTaskExecutor};
 use reth_transaction_pool::TransactionPool;
+use secp256k1::scalar;
 use std::{
     fmt::Debug,
     future::Future,
@@ -102,6 +103,9 @@ where
         gas_cap: impl Into<GasCap>,
         blocking_task_pool: BlockingTaskPool,
         fee_history_cache: FeeHistoryCache,
+        /// Huong_04032024_modified
+        /// An adapter for interacting with ABCI client and consensus client
+        scalar_eth_adapter: scalar_eth_adapter::ScalarEthAdapter,
     ) -> Self {
         Self::with_spawner(
             provider,
@@ -113,6 +117,8 @@ where
             Box::<TokioTaskExecutor>::default(),
             blocking_task_pool,
             fee_history_cache,
+            /// Huong_04032024_modified
+            scalar_eth_adapter,
         )
     }
 
@@ -128,6 +134,9 @@ where
         task_spawner: Box<dyn TaskSpawner>,
         blocking_task_pool: BlockingTaskPool,
         fee_history_cache: FeeHistoryCache,
+        /// Huong_04032024_modified
+        /// An adapter for interacting with ABCI client and consensus client
+        scalar_eth_adapter: scalar_eth_adapter::ScalarEthAdapter,
     ) -> Self {
         // get the block number of the latest block
         let latest_block = provider
@@ -152,9 +161,13 @@ where
             fee_history_cache,
             #[cfg(feature = "optimism")]
             http_client: reqwest::Client::new(),
+            /// Huong_04032024_modified
+            scalar_eth_adapter,
         };
 
-        Self { inner: Arc::new(inner) }
+        Self {
+            inner: Arc::new(inner),
+        }
     }
 
     /// Executes the future on a new blocking task.
@@ -268,8 +281,10 @@ where
         } else {
             // no pending block from the CL yet, so we use the latest block and modify the env
             // values that we can
-            let mut latest =
-                self.provider().latest_header()?.ok_or_else(|| EthApiError::UnknownBlockNumber)?;
+            let mut latest = self
+                .provider()
+                .latest_header()?
+                .ok_or_else(|| EthApiError::UnknownBlockNumber)?;
 
             // child block
             latest.number += 1;
@@ -293,16 +308,21 @@ where
         let mut block_env = BlockEnv::default();
         // Note: for the PENDING block we assume it is past the known merge block and thus this will
         // not fail when looking up the total difficulty value for the blockenv.
-        self.provider().fill_env_with_header(&mut cfg, &mut block_env, origin.header())?;
+        self.provider()
+            .fill_env_with_header(&mut cfg, &mut block_env, origin.header())?;
 
-        Ok(PendingBlockEnv { cfg, block_env, origin })
+        Ok(PendingBlockEnv {
+            cfg,
+            block_env,
+            origin,
+        })
     }
 
     /// Returns the locally built pending block
     pub(crate) async fn local_pending_block(&self) -> EthResult<Option<SealedBlockWithSenders>> {
         let pending = self.pending_block_env_and_cfg()?;
         if pending.origin.is_actual_pending() {
-            return Ok(pending.origin.into_actual_pending())
+            return Ok(pending.origin.into_actual_pending());
         }
 
         // no pending block from the CL yet, so we need to build it ourselves via txpool
@@ -313,17 +333,17 @@ where
             // check if the block is still good
             if let Some(pending_block) = lock.as_ref() {
                 // this is guaranteed to be the `latest` header
-                if pending.block_env.number.to::<u64>() == pending_block.block.number &&
-                    pending.origin.header().hash == pending_block.block.parent_hash &&
-                    now <= pending_block.expires_at
+                if pending.block_env.number.to::<u64>() == pending_block.block.number
+                    && pending.origin.header().hash == pending_block.block.parent_hash
+                    && now <= pending_block.expires_at
                 {
-                    return Ok(Some(pending_block.block.clone()))
+                    return Ok(Some(pending_block.block.clone()));
                 }
             }
 
             // if we're currently syncing, we're unable to build a pending block
             if this.network().is_syncing() {
-                return Ok(None)
+                return Ok(None);
             }
 
             // we rebuild the block
@@ -331,7 +351,7 @@ where
                 Ok(block) => block,
                 Err(err) => {
                     tracing::debug!(target: "rpc", "Failed to build pending block: {:?}", err);
-                    return Ok(None)
+                    return Ok(None);
                 }
             };
 
@@ -355,7 +375,9 @@ impl<Provider, Pool, Events> std::fmt::Debug for EthApi<Provider, Pool, Events> 
 
 impl<Provider, Pool, Events> Clone for EthApi<Provider, Pool, Events> {
     fn clone(&self) -> Self {
-        Self { inner: Arc::clone(&self.inner) }
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
     }
 }
 
@@ -386,7 +408,11 @@ where
     }
 
     fn accounts(&self) -> Vec<Address> {
-        self.inner.signers.iter().flat_map(|s| s.accounts()).collect()
+        self.inner
+            .signers
+            .iter()
+            .flat_map(|s| s.accounts())
+            .collect()
     }
 
     fn is_syncing(&self) -> bool {
@@ -397,7 +423,10 @@ where
     fn sync_status(&self) -> RethResult<SyncStatus> {
         let status = if self.is_syncing() {
             let current_block = U256::from(
-                self.provider().chain_info().map(|info| info.best_number).unwrap_or_default(),
+                self.provider()
+                    .chain_info()
+                    .map(|info| info.best_number)
+                    .unwrap_or_default(),
             );
             SyncStatus::Info(SyncInfo {
                 starting_block: self.inner.starting_block,
@@ -471,4 +500,8 @@ struct EthApiInner<Provider, Pool, Network> {
     /// An http client for communicating with sequencers.
     #[cfg(feature = "optimism")]
     http_client: reqwest::Client,
+
+    /// Huong_04032024_modified
+    /// An adapter for interacting with ABCI client and consensus client
+    scalar_eth_adapter: scalar_eth_adapter::ScalarEthAdapter,
 }
