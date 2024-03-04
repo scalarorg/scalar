@@ -342,7 +342,11 @@ where
 
     async fn evm_env_at(&self, at: BlockId) -> EthResult<(CfgEnv, BlockEnv, BlockId)> {
         if at.is_pending() {
-            let PendingBlockEnv { cfg, block_env, origin } = self.pending_block_env_and_cfg()?;
+            let PendingBlockEnv {
+                cfg,
+                block_env,
+                origin,
+            } = self.pending_block_env_and_cfg()?;
             Ok((cfg, block_env, origin.state_block_id()))
         } else {
             //  Use cached values if there is no pending block
@@ -387,7 +391,9 @@ where
         &self,
         block: BlockId,
     ) -> EthResult<Option<Vec<TransactionSigned>>> {
-        self.block_by_id(block).await.map(|block| block.map(|block| block.body))
+        self.block_by_id(block)
+            .await
+            .map(|block| block.map(|block| block.body))
     }
 
     async fn transaction_by_hash(&self, hash: B256) -> EthResult<Option<TransactionSource>> {
@@ -419,8 +425,10 @@ where
 
         if resp.is_none() {
             // tx not found on disk, check pool
-            if let Some(tx) =
-                self.pool().get(&hash).map(|tx| tx.transaction.to_recovered_transaction())
+            if let Some(tx) = self
+                .pool()
+                .get(&hash)
+                .map(|tx| tx.transaction.to_recovered_transaction())
             {
                 resp = Some(TransactionSource::Pool(tx));
             }
@@ -495,7 +503,9 @@ where
             None => return Ok(None),
         };
 
-        self.build_transaction_receipt(tx, meta, receipt).await.map(Some)
+        self.build_transaction_receipt(tx, meta, receipt)
+            .await
+            .map(Some)
     }
 
     async fn send_raw_transaction(&self, tx: Bytes) -> EthResult<B256> {
@@ -508,7 +518,10 @@ where
         let pool_transaction = <Pool::Transaction>::from_recovered_pooled_transaction(recovered);
 
         // submit the transaction to the pool with a `Local` origin
-        let hash = self.pool().add_transaction(TransactionOrigin::Local, pool_transaction).await?;
+        let hash = self
+            .pool()
+            .add_transaction(TransactionOrigin::Local, pool_transaction)
+            .await?;
 
         Ok(hash)
     }
@@ -590,14 +603,18 @@ where
 
         let signed_tx = self.sign_request(&from, transaction)?;
 
-        let recovered =
-            signed_tx.into_ecrecovered().ok_or(EthApiError::InvalidTransactionSignature)?;
+        let recovered = signed_tx
+            .into_ecrecovered()
+            .ok_or(EthApiError::InvalidTransactionSignature)?;
 
         let pool_transaction =
             <Pool::Transaction>::from_recovered_pooled_transaction(recovered.into());
 
         // submit the transaction to the pool with a `Local` origin
-        let hash = self.pool().add_transaction(TransactionOrigin::Local, pool_transaction).await?;
+        let hash = self
+            .pool()
+            .add_transaction(TransactionOrigin::Local, pool_transaction)
+            .await?;
 
         Ok(hash)
     }
@@ -641,8 +658,10 @@ where
         at: BlockId,
         overrides: EvmOverrides,
     ) -> EthResult<(ResultAndState, Env)> {
-        self.spawn_with_call_at(request, at, overrides, move |mut db, env| transact(&mut db, env))
-            .await
+        self.spawn_with_call_at(request, at, overrides, move |mut db, env| {
+            transact(&mut db, env)
+        })
+        .await
     }
 
     async fn spawn_inspect_call_at<I>(
@@ -655,8 +674,10 @@ where
     where
         I: Inspector<StateCacheDB> + Send + 'static,
     {
-        self.spawn_with_call_at(request, at, overrides, move |db, env| inspect(db, env, inspector))
-            .await
+        self.spawn_with_call_at(request, at, overrides, move |db, env| {
+            inspect(db, env, inspector)
+        })
+        .await
     }
 
     fn trace_at<F, R>(
@@ -749,7 +770,11 @@ where
             // replay all transactions prior to the targeted transaction
             replay_transactions_until(&mut db, cfg.clone(), block_env.clone(), block_txs, tx.hash)?;
 
-            let env = Env { cfg, block: block_env, tx: tx_env_with_recovered(&tx) };
+            let env = Env {
+                cfg,
+                block: block_env,
+                tx: tx_env_with_recovered(&tx),
+            };
 
             let mut inspector = TracingInspector::new(config);
             let (res, _, db) = inspect_and_return_db(db, env, &mut inspector)?;
@@ -842,7 +867,11 @@ where
             let mut db = CacheDB::new(StateProviderDatabase::new(state));
 
             while let Some((tx_info, tx)) = transactions.next() {
-                let env = Env { cfg: cfg.clone(), block: block_env.clone(), tx };
+                let env = Env {
+                    cfg: cfg.clone(),
+                    block: block_env.clone(),
+                    tx,
+                };
 
                 let mut inspector = TracingInspector::new(config);
                 let (res, _) = inspect(&mut db, env, &mut inspector)?;
@@ -953,7 +982,9 @@ where
         l1_block_info: Option<L1BlockInfo>,
         block_timestamp: u64,
     ) -> EthResult<OptimismTxMeta> {
-        let Some(l1_block_info) = l1_block_info else { return Ok(OptimismTxMeta::default()) };
+        let Some(l1_block_info) = l1_block_info else {
+            return Ok(OptimismTxMeta::default());
+        };
 
         let envelope_buf: Bytes = {
             let mut envelope_buf = bytes::BytesMut::new();
@@ -971,14 +1002,22 @@ where
                 )
                 .map_err(|_| EthApiError::Optimism(OptimismEthApiError::L1BlockFeeError))?;
             let inner_l1_data_gas = l1_block_info
-                .l1_data_gas(&self.inner.provider.chain_spec(), block_timestamp, &envelope_buf)
+                .l1_data_gas(
+                    &self.inner.provider.chain_spec(),
+                    block_timestamp,
+                    &envelope_buf,
+                )
                 .map_err(|_| EthApiError::Optimism(OptimismEthApiError::L1BlockGasError))?;
             (Some(inner_l1_fee), Some(inner_l1_data_gas))
         } else {
             (None, None)
         };
 
-        Ok(OptimismTxMeta::new(Some(l1_block_info), l1_fee, l1_data_gas))
+        Ok(OptimismTxMeta::new(
+            Some(l1_block_info),
+            l1_fee,
+            l1_data_gas,
+        ))
     }
 
     /// Helper function for `eth_sendRawTransaction` for Optimism.
@@ -1032,7 +1071,7 @@ where
                 return match signer.sign_transaction(request, from) {
                     Ok(tx) => Ok(tx),
                     Err(e) => Err(e.into()),
-                }
+                };
             }
         }
         Err(EthApiError::InvalidTransactionSignature)
@@ -1057,7 +1096,7 @@ where
                     block_number,
                     base_fee_per_gas,
                     index.into(),
-                )))
+                )));
             }
         }
 
@@ -1110,7 +1149,13 @@ impl TransactionSource {
                     },
                 )
             }
-            TransactionSource::Block { transaction, index, block_hash, block_number, base_fee } => {
+            TransactionSource::Block {
+                transaction,
+                index,
+                block_hash,
+                block_number,
+                base_fee,
+            } => {
                 let hash = transaction.hash();
                 (
                     transaction,
@@ -1140,15 +1185,19 @@ impl From<TransactionSource> for Transaction {
     fn from(value: TransactionSource) -> Self {
         match value {
             TransactionSource::Pool(tx) => reth_rpc_types_compat::transaction::from_recovered(tx),
-            TransactionSource::Block { transaction, index, block_hash, block_number, base_fee } => {
-                from_recovered_with_block_context(
-                    transaction,
-                    block_hash,
-                    block_number,
-                    base_fee,
-                    U256::from(index),
-                )
-            }
+            TransactionSource::Block {
+                transaction,
+                index,
+                block_hash,
+                block_number,
+                base_fee,
+            } => from_recovered_with_block_context(
+                transaction,
+                block_hash,
+                block_number,
+                base_fee,
+                U256::from(index),
+            ),
         }
     }
 }
@@ -1166,8 +1215,9 @@ pub(crate) fn build_transaction_receipt_with_block_receipts(
 ) -> EthResult<TransactionReceipt> {
     // Note: we assume this transaction is valid, because it's mined (or part of pending block) and
     // we don't need to check for pre EIP-2
-    let from =
-        transaction.recover_signer_unchecked().ok_or(EthApiError::InvalidTransactionSignature)?;
+    let from = transaction
+        .recover_signer_unchecked()
+        .ok_or(EthApiError::InvalidTransactionSignature)?;
 
     // get the previous transaction cumulative gas used
     let gas_used = if meta.index == 0 {
@@ -1197,7 +1247,11 @@ pub(crate) fn build_transaction_receipt_with_block_receipts(
         // TODO pre-byzantium receipts have a post-transaction state root
         state_root: None,
         logs_bloom: receipt.bloom_slow(),
-        status_code: if receipt.success { Some(U64::from(1)) } else { Some(U64::from(0)) },
+        status_code: if receipt.success {
+            Some(U64::from(1))
+        } else {
+            Some(U64::from(0))
+        },
         // EIP-4844 fields
         blob_gas_price: meta.excess_blob_gas.map(calc_blob_gasprice).map(U128::from),
         blob_gas_used: transaction.transaction.blob_gas_used().map(U128::from),
@@ -1211,8 +1265,9 @@ pub(crate) fn build_transaction_receipt_with_block_receipts(
     if let Some(l1_block_info) = optimism_tx_meta.l1_block_info {
         if !transaction.is_deposit() {
             res_receipt.l1_fee = optimism_tx_meta.l1_fee;
-            res_receipt.l1_gas_used =
-                optimism_tx_meta.l1_data_gas.map(|dg| dg + l1_block_info.l1_fee_overhead);
+            res_receipt.l1_gas_used = optimism_tx_meta
+                .l1_data_gas
+                .map(|dg| dg + l1_block_info.l1_fee_overhead);
             res_receipt.l1_fee_scalar =
                 Some(l1_block_info.l1_fee_scalar.div(U256::from(1_000_000)));
             res_receipt.l1_gas_price = Some(l1_block_info.l1_base_fee);
@@ -1286,6 +1341,8 @@ mod tests {
             ETHEREUM_BLOCK_GAS_LIMIT,
             BlockingTaskPool::build().expect("failed to build tracing pool"),
             fee_history_cache,
+            // Huong_04032024_modified
+            None,
         );
 
         // https://etherscan.io/tx/0xa694b71e6c128a2ed8e2e0f6770bddbe52e3bb8f10e8472f9a79ab81497a8b5d
@@ -1310,7 +1367,13 @@ mod tests {
             pool.len()
         );
 
-        assert!(pool.get(&tx_1_result).is_some(), "tx1 not found in the pool");
-        assert!(pool.get(&tx_2_result).is_some(), "tx2 not found in the pool");
+        assert!(
+            pool.get(&tx_1_result).is_some(),
+            "tx1 not found in the pool"
+        );
+        assert!(
+            pool.get(&tx_2_result).is_some(),
+            "tx2 not found in the pool"
+        );
     }
 }

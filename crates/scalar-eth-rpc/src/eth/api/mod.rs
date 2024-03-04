@@ -105,7 +105,7 @@ where
         fee_history_cache: FeeHistoryCache,
         /// Huong_04032024_modified
         /// An adapter for interacting with ABCI client and consensus client
-        scalar_eth_adapter: scalar_eth_adapter::ScalarEthAdapter,
+        scalar_eth_adapter: Option<scalar_eth_adapter::ScalarEthAdapter>,
     ) -> Self {
         Self::with_spawner(
             provider,
@@ -136,7 +136,7 @@ where
         fee_history_cache: FeeHistoryCache,
         /// Huong_04032024_modified
         /// An adapter for interacting with ABCI client and consensus client
-        scalar_eth_adapter: scalar_eth_adapter::ScalarEthAdapter,
+        scalar_eth_adapter: Option<scalar_eth_adapter::ScalarEthAdapter>,
     ) -> Self {
         // get the block number of the latest block
         let latest_block = provider
@@ -503,5 +503,5 @@ struct EthApiInner<Provider, Pool, Network> {
 
     /// Huong_04032024_modified
     /// An adapter for interacting with ABCI client and consensus client
-    scalar_eth_adapter: scalar_eth_adapter::ScalarEthAdapter,
+    scalar_eth_adapter: Option<scalar_eth_adapter::ScalarEthAdapter>,
 }
