@@ -8,6 +8,21 @@ BIN_DIR=${SCRIPT_DIR}/validator/${PROFILE}
 SCALAR_DIR=${SCRIPT_DIR}/../../scalar
 TOFND_DIR=${SCRIPT_DIR}/../../../tofnd
 
+#2024-03-04 Scalar abci validator
+
+scalar_abci_validator() {
+    BIN_NAME=scalar-validator
+    WORKING_DIR=/scalar/${BIN_NAME}
+    CONTEXT=${SCRIPT_DIR}/../runtime
+    OUT_FILE=${CONTEXT}/bin/${BIN_NAME}
+    mkdir -p $OUT_FILE
+    docker exec -it ${BUILDER} cargo build --manifest-path ${WORKING_DIR}/Cargo.toml --profile dev --bin ${BIN_NAME}
+    docker cp ${BUILDER}:${WORKING_DIR}/target/${PROFILE}/${BIN_NAME} ${OUT_FILE}
+    #docker cp ${OUT_FILE} ${RUNNER}:/usr/local/bin
+    #docker build --file ${SCRIPT_DIR}/../docker/runner.Dockerfile -t scalar-runner ${CONTEXT}
+
+}
+
 scalar_validator() {
     BIN_NAME=scalar-validator
     WORKING_DIR=/scalar

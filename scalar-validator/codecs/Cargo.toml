@@ -1,0 +1,36 @@
+[package]
+name = "scalar-codecs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+scalar-codecs-derive = { path = "./derive", default-features = false }
+
+alloy-primitives.workspace = true
+bytes.workspace = true
+
+[dev-dependencies]
+alloy-primitives = { workspace = true, features = ["arbitrary", "serde"] }
+serde.workspace = true
+modular-bitfield = "0.11.2"
+test-fuzz.workspace = true
+
+arbitrary = { workspace = true, features = ["derive"] }
+proptest.workspace = true
+proptest-derive.workspace = true
+
+[features]
+default = ["compact", "std"]
+std = ["alloy-primitives/std", "bytes/std"]
+compact = ["scalar-codecs-derive/compact"]
+scale = ["scalar-codecs-derive/scale"]
+postcard = ["scalar-codecs-derive/postcard"]
+no_codec = ["scalar-codecs-derive/no_codec"]
+optimism = ["scalar-codecs-derive/optimism"]

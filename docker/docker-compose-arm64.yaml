@@ -9,11 +9,16 @@ services:
         # update with git sha of whichever branch you're building on.
         GIT_REVISION: db24658bc9
         BUILD_DATE: today
+        GID: $GID
+        UID: $UID
+        USER: $USER
     image: scalar-builder
     environment:
       - LD_PRELOAD
       - RUST_JSON_LOG=true
       - RUST_LOG=info
+      # For stripped binary file
+      - RUSTFLAGS=-C link-arg=-s
       # don't use debug, it generates volumes of data.
 
     container_name: scalar-builder
@@ -23,17 +28,17 @@ services:
     volumes:
       - ../:/scalar
 
-  runner:
-    build:
-      context: ../
-      dockerfile: ./docker/runner.Dockerfile
-      args:
-        BUILD_DATE: today
-    image: scalar-runner 
-    environment:
-      - LD_PRELOAD
-      - RUST_JSON_LOG=true
-      - RUST_LOG=info
-      # don't use debug, it generates volumes of data.
-    container_name: scalar-runner
-    restart: unless-stopped
+  # runner:
+  #   build:
+  #     context: ../
+  #     dockerfile: ./docker/runner.Dockerfile
+  #     args:
+  #       BUILD_DATE: today
+  #   image: scalar-runner 
+  #   environment:
+  #     - LD_PRELOAD
+  #     - RUST_JSON_LOG=true
+  #     - RUST_LOG=info
+  #     # don't use debug, it generates volumes of data.
+  #   container_name: scalar-runner
+  #   restart: unless-stopped
