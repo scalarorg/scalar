@@ -1,2 +1,2 @@
 # scalar
-Scalar block chain
+Scalar dog chain and leash
